@@ -61,7 +61,7 @@ export default function Footer() {
 
         <div className="border-t border-cream-darker mt-10 pt-6">
           <p className="text-xs text-taupe text-center">
-            &copy; 2024 Mishkitashua. Hecho a mano con amor en los Andes.
+            &copy; {new Date().getFullYear()} Mishkitashua. Sabores que nacen de nuestra tierra.
           </p>
         </div>
       </div>
