@@ -71,12 +71,13 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14">
         {/* Image Gallery */}
         <div className="lg:col-span-7">
-          <div className="relative aspect-square rounded-2xl overflow-hidden mb-4">
+          <div className="relative rounded-2xl overflow-hidden mb-4 bg-cream-dark">
             <Image
               src={product.images[selectedImage]}
               alt={product.name}
-              fill
-              className="object-cover"
+              width={800}
+              height={1000}
+              className="w-full h-auto"
               priority
               sizes="(max-width: 1024px) 100vw, 58vw"
             />

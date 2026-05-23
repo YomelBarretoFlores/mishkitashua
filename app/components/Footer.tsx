@@ -10,8 +10,7 @@ export default function Footer() {
               Mishkitashua
             </h3>
             <p className="text-sm text-on-surface-variant leading-relaxed">
-              Sabores que nacen de nuestra tierra. Repostería artesanal con
-              identidad andina.
+              Sabores que nacen de nuestra tierra.
             </p>
           </div>
 
