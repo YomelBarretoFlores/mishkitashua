@@ -1,6 +1,15 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
+
+const STORAGE_KEY = "mishkitashua-cart";
 
 export type CartItem = {
   slug: string;
@@ -19,12 +28,34 @@ type CartContextType = {
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
+  hydrated: boolean;
 };
 
 const CartContext = createContext<CartContextType | null>(null);
 
+function loadCart(): CartItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setItems(loadCart());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }, [items, hydrated]);
 
   const addItem = useCallback(
     (item: Omit<CartItem, "quantity">, quantity = 1) => {
@@ -63,7 +94,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
-    <CartContext value={{ items, addItem, removeItem, updateQuantity, clearCart, totalItems, subtotal }}>
+    <CartContext
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        totalItems,
+        subtotal,
+        hydrated,
+      }}
+    >
       {children}
     </CartContext>
   );

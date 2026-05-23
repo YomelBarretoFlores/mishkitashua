@@ -2,14 +2,26 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Snowflake, Leaf, Truck, Store, Info } from "lucide-react";
+import { faqJsonLd } from "@/app/lib/jsonld";
 
 export const metadata: Metadata = {
   title: "Preguntas Frecuentes y Envíos",
+  description:
+    "Todo sobre conservación, envíos nacionales, ingredientes andinos y ventas al por mayor de alfajores y manjares Mishkitashua.",
+  openGraph: {
+    title: "Preguntas Frecuentes y Envíos | Mishkitashua",
+    description:
+      "Cuidado, envío y origen de nuestros alfajores artesanales andinos.",
+  },
 };
 
 export default function AyudaPage() {
   return (
     <div className="max-w-7xl mx-auto px-5 md:px-16 py-12 md:py-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd()) }}
+      />
       {/* Header */}
       <div className="text-center mb-14">
         <h1

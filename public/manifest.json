@@ -1,0 +1,21 @@
+{
+  "name": "Mishkitashua — Sabores que nacen de nuestra tierra",
+  "short_name": "Mishkitashua",
+  "description": "Repostería artesanal andina. Alfajores y manjares saborizados con ingredientes de los Andes peruanos.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#3e2723",
+  "background_color": "#fbf9f1",
+  "icons": [
+    {
+      "src": "/images/logo-mishkitashua.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/images/logo-mishkitashua.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

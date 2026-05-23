@@ -10,6 +10,8 @@ import {
 
 export const metadata: Metadata = {
   title: "Confirmación de Pedido",
+  description: "Tu pedido ha sido confirmado. Gracias por tu compra.",
+  robots: { index: false, follow: false },
 };
 
 export default function ConfirmacionPage() {

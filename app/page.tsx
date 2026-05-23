@@ -1,6 +1,26 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Leaf, Mountain, Heart } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Mishkitashua — Sabores que nacen de nuestra tierra",
+  description:
+    "Repostería artesanal andina. Alfajores y manjares saborizados con ingredientes de los Andes peruanos: Tunaluna, Sol Aguaymanto y Muña Andina.",
+  openGraph: {
+    title: "Mishkitashua — Sabores que nacen de nuestra tierra",
+    description:
+      "Alfajores artesanales y manjares saborizados de los Andes peruanos.",
+    images: [
+      {
+        url: "/images/tres-sabores-poster.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Mishkitashua — Tres sabores, una misma identidad",
+      },
+    ],
+  },
+};
 
 export default function HomePage() {
   return (

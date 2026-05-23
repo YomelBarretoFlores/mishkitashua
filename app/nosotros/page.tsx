@@ -4,6 +4,16 @@ import { Leaf, MapPin, Cookie } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Nuestra Historia",
+  description:
+    "Conoce el legado de Mishkitashua: tradición, ingredientes andinos y el arte de la repostería artesanal desde Huaraz, Áncash.",
+  openGraph: {
+    title: "Nuestra Historia | Mishkitashua",
+    description:
+      "Un legado de calidez, tradición y la búsqueda de la repostería perfecta desde los Andes peruanos.",
+    images: [
+      { url: "/images/alfajores-productos-light.jpg", width: 1200, height: 630 },
+    ],
+  },
 };
 
 const timeline = [
