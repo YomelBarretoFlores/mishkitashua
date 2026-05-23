@@ -17,15 +17,15 @@ export type Product = {
 export const products: Product[] = [
   {
     slug: "alfajores-andinos-surtidos",
-    name: "Alfajores Andinos Surtidos",
+    name: "Alfajores Andinos",
     subtitle: "Caja x 6 unidades",
     category: "alfajores",
-    price: 24.0,
+    price: 8.0,
     weight: "264g",
     description:
-      "3 sabores surtidos, 2 por sabor. Alfajores artesanales rellenos de manjar andino en sabores Tunaluna, Aguaymanto y Muña.",
+      "Caja surtida de 6 alfajores con tres sabores andinos: tuna, aguaymanto y muña.",
     longDescription:
-      "Nuestra caja insignia reúne la esencia de los Andes en seis alfajores artesanales. Cada par representa un sabor único: la dulzura frutal de la tuna, la frescura herbal de la muña y la dulzura cítrica del aguaymanto. Elaborados con ingredientes seleccionados y horneados con orgullo en los Andes.",
+      "Nuestra caja insignia reúne tres sabores andinos en una presentación comercial de 6 alfajores. Las tapas son elaboradas a base de harina de mashua negra y se combinan con rellenos de manjar saborizado de tuna, aguaymanto y muña. Cada variedad se diferencia por su relleno, color característico y perfil de sabor, creando una experiencia visual y sensorial atractiva.",
     ingredients: [
       "Harina de trigo sin preparar",
       "Mantequilla",
