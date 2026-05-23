@@ -67,32 +67,71 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      {/* Heritage */}
+      {/* Sobre Mishkitashua */}
       <section className="max-w-7xl mx-auto px-5 md:px-16 py-20 md:py-28">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           <div>
+            <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-3">
+              Sobre Mishkitashua
+            </p>
             <h2
               className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-6"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
             >
-              Nuestra Herencia
+              Sabores andinos en una propuesta moderna
             </h2>
             <p className="text-on-surface-variant leading-relaxed mb-4">
-              Todo comenzó con una receta sencilla transmitida de generación en
-              generación. Nuestra fundadora creyó que la verdadera artesanía no
-              puede apresurarse. Cada pliegue de masa, cada medida precisa de
-              manjar y cada cuidadosa vigilancia del horno es un testimonio de la
-              dedicación de nuestra familia al oficio.
+              Mishkitashua nace como una marca peruana de repostería andina que
+              transforma insumos representativos de los Andes en productos
+              dulces, atractivos y listos para el mercado.
+            </p>
+            <p className="text-on-surface-variant leading-relaxed mb-8">
+              Nuestro portafolio está conformado por dos líneas principales:
+              alfajores andinos y manjares saborizados, desarrollados en tres
+              sabores: tuna, aguaymanto y muña. Cada producto combina identidad
+              regional, presentación cuidada y una experiencia de consumo
+              diferente.
+            </p>
+
+            <h3
+              className="text-xl font-semibold text-cocoa-deep mb-3"
+              style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+            >
+              Nuestra esencia
+            </h3>
+            <p className="text-on-surface-variant leading-relaxed mb-4">
+              Mishkitashua busca revalorar ingredientes andinos como la mashua
+              negra, la tuna, el aguaymanto y la muña, integrándolos en
+              productos dulces con mayor valor agregado.
+            </p>
+            <p className="text-on-surface-variant leading-relaxed mb-8">
+              La marca no solo se enfoca en ofrecer un sabor distinto, sino
+              también en construir una propuesta visual, comercial y productiva
+              coherente. Por eso, cada alfajor y cada manjar ha sido pensado
+              desde su formulación hasta su empaque, cuidando el sabor, la
+              textura, el color y la presentación final.
+            </p>
+
+            <h3
+              className="text-xl font-semibold text-cocoa-deep mb-3"
+              style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+            >
+              De los Andes al mercado
+            </h3>
+            <p className="text-on-surface-variant leading-relaxed mb-4">
+              Mishkitashua une tradición e innovación en una línea de productos
+              pensada para consumidores que buscan algo diferente: dulces con
+              identidad peruana, sabores reconocibles y una presentación moderna.
             </p>
             <p className="text-on-surface-variant leading-relaxed">
-              No solo horneamos; preservamos memorias. La calidez que sientes al
-              descubrir nuestros productos es la misma calidez que llenaba la
-              cocina de nuestra abuela. Utilizamos solo los mejores ingredientes
-              naturales, asegurando que cada bocado cuente una historia de
-              autenticidad y amor.
+              Nuestros alfajores se elaboran con tapas a base de harina de
+              mashua negra y rellenos de manjar saborizado. Los manjares, por su
+              parte, se presentan en frascos de 300 g como productos
+              independientes, ideales para untar, acompañar postres o utilizar en
+              repostería.
             </p>
           </div>
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden">
+          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden sticky top-24">
             <Image
               src="/images/portafolio-mishkitashua.jpg"
               alt="Portafolio Mishkitashua"
