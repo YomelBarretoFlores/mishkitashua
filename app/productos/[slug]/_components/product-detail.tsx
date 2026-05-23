@@ -224,8 +224,8 @@ export default function ProductDetailPage() {
 
           <div className="relative rounded-2xl overflow-hidden min-h-[300px]">
             <Image
-              src={product.image}
-              alt={`${product.name} - presentación`}
+              src="/images/ingredientes-andinos.png"
+              alt="Ingredientes andinos Mishkitashua"
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"

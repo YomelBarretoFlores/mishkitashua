@@ -143,8 +143,8 @@ export default function AyudaPage() {
 
             <div className="relative h-[200px] md:h-full rounded-xl overflow-hidden hidden md:block">
               <Image
-                src="/images/alfajores-surtidos.jpg"
-                alt="Ingredientes andinos"
+                src="/images/ingredientes-andinos.png"
+                alt="Ingredientes andinos Mishkitashua"
                 fill
                 className="object-cover"
                 sizes="200px"
