@@ -3,8 +3,17 @@ import { Star } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
+type ReviewItem = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: Date;
+  customer: { name: string };
+  order: { orderNumber: string };
+};
+
 export default async function ResenasPage() {
-  const reviews = await prisma.review.findMany({
+  const reviews: ReviewItem[] = await prisma.review.findMany({
     orderBy: { createdAt: "desc" },
     include: {
       customer: true,
