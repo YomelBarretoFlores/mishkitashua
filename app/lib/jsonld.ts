@@ -63,7 +63,23 @@ export function faqJsonLd() {
         name: "¿Cómo se conservan los alfajores?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Nuestros alfajores artesanales están elaborados sin conservantes artificiales. Recomendamos mantenerlos en un lugar fresco y seco, lejos de la luz solar directa. Así conservarán su frescura óptima durante 15 días. Si vives en un clima muy cálido, puedes guardarlos en el refrigerador hasta 30 días.",
+          text: "Nuestros alfajores deben conservarse en un lugar fresco, seco y protegido de la luz solar directa. Se recomienda conservarlos en su empaque original hasta el momento de consumo. Una vez abierto, consumir en el menor tiempo posible.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "¿Cómo se conservan los manjares saborizados?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Los manjares Mishkitashua deben mantenerse cerrados, en un lugar fresco y seco. Después de abrir el frasco, se recomienda refrigerar el producto y consumirlo dentro del periodo indicado en la etiqueta. Aplica para Tunaluna, Sol Aguaymanto y Muña Andina.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "¿Los productos contienen alérgenos?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Sí. Nuestros productos contienen ingredientes de origen lácteo. Los alfajores también pueden contener gluten y huevo, debido a la composición de sus tapas. Recomendamos revisar siempre la etiqueta antes de consumir.",
         },
       },
       {
@@ -72,14 +88,6 @@ export function faqJsonLd() {
         acceptedAnswer: {
           "@type": "Answer",
           text: "Lima Metropolitana: entregas en 24 a 48 horas hábiles. Provincias: envíos a través de agencias asociadas con tiempo estimado de 3 a 5 días hábiles.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "¿De dónde provienen los ingredientes?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "La esencia de Mishkitashua radica en la riqueza de los Andes. Seleccionamos cuidadosamente cada insumo, trabajando directamente con comunidades locales para garantizar prácticas sostenibles y un sabor auténtico.",
         },
       },
     ],
