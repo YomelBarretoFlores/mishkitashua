@@ -12,6 +12,18 @@ import { prisma } from "@/app/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+type TopProduct = { productName: string; _sum: { quantity: number | null } };
+type RecentOrder = {
+  id: string;
+  orderNumber: string;
+  total: number;
+  status: string;
+  createdAt: Date;
+  customer: { name: string; email: string };
+  items: { productName: string; quantity: number }[];
+};
+type StatusGroup = { status: string; _count: number };
+
 async function getStats() {
   const [
     orders,
@@ -234,7 +246,7 @@ export default async function AdminDashboard() {
             <p className="text-sm text-gray-400">Aún no hay ventas</p>
           ) : (
             <div className="space-y-3">
-              {stats.topProducts.map((p: { productName: string; _sum: { quantity: number | null } }, i: number) => (
+              {stats.topProducts.map((p: TopProduct, i: number) => (
                 <div key={p.productName} className="flex items-center gap-3">
                   <span className="text-lg font-bold text-gray-300 w-6">
                     {i + 1}
@@ -260,7 +272,7 @@ export default async function AdminDashboard() {
             <p className="text-sm text-gray-400">Aún no hay pedidos</p>
           ) : (
             <div className="space-y-3">
-              {stats.recentOrders.map((order) => (
+              {stats.recentOrders.map((order: RecentOrder) => (
                 <div
                   key={order.id}
                   className="flex items-center justify-between"
