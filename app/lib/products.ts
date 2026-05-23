@@ -85,16 +85,17 @@ export const products: Product[] = [
         price: 15.0,
         weight: "300g",
         description:
-            "Dulzura cítrica de origen andino. Manjar dorado con el toque vibrante del aguaymanto peruano.",
+            "Manjar saborizado elaborado con concentrado de aguaymanto, variedad cítrica de la línea Mishkitashua. Frasco de 300 g.",
         longDescription:
-            "El Sol Aguaymanto captura la esencia dorada de los Andes. Elaborado con aguaymanto silvestre, este manjar combina la dulzura clásica del manjar blanco con notas cítricas y tropicales únicas. Su color dorado y su sabor inconfundible lo convierten en un acompañamiento perfecto para postres, panes y creaciones culinarias.",
+            "Sol Aguaymanto combina una base cremosa de manjar con concentrado de aguaymanto, logrando un sabor dulce con ligera acidez frutal. Su textura untable y color dorado lo convierten en una opción ideal para panes, postres y preparaciones de repostería.",
         ingredients: [
             "Leche fresca entera",
-            "Azúcar blanca",
-            "Pulpa de aguaymanto",
-            "Bicarbonato de sodio",
-            "Esencia de vainilla",
+            "Leche condensada",
+            "Concentrado de aguaymanto",
+            "Estabilizante permitido",
+            "Conservante permitido",
         ],
+        allergens: "Contiene leche.",
         features: [
             "Ingredientes naturales",
             "Origen andino",
@@ -112,16 +113,17 @@ export const products: Product[] = [
         price: 15.0,
         weight: "300g",
         description:
-            "Frescura herbal de origen andino. Manjar infusionado con muña, la menta silvestre de los Andes.",
+            "Manjar saborizado elaborado con muña micronizada, variedad herbal de la línea Mishkitashua. Frasco de 300 g.",
         longDescription:
-            "La Muña Andina trae la frescura de las alturas a tu mesa. Infusionado con muña silvestre, esta variedad única de manjar ofrece un equilibrio perfecto entre la cremosidad clásica y un toque herbal refrescante. Una experiencia sensorial que evoca los campos verdes de la sierra peruana.",
+            "Muña Andina combina una base cremosa de manjar con muña micronizada, logrando un sabor dulce-herbal, fresco y aromático. Su textura untable y perfil diferente la convierten en una opción ideal para panes, postres y preparaciones de repostería.",
         ingredients: [
             "Leche fresca entera",
-            "Azúcar blanca",
-            "Extracto natural de muña",
-            "Bicarbonato de sodio",
-            "Esencia de vainilla",
+            "Leche condensada",
+            "Muña micronizada",
+            "Estabilizante permitido",
+            "Conservante permitido",
         ],
+        allergens: "Contiene leche.",
         features: [
             "Ingredientes naturales",
             "Origen andino",
