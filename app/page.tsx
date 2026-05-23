@@ -138,78 +138,40 @@ export default function HomePage() {
                             </div>
                         </Link>
 
-                        {/* Manjares — bento: imagen arriba + info abajo */}
-                        <div className="flex flex-col gap-6">
-                            <Link
-                                href="/productos#manjares"
-                                className="group rounded-2xl overflow-hidden bg-white border border-cream-darker/60 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="overflow-hidden">
-                                    <Image
-                                        src="/images/tres-manjares.png"
-                                        alt="Manjares Saborizados"
-                                        width={800}
-                                        height={500}
-                                        className="w-full h-auto group-hover:scale-105 transition-transform duration-700"
-                                        sizes="(max-width: 768px) 100vw, 50vw"
-                                    />
-                                </div>
-                                <div className="p-6">
-                                    <h3
-                                        className="text-2xl font-medium text-cocoa-deep mb-2"
-                                        style={{
-                                            fontFamily:
-                                                "var(--font-eb-garamond), serif",
-                                        }}
-                                    >
-                                        Manjares Saborizados
-                                    </h3>
-                                    <p className="text-on-surface-variant text-sm mb-3">
-                                        Manjares de tuna, aguaymanto y muña en
-                                        presentación de 300 g.
-                                    </p>
-                                    <span className="inline-flex items-center gap-1 text-caramel text-sm font-semibold">
-                                        Ver colección <ArrowRight size={16} />
-                                    </span>
-                                </div>
-                            </Link>
-
-                            {/* Info card — relleno bento */}
-                            <div className="bg-cream-dark rounded-2xl p-6 flex-1 flex flex-col justify-center border border-cream-darker/40">
-                                <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-2">
-                                    3 sabores únicos
-                                </p>
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-3 h-3 rounded-full bg-aguaymanto shrink-0" />
-                                        <span className="text-sm text-cocoa-deep font-medium">
-                                            Sol Aguaymanto
-                                        </span>
-                                        <span className="text-xs text-on-surface-variant">
-                                            — Dulzura cítrica
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-3 h-3 rounded-full bg-tunaluna shrink-0" />
-                                        <span className="text-sm text-cocoa-deep font-medium">
-                                            Tunaluna
-                                        </span>
-                                        <span className="text-xs text-on-surface-variant">
-                                            — Dulzura frutal
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="w-3 h-3 rounded-full bg-muna shrink-0" />
-                                        <span className="text-sm text-cocoa-deep font-medium">
-                                            Muña Andina
-                                        </span>
-                                        <span className="text-xs text-on-surface-variant">
-                                            — Frescura herbal
-                                        </span>
-                                    </div>
-                                </div>
+                        {/* Manjares */}
+                        <Link
+                            href="/productos#manjares"
+                            className="group rounded-2xl overflow-hidden bg-white border border-cream-darker/60 hover:shadow-lg transition-shadow flex flex-col"
+                        >
+                            <div className="overflow-hidden">
+                                <Image
+                                    src="/images/tres-manjares.png"
+                                    alt="Manjares Saborizados"
+                                    width={800}
+                                    height={1000}
+                                    className="w-full h-auto group-hover:scale-105 transition-transform duration-700"
+                                    sizes="(max-width: 768px) 100vw, 50vw"
+                                />
                             </div>
-                        </div>
+                            <div className="p-6">
+                                <h3
+                                    className="text-2xl font-medium text-cocoa-deep mb-2"
+                                    style={{
+                                        fontFamily:
+                                            "var(--font-eb-garamond), serif",
+                                    }}
+                                >
+                                    Manjares Saborizados
+                                </h3>
+                                <p className="text-on-surface-variant text-sm mb-3">
+                                    Manjares de tuna, aguaymanto y muña en
+                                    presentación de 300 g.
+                                </p>
+                                <span className="inline-flex items-center gap-1 text-caramel text-sm font-semibold">
+                                    Ver colección <ArrowRight size={16} />
+                                </span>
+                            </div>
+                        </Link>
                     </div>
                 </div>
             </section>

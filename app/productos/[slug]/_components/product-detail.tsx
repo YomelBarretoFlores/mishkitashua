@@ -81,9 +81,6 @@ export default function ProductDetailPage() {
               priority
               sizes="(max-width: 1024px) 100vw, 58vw"
             />
-            <span className="absolute top-4 left-4 bg-cocoa/90 text-white text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-wider">
-              Artesanal
-            </span>
           </div>
           <div className="flex gap-3">
             {product.images.map((img, idx) => (
@@ -192,7 +189,7 @@ export default function ProductDetailPage() {
               className="text-2xl md:text-3xl font-medium text-cocoa-deep mb-6"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
             >
-              El Arte Detrás del Sabor
+              Sabor andino en cada presentación
             </h2>
             <p className="text-on-surface-variant leading-relaxed mb-8">
               {product.longDescription}
@@ -201,7 +198,7 @@ export default function ProductDetailPage() {
             <h3 className="text-sm font-semibold text-cocoa-deep tracking-wide uppercase mb-4">
               Ingredientes
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2 mb-6">
               {product.ingredients.map((ing) => (
                 <li
                   key={ing}
@@ -212,17 +209,27 @@ export default function ProductDetailPage() {
                 </li>
               ))}
             </ul>
+
+            {product.allergens && (
+              <div>
+                <h3 className="text-sm font-semibold text-cocoa-deep tracking-wide uppercase mb-2">
+                  Alérgenos
+                </h3>
+                <p className="text-sm text-on-surface-variant">
+                  {product.allergens}
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="bg-cream-dark rounded-2xl p-8 md:p-12 flex items-center justify-center">
-            <blockquote className="text-center">
-              <p
-                className="text-2xl md:text-3xl font-medium text-cocoa-deep italic leading-relaxed"
-                style={{ fontFamily: "var(--font-eb-garamond), serif" }}
-              >
-                &ldquo;La paciencia es nuestro ingrediente principal.&rdquo;
-              </p>
-            </blockquote>
+          <div className="relative rounded-2xl overflow-hidden min-h-[300px]">
+            <Image
+              src={product.image}
+              alt={`${product.name} - presentación`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
           </div>
         </div>
       </section>

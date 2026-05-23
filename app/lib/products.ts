@@ -8,6 +8,7 @@ export type Product = {
     description: string;
     longDescription: string;
     ingredients: string[];
+    allergens?: string;
     features: string[];
     image: string;
     images: string[];
@@ -58,14 +59,15 @@ export const products: Product[] = [
         description:
             "Manjar saborizado elaborado con pulpa de tuna, variedad frutal de la línea Mishkitashua. Frasco de 300 g.",
         longDescription:
-            "Manjar saborizado elaborado con pulpa de tuna, desarrollado como una variedad frutal dentro de la línea Mishkitashua. Su presentación en frasco de 300 g permite una adecuada conservación, identificación comercial y uso versátil en panes, postres, galletas y preparaciones dulces.",
+            "Tunaluna combina la suavidad tradicional del manjar con el sabor frutal de la tuna. Su presentación en frasco permite conservar mejor el producto y facilita su uso en desayunos, postres, repostería o acompañamientos dulces.",
         ingredients: [
             "Leche fresca entera",
-            "Azúcar blanca",
-            "Pulpa de tuna (higo chumbo)",
-            "Bicarbonato de sodio",
-            "Esencia de vainilla",
+            "Leche condensada",
+            "Concentrado de tuna roja",
+            "Estabilizante permitido",
+            "Conservante permitido",
         ],
+        allergens: "Contiene leche.",
         features: [
             "Ingredientes naturales",
             "Origen andino",
