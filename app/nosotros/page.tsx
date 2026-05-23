@@ -57,11 +57,10 @@ export default function NosotrosPage() {
               className="text-4xl md:text-6xl font-medium text-white mb-4 italic"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
             >
-              Nuestra Historia
+              Sobre Mishkitashua
             </h1>
             <p className="text-white/80 text-lg max-w-xl mx-auto">
-              Un legado de calidez, tradición y la búsqueda de la repostería
-              perfecta.
+              Sabores andinos en una propuesta moderna.
             </p>
           </div>
         </div>
