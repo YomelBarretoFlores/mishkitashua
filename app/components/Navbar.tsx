@@ -10,6 +10,7 @@ import { useCart } from "@/app/lib/cart-context";
 const links = [
   { href: "/productos", label: "Productos" },
   { href: "/nosotros", label: "Nuestra Historia" },
+  { href: "/seguimiento", label: "Mi Pedido" },
   { href: "/ayuda", label: "Ayuda" },
   { href: "/contacto", label: "Contacto" },
 ];

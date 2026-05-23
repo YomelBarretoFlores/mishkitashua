@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  address   String
+  city      String
+  orders    Order[]
+  reviews   Review[]
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  customer      Customer    @relation(fields: [customerId], references: [id])
+  customerId    String
+  items         OrderItem[]
+  subtotal      Float
+  shippingCost  Float
+  total         Float
+  paymentMethod String
+  status        String      @default("confirmado")
+  review        Review?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String @id @default(cuid())
+  order       Order  @relation(fields: [orderId], references: [id])
+  orderId     String
+  productSlug String
+  productName String
+  quantity    Int
+  price       Float
+  image       String
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  type        String
+  page        String?
+  productSlug String?
+  sessionId   String
+  metadata    String?
+  createdAt   DateTime @default(now())
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    String   @unique
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+}

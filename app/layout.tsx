@@ -6,6 +6,7 @@ import Footer from "@/app/components/Footer";
 import { CartProvider } from "@/app/lib/cart-context";
 import { organizationJsonLd } from "@/app/lib/jsonld";
 import WhatsAppButton from "@/app/components/WhatsAppButton";
+import PageTracker from "@/app/components/PageTracker";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -97,6 +98,7 @@ export default function RootLayout({
           }}
         />
         <CartProvider>
+          <PageTracker />
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />

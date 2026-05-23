@@ -8,6 +8,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+import { trackEvent } from "@/app/lib/analytics";
 
 const STORAGE_KEY = "mishkitashua-cart";
 
@@ -59,6 +60,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (item: Omit<CartItem, "quantity">, quantity = 1) => {
+      trackEvent("add_to_cart", { productSlug: item.slug });
       setItems((prev) => {
         const existing = prev.find((i) => i.slug === item.slug);
         if (existing) {

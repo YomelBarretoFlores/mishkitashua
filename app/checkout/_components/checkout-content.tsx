@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { trackEvent } from "@/app/lib/analytics";
 import {
   Lock,
   ArrowRight,
@@ -43,10 +44,53 @@ export default function CheckoutPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (items.length > 0) trackEvent("checkout_start", { page: "/checkout" });
+  }, [items.length]);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    clearCart();
-    router.push("/confirmacion");
+    setSubmitting(true);
+
+    try {
+      const sessionId = sessionStorage.getItem("msk-session") || "";
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: {
+            name: form.nombre,
+            email: form.email,
+            phone: form.telefono,
+            address: form.direccion,
+            city: form.ciudad,
+          },
+          items: items.map((i) => ({
+            slug: i.slug,
+            name: i.name,
+            quantity: i.quantity,
+            price: i.price,
+            image: i.image,
+          })),
+          paymentMethod,
+          subtotal,
+          shippingCost: SHIPPING_COST,
+          total,
+          sessionId,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Error");
+
+      const { id } = await res.json();
+      clearCart();
+      router.push(`/confirmacion?order=${id}`);
+    } catch {
+      setSubmitting(false);
+      alert("Error al procesar el pedido. Inténtalo de nuevo.");
+    }
   };
 
   if (items.length === 0) {
@@ -359,10 +403,11 @@ export default function CheckoutPage() {
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 bg-cocoa text-white font-semibold py-4 rounded-lg hover:bg-cocoa-deep transition-colors"
+                disabled={submitting}
+                className="w-full flex items-center justify-center gap-2 bg-cocoa text-white font-semibold py-4 rounded-lg hover:bg-cocoa-deep transition-colors disabled:opacity-60"
               >
                 <CheckCircle size={18} />
-                Finalizar Compra
+                {submitting ? "Procesando..." : "Finalizar Compra"}
               </button>
 
               <p className="text-xs text-taupe text-center mt-4 leading-relaxed">
