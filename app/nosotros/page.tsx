@@ -18,21 +18,21 @@ export const metadata: Metadata = {
 
 const timeline = [
   {
-    year: "2023",
-    title: "La Primera Receta",
-    text: "Comenzamos experimentando con recetas familiares de manjar, buscando incorporar sabores únicos de los Andes peruanos.",
+    year: "2024",
+    title: "Nace la idea",
+    text: "Se plantea una propuesta de repostería andina basada en el uso de insumos regionales y sabores diferenciados.",
     side: "right" as const,
   },
   {
-    year: "2024",
-    title: "Perfeccionando el Arte",
-    text: "Viajamos por los Andes para perfeccionar el arte del manjar saborizado, seleccionando los mejores insumos: tuna, aguaymanto y muña.",
+    year: "2025",
+    title: "Se define el portafolio",
+    text: "Se estructuran dos líneas de producto: alfajores andinos y manjares saborizados de tuna, aguaymanto y muña.",
     side: "left" as const,
   },
   {
-    year: "2025",
-    title: "Mishkitashua Nace",
-    text: "Lanzamos oficialmente nuestra marca con dos líneas de producto: Alfajores Andinos Surtidos y Manjares Saborizados en tres sabores únicos.",
+    year: "2026",
+    title: "Proyección comercial",
+    text: "Mishkitashua se consolida como una marca con presentaciones definidas, envases comerciales, canales digitales y enfoque hacia una producción organizada por lotes.",
     side: "right" as const,
   },
 ];
