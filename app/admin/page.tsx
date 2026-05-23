@@ -234,7 +234,7 @@ export default async function AdminDashboard() {
             <p className="text-sm text-gray-400">Aún no hay ventas</p>
           ) : (
             <div className="space-y-3">
-              {stats.topProducts.map((p, i) => (
+              {stats.topProducts.map((p: { productName: string; _sum: { quantity: number | null } }, i: number) => (
                 <div key={p.productName} className="flex items-center gap-3">
                   <span className="text-lg font-bold text-gray-300 w-6">
                     {i + 1}
