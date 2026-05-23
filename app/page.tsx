@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Leaf, Mountain, Heart } from "lucide-react";
+import { ArrowRight, Leaf, ClipboardList, PackageCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Mishkitashua — Sabores que nacen de nuestra tierra",
@@ -40,9 +40,9 @@ export default function HomePage() {
                 Repostería andina con identidad propia
               </h1>
               <p className="text-lg text-on-surface-variant leading-relaxed mb-8 max-w-lg">
-                Alfajores artesanales y manjares saborizados elaborados con
-                ingredientes seleccionados de los Andes peruanos. Tres sabores,
-                una misma identidad.
+                Alfajores y manjares inspirados en los Andes peruanos, elaborados
+                con sabores de tuna, aguaymanto y muña. Una propuesta moderna,
+                innovadora y lista para disfrutar en cualquier ocasión.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link
@@ -61,12 +61,12 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="relative aspect-square max-w-lg mx-auto lg:mx-0">
+            <div className="relative aspect-[3/4] max-w-lg mx-auto lg:mx-0">
               <Image
-                src="/images/tres-sabores-poster.jpg"
+                src="/images/hero-reposteria.jpg"
                 alt="Productos Mishkitashua - Tres sabores, una misma identidad"
                 fill
-                className="object-cover rounded-3xl"
+                className="object-contain rounded-3xl"
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
@@ -83,18 +83,20 @@ export default function HomePage() {
               className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-4"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
             >
-              Dos líneas de producto
+              Dos líneas, una misma identidad
             </h2>
             <p className="text-on-surface-variant max-w-2xl mx-auto">
-              Descubre nuestra repostería artesanal andina, donde cada producto
-              cuenta la historia de los Andes peruanos.
+              Mishkitashua reúne alfajores andinos y manjares saborizados en una
+              propuesta dulce, moderna y con identidad regional. Cada producto
+              combina sabores representativos de los Andes con una presentación
+              cuidada, ideal para consumo personal, regalo o venta comercial.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Link
               href="/productos#alfajores"
-              className="group relative rounded-2xl overflow-hidden aspect-[4/3]"
+              className="group relative rounded-2xl overflow-hidden aspect-[3/4]"
             >
               <Image
                 src="/images/alfajores-surtidos.jpg"
@@ -109,10 +111,10 @@ export default function HomePage() {
                   className="text-2xl md:text-3xl font-medium text-white mb-2"
                   style={{ fontFamily: "var(--font-eb-garamond), serif" }}
                 >
-                  Alfajores Andinos Surtidos
+                  Alfajores Andinos
                 </h3>
                 <p className="text-white/80 text-sm mb-3">
-                  3 sabores surtidos · 2 por sabor · Caja x 6 unidades
+                  Caja surtida de 6 alfajores con tres sabores: tuna, aguaymanto y muña.
                 </p>
                 <span className="inline-flex items-center gap-1 text-caramel-light text-sm font-semibold">
                   Ver producto <ArrowRight size={16} />
@@ -122,7 +124,7 @@ export default function HomePage() {
 
             <Link
               href="/productos#manjares"
-              className="group relative rounded-2xl overflow-hidden aspect-[4/3]"
+              className="group relative rounded-2xl overflow-hidden aspect-[3/4]"
             >
               <Image
                 src="/images/tres-manjares.jpg"
@@ -140,7 +142,7 @@ export default function HomePage() {
                   Manjares Saborizados
                 </h3>
                 <p className="text-white/80 text-sm mb-3">
-                  Tres sabores que nacen de nuestra tierra · 300g
+                  Manjares de tuna, aguaymanto y muña en presentación de 300 g.
                 </p>
                 <span className="inline-flex items-center gap-1 text-caramel-light text-sm font-semibold">
                   Ver colección <ArrowRight size={16} />
@@ -159,11 +161,13 @@ export default function HomePage() {
               className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-4"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
             >
-              Nuestro Compromiso
+              Calidad que se nota en cada presentación
             </h2>
             <p className="text-on-surface-variant max-w-2xl mx-auto">
-              Creemos que el sabor excepcional proviene de estándares sin
-              concesiones.
+              En Mishkitashua cuidamos la selección de ingredientes, el sabor,
+              la textura y la presentación de cada producto. Buscamos que cada
+              alfajor y cada manjar mantenga una experiencia uniforme, atractiva
+              y confiable para nuestros clientes.
             </p>
           </div>
 
@@ -176,43 +180,44 @@ export default function HomePage() {
                 className="text-xl font-semibold text-cocoa-deep mb-3"
                 style={{ fontFamily: "var(--font-eb-garamond), serif" }}
               >
-                Ingredientes Seleccionados
+                Ingredientes andinos
               </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed">
-                Trabajamos directamente con comunidades andinas para obtener los
-                mejores insumos: tuna, aguaymanto, muña y más.
+                Trabajamos con comunidades andinas para obtener la mashua negra,
+                tuna, el aguaymanto y la muña, resaltando ingredientes
+                representativos de nuestra identidad regional.
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
               <div className="w-14 h-14 bg-cream-dark rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <Mountain className="text-caramel" size={26} />
+                <ClipboardList className="text-caramel" size={26} />
               </div>
               <h3
                 className="text-xl font-semibold text-cocoa-deep mb-3"
                 style={{ fontFamily: "var(--font-eb-garamond), serif" }}
               >
-                Hecho en los Andes
+                Proceso estandarizado
               </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed">
-                Cada producto se elabora con orgullo en los Andes peruanos,
-                honrando recetas y técnicas tradicionales.
+                Nuestros productos se elaboran mediante formulaciones definidas,
+                producción por lotes y criterios de uniformidad.
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
               <div className="w-14 h-14 bg-cream-dark rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <Heart className="text-caramel" size={26} />
+                <PackageCheck className="text-caramel" size={26} />
               </div>
               <h3
                 className="text-xl font-semibold text-cocoa-deep mb-3"
                 style={{ fontFamily: "var(--font-eb-garamond), serif" }}
               >
-                Sabores Auténticos
+                Empaques con propósito
               </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed">
-                Sin conservantes artificiales. Textura suave y cremosa en cada
-                manjar, crocante perfecto en cada alfajor.
+                Cuidamos cada presentación con empaques funcionales, atractivos
+                y pensados para reducir el impacto ambiental.
               </p>
             </div>
           </div>
@@ -236,11 +241,11 @@ export default function HomePage() {
             className="text-3xl md:text-5xl font-medium text-white mb-4"
             style={{ fontFamily: "var(--font-eb-garamond), serif" }}
           >
-            Disfruta lo mejor de los Andes
+            Disfruta lo mejor de Mishkitashua
           </h2>
           <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-            Haz tu pedido y recibe nuestros productos artesanales directamente
-            en tu puerta.
+            Elige tus alfajores o manjares favoritos y descubre una forma
+            diferente de disfrutar los sabores andinos.
           </p>
           <Link
             href="/productos"

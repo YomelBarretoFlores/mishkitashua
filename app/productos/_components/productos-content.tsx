@@ -171,12 +171,12 @@ export default function ProductosContent() {
             letterSpacing: "-0.02em",
           }}
         >
-          Nuestras Creaciones
+          Nuestros productos
         </h1>
         <p className="text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
-          Descubre nuestra selección de alfajores artesanales y manjares
-          saborizados, elaborados con los mejores ingredientes de los Andes
-          peruanos.
+          Descubre el portafolio Mishkitashua: alfajores andinos y manjares
+          saborizados con presentaciones modernas, sabores diferenciados y una
+          identidad visual inspirada en los Andes.
         </p>
       </section>
 
@@ -193,8 +193,10 @@ export default function ProductosContent() {
             Alfajores Andinos
           </h2>
           <p className="text-on-surface-variant max-w-xl">
-            Nuestros alfajores artesanales con sabores únicos de los Andes,
-            elaborados en cajas surtidas de 6 unidades.
+            Nuestros alfajores andinos se presentan en una caja surtida de 6
+            unidades, con sabores de tuna, aguaymanto y muña. Cada variedad se
+            diferencia por su relleno, color característico y perfil de sabor,
+            creando una experiencia visual y sensorial atractiva.
           </p>
         </div>
 

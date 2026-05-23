@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -21,8 +22,20 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-cream/95 backdrop-blur-sm border-b border-cream-darker/50">
       <nav className="max-w-7xl mx-auto px-5 md:px-16 flex items-center justify-between h-16 md:h-20">
-        <Link href="/" className="font-serif text-2xl md:text-3xl font-semibold text-cocoa-deep tracking-tight">
-          Mishkitashua
+        <Link href="/" className="flex items-center group">
+          <Image
+            src="/images/logo.jpg"
+            alt="Mishkitashua"
+            width={140}
+            height={56}
+            className="object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+          />
+          <span
+            className="-ml-2 text-xl md:text-2xl font-medium text-cocoa-deep tracking-tight"
+            style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+          >
+            Mishkitashua
+          </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

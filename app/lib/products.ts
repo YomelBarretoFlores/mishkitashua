@@ -53,7 +53,7 @@ export const products: Product[] = [
     name: "Tunaluna",
     subtitle: "Manjar saborizado de tuna",
     category: "manjares",
-    price: 14.5,
+    price: 8.0,
     weight: "300g",
     description:
       "Dulzura frutal de origen andino. Manjar sedoso elaborado con tuna (higo chumbo) de los Andes peruanos.",
@@ -84,7 +84,7 @@ export const products: Product[] = [
     name: "Sol Aguaymanto",
     subtitle: "Manjar saborizado de aguaymanto",
     category: "manjares",
-    price: 14.5,
+    price: 8.0,
     weight: "300g",
     description:
       "Dulzura cítrica de origen andino. Manjar dorado con el toque vibrante del aguaymanto peruano.",
@@ -114,7 +114,7 @@ export const products: Product[] = [
     name: "Muña Andina",
     subtitle: "Manjar saborizado de muña",
     category: "manjares",
-    price: 14.5,
+    price: 8.0,
     weight: "300g",
     description:
       "Frescura herbal de origen andino. Manjar infusionado con muña, la menta silvestre de los Andes.",

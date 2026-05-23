@@ -101,7 +101,7 @@ export default function ContactoPage() {
                     Teléfono
                   </p>
                   <p className="text-sm text-on-surface-variant">
-                    +51 999 999 999
+                    +51 943 247 410
                   </p>
                 </div>
               </div>

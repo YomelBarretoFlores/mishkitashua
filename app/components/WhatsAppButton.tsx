@@ -1,6 +1,6 @@
 "use client";
 
-const PHONE = "51926761067";
+const PHONE = "51943247410";
 const MESSAGE = encodeURIComponent(
   "Hola, me interesa conocer más sobre los productos de Mishkitashua 🍪"
 );
