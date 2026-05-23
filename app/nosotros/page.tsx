@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Leaf, MapPin, Cookie } from "lucide-react";
+import { Leaf, ClipboardList, PackageCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Nuestra Historia",
@@ -253,11 +253,13 @@ export default function NosotrosPage() {
             className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-4 text-center"
             style={{ fontFamily: "var(--font-eb-garamond), serif" }}
           >
-            Nuestro Compromiso
+            Calidad que se nota en cada presentación
           </h2>
           <p className="text-on-surface-variant text-center max-w-2xl mx-auto mb-14">
-            Creemos que el sabor excepcional proviene de estándares sin
-            concesiones.
+            En Mishkitashua cuidamos la selección de ingredientes, el sabor,
+            la textura y la presentación de cada producto. Buscamos que cada
+            alfajor y cada manjar mantenga una experiencia uniforme, atractiva
+            y confiable para nuestros clientes.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -269,43 +271,44 @@ export default function NosotrosPage() {
                 className="text-xl font-semibold text-cocoa-deep mb-3"
                 style={{ fontFamily: "var(--font-eb-garamond), serif" }}
               >
-                Ingredientes Puros
+                Ingredientes andinos
               </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed">
-                Obtenemos solo los mejores insumos naturales: tuna silvestre,
-                aguaymanto orgánico y muña de altura.
+                Trabajamos con comunidades andinas para obtener la mashua negra,
+                tuna, el aguaymanto y la muña, resaltando ingredientes
+                representativos de nuestra identidad regional.
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
               <div className="w-14 h-14 bg-caramel-light/25 rounded-full flex items-center justify-center mx-auto mb-5">
-                <MapPin className="text-caramel" size={26} />
+                <ClipboardList className="text-caramel" size={26} />
               </div>
               <h3
                 className="text-xl font-semibold text-cocoa-deep mb-3"
                 style={{ fontFamily: "var(--font-eb-garamond), serif" }}
               >
-                Origen Local
+                Proceso estandarizado
               </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed">
-                Colaboramos con comunidades andinas locales para apoyar
-                prácticas sostenibles y garantizar la frescura.
+                Nuestros productos se elaboran mediante formulaciones definidas,
+                producción por lotes y criterios de uniformidad.
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
               <div className="w-14 h-14 bg-caramel-light/25 rounded-full flex items-center justify-center mx-auto mb-5">
-                <Cookie className="text-caramel" size={26} />
+                <PackageCheck className="text-caramel" size={26} />
               </div>
               <h3
                 className="text-xl font-semibold text-cocoa-deep mb-3"
                 style={{ fontFamily: "var(--font-eb-garamond), serif" }}
               >
-                Artesanía Diaria
+                Empaques con propósito
               </h3>
               <p className="text-sm text-on-surface-variant leading-relaxed">
-                Cada pieza se elabora a mano y en pequeños lotes para garantizar
-                la textura y el sabor perfectos.
+                Cuidamos cada presentación con empaques funcionales, atractivos
+                y pensados para reducir el impacto ambiental.
               </p>
             </div>
           </div>
