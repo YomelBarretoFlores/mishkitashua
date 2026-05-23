@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Clock, Phone, Send, ArrowRight, Camera, ThumbsUp } from "lucide-react";
+import { MapPin, Clock, Phone, Send, ArrowRight, Camera, Music } from "lucide-react";
 
 export default function ContactoPage() {
   const [form, setForm] = useState({
@@ -237,7 +237,7 @@ export default function ContactoPage() {
           </h2>
           <div className="flex justify-center gap-4">
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/mishkitashua"
               target="_blank"
               rel="noopener noreferrer"
               className="w-12 h-12 rounded-full bg-white border border-cream-darker/60 flex items-center justify-center text-cocoa-deep hover:text-caramel hover:border-caramel transition-colors"
@@ -246,13 +246,13 @@ export default function ContactoPage() {
               <Camera size={22} />
             </a>
             <a
-              href="https://facebook.com"
+              href="https://www.tiktok.com/@mishkitashua"
               target="_blank"
               rel="noopener noreferrer"
               className="w-12 h-12 rounded-full bg-white border border-cream-darker/60 flex items-center justify-center text-cocoa-deep hover:text-caramel hover:border-caramel transition-colors"
-              aria-label="Facebook"
+              aria-label="TikTok"
             >
-              <ThumbsUp size={22} />
+              <Music size={22} />
             </a>
           </div>
         </div>

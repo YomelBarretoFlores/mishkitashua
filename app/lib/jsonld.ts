@@ -17,7 +17,10 @@ export function organizationJsonLd() {
       addressRegion: "Áncash",
       addressCountry: "PE",
     },
-    sameAs: ["https://instagram.com", "https://facebook.com"],
+    sameAs: [
+      "https://www.instagram.com/mishkitashua",
+      "https://www.tiktok.com/@mishkitashua",
+    ],
   };
 }
 

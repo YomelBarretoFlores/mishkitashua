@@ -21,7 +21,7 @@ export default function Footer() {
             </h4>
             <div className="space-y-2">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/mishkitashua"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-sm text-on-surface-variant hover:text-caramel transition-colors"
@@ -29,12 +29,12 @@ export default function Footer() {
                 Instagram
               </a>
               <a
-                href="https://facebook.com"
+                href="https://www.tiktok.com/@mishkitashua"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-sm text-on-surface-variant hover:text-caramel transition-colors"
               >
-                Facebook
+                TikTok
               </a>
             </div>
           </div>

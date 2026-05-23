@@ -97,7 +97,7 @@ export default function HomePage() {
               className="group relative rounded-2xl overflow-hidden aspect-[4/3]"
             >
               <Image
-                src="/images/alfajores-poster.jpg"
+                src="/images/alfajores-surtidos.jpg"
                 alt="Alfajores Andinos Surtidos"
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
@@ -125,7 +125,7 @@ export default function HomePage() {
               className="group relative rounded-2xl overflow-hidden aspect-[4/3]"
             >
               <Image
-                src="/images/manjares-saborizados.jpg"
+                src="/images/tres-manjares.jpg"
                 alt="Manjares Saborizados"
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
