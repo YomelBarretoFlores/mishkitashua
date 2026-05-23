@@ -56,9 +56,9 @@ export const products: Product[] = [
         price: 15.0,
         weight: "300g",
         description:
-            "Dulzura frutal de origen andino. Manjar sedoso elaborado con tuna (higo chumbo) de los Andes peruanos.",
+            "Manjar saborizado elaborado con pulpa de tuna, variedad frutal de la línea Mishkitashua. Frasco de 300 g.",
         longDescription:
-            "Una lujosa delicia andina nacida de la vibrante tuna. Reducido lentamente hasta lograr un manjar aterciopelado y cremoso, Tunaluna equilibra la dulzura natural y vívida de la fruta con profundos matices caramelizados. Perfecto para untar sobre pan artesanal caliente, maridar con quesos maduros o disfrutar a cucharadas.",
+            "Manjar saborizado elaborado con pulpa de tuna, desarrollado como una variedad frutal dentro de la línea Mishkitashua. Su presentación en frasco de 300 g permite una adecuada conservación, identificación comercial y uso versátil en panes, postres, galletas y preparaciones dulces.",
         ingredients: [
             "Leche fresca entera",
             "Azúcar blanca",
@@ -72,11 +72,7 @@ export const products: Product[] = [
             "Textura suave y cremosa",
         ],
         image: "/images/manjar-tunaluna.jpg",
-        images: [
-            "/images/manjar-tunaluna.jpg",
-            "/images/manjar-tunaluna-2.jpg",
-            "/images/tres-manjares.png",
-        ],
+        images: ["/images/manjar-tunaluna.jpg"],
         color: "#7b1fa2",
     },
     {
@@ -103,10 +99,7 @@ export const products: Product[] = [
             "Textura suave y cremosa",
         ],
         image: "/images/manjar-sol-aguaymanto.jpg",
-        images: [
-            "/images/manjar-sol-aguaymanto.jpg",
-            "/images/tres-manjares.png",
-        ],
+        images: ["/images/manjar-sol-aguaymanto.jpg"],
         color: "#e65100",
     },
     {
@@ -133,7 +126,7 @@ export const products: Product[] = [
             "Textura suave y cremosa",
         ],
         image: "/images/manjar-muna-andina.jpg",
-        images: ["/images/manjar-muna-andina.jpg", "/images/tres-manjares.jpg"],
+        images: ["/images/manjar-muna-andina.jpg"],
         color: "#2e7d32",
     },
 ];
