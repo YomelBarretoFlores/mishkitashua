@@ -30,13 +30,12 @@ function AddToCartCard({ product }: { product: Product }) {
       href={`/productos/${product.slug}`}
       className="group bg-white rounded-2xl overflow-hidden border border-cream-darker/60 hover:shadow-lg hover:shadow-cocoa/8 transition-all duration-300 flex flex-col"
     >
-      <div className="relative overflow-hidden bg-cream-dark">
+      <div className="relative h-[350px] overflow-hidden bg-cream-dark">
         <Image
           src={product.image}
           alt={product.name}
-          width={600}
-          height={600}
-          className="w-full h-auto group-hover:scale-105 transition-transform duration-500"
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         <span className="absolute top-3 left-3 bg-caramel-light text-cocoa-deep text-[12px] font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
