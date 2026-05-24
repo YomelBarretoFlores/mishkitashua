@@ -8,7 +8,7 @@ export function organizationJsonLd() {
     "@type": "Organization",
     name: "Mishkitashua",
     url: BASE_URL,
-    logo: `${BASE_URL}/images/logo-colibri.jpg`,
+    logo: `${BASE_URL}/images/logo.png`,
     description:
       "Repostería artesanal andina. Alfajores y manjares saborizados con ingredientes de los Andes peruanos.",
     address: {

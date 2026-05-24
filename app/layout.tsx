@@ -69,8 +69,8 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   icons: {
-    icon: "/images/logo-colibri.jpg",
-    apple: "/images/logo-colibri.jpg",
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
   },
   other: {
     "theme-color": "#3e2723",
