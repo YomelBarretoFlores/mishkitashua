@@ -13,7 +13,7 @@ export const metadata: Metadata = {
             "Alfajores artesanales y manjares saborizados de los Andes peruanos.",
         images: [
             {
-                url: "/images/tres-sabores-poster.jpg",
+                url: "/images/marca-todos-productos.png",
                 width: 1200,
                 height: 630,
                 alt: "Mishkitashua — Tres sabores, una misma identidad",
@@ -68,7 +68,7 @@ export default function HomePage() {
 
                         <div className="relative aspect-[3/4] max-w-lg mx-auto lg:mx-0">
                             <Image
-                                src="/images/hero-reposteria.jpg"
+                                src="/images/marca-todos-productos.png"
                                 alt="Productos Mishkitashua - Tres sabores, una misma identidad"
                                 fill
                                 className="object-contain rounded-3xl"
@@ -110,7 +110,7 @@ export default function HomePage() {
                         >
                             <div className="overflow-hidden">
                                 <Image
-                                    src="/images/alfajores-surtidos.jpg"
+                                    src="/images/alfajores-caja-claro.png"
                                     alt="Alfajores Andinos"
                                     width={800}
                                     height={1000}
@@ -145,7 +145,7 @@ export default function HomePage() {
                         >
                             <div className="overflow-hidden">
                                 <Image
-                                    src="/images/tres-manjares.png"
+                                    src="/images/tres-manjares-fila.png"
                                     alt="Manjares Saborizados"
                                     width={800}
                                     height={1000}
@@ -272,7 +272,7 @@ export default function HomePage() {
             <section className="relative overflow-hidden">
                 <div className="absolute inset-0">
                     <Image
-                        src="/images/hero-reposteria.jpg"
+                        src="/images/banner-hero-2.png"
                         alt="Mishkitashua productos"
                         fill
                         className="object-cover"

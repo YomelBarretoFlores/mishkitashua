@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     description:
       "Un legado de calidez, tradición y la búsqueda de la repostería perfecta desde los Andes peruanos.",
     images: [
-      { url: "/images/alfajores-productos-light.jpg", width: 1200, height: 630 },
+      { url: "/images/banner-hero-2.png", width: 1200, height: 630 },
     ],
   },
 };
@@ -43,7 +43,7 @@ export default function NosotrosPage() {
       {/* Hero */}
       <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
         <Image
-          src="/images/alfajores-productos-light.jpg"
+          src="/images/banner-hero-2.png"
           alt="Nuestra Historia"
           fill
           className="object-cover"
@@ -130,12 +130,13 @@ export default function NosotrosPage() {
               repostería.
             </p>
           </div>
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden sticky top-24">
+          <div className="rounded-2xl overflow-hidden sticky top-24">
             <Image
-              src="/images/portafolio-mishkitashua.jpg"
+              src="/images/marca-catalogo.png"
               alt="Portafolio Mishkitashua"
-              fill
-              className="object-cover"
+              width={800}
+              height={800}
+              className="w-full h-auto"
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
           </div>

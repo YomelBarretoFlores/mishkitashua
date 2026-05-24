@@ -7,6 +7,7 @@ import {
   Eye,
   MousePointer,
   CreditCard,
+  Users,
 } from "lucide-react";
 import { prisma } from "@/app/lib/prisma";
 
@@ -22,7 +23,6 @@ type RecentOrder = {
   customer: { name: string; email: string };
   items: { productName: string; quantity: number }[];
 };
-type StatusGroup = { status: string; _count: number };
 
 async function getStats() {
   const [
@@ -36,6 +36,7 @@ async function getStats() {
     checkoutStarts,
     purchases,
     recentOrders,
+    customerCount,
   ] = await Promise.all([
     prisma.order.count(),
     prisma.order.aggregate({ _sum: { total: true } }),
@@ -56,6 +57,7 @@ async function getStats() {
       orderBy: { createdAt: "desc" },
       include: { customer: true, items: true },
     }),
+    prisma.customer.count(),
   ]);
 
   return {
@@ -73,6 +75,7 @@ async function getStats() {
     checkoutStarts,
     purchases,
     recentOrders,
+    customerCount,
   };
 }
 
@@ -84,10 +87,10 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  confirmado: "bg-blue-100 text-blue-800",
-  preparando: "bg-yellow-100 text-yellow-800",
-  enviado: "bg-purple-100 text-purple-800",
-  entregado: "bg-green-100 text-green-800",
+  confirmado: "bg-blue-50 text-blue-700",
+  preparando: "bg-amber-50 text-amber-700",
+  enviado: "bg-purple-50 text-purple-700",
+  entregado: "bg-green-50 text-green-700",
 };
 
 export default async function AdminDashboard() {
@@ -95,93 +98,110 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+      <h1
+        className="text-xl sm:text-2xl font-medium text-cocoa-deep mb-6"
+        style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+      >
+        Dashboard
+      </h1>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <DollarSign size={20} className="text-green-600" />
+            <div className="w-10 h-10 bg-cream-dark rounded-xl flex items-center justify-center">
+              <DollarSign size={20} className="text-caramel" />
             </div>
-            <span className="text-sm text-gray-500">Ventas totales</span>
+            <span className="text-sm text-on-surface-variant">Ventas totales</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-xl sm:text-2xl font-semibold text-cocoa-deep">
             S/ {stats.totalRevenue.toFixed(2)}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <ShoppingBag size={20} className="text-blue-600" />
+            <div className="w-10 h-10 bg-cream-dark rounded-xl flex items-center justify-center">
+              <ShoppingBag size={20} className="text-caramel" />
             </div>
-            <span className="text-sm text-gray-500">Pedidos</span>
+            <span className="text-sm text-on-surface-variant">Pedidos</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-xl sm:text-2xl font-semibold text-cocoa-deep">
             {stats.totalOrders}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <TrendingUp size={20} className="text-orange-600" />
+            <div className="w-10 h-10 bg-cream-dark rounded-xl flex items-center justify-center">
+              <TrendingUp size={20} className="text-caramel" />
             </div>
-            <span className="text-sm text-gray-500">Ticket promedio</span>
+            <span className="text-sm text-on-surface-variant">Ticket promedio</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-xl sm:text-2xl font-semibold text-cocoa-deep">
             S/ {stats.avgTicket.toFixed(2)}
           </p>
         </div>
 
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <ShoppingCart size={20} className="text-red-600" />
+            <div className="w-10 h-10 bg-cream-dark rounded-xl flex items-center justify-center">
+              <ShoppingCart size={20} className="text-caramel" />
             </div>
-            <span className="text-sm text-gray-500">Carritos abandonados</span>
+            <span className="text-sm text-on-surface-variant">Carritos abandonados</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-xl sm:text-2xl font-semibold text-cocoa-deep">
             {stats.abandonedCarts}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-cream-dark rounded-xl flex items-center justify-center">
+              <Users size={20} className="text-caramel" />
+            </div>
+            <span className="text-sm text-on-surface-variant">Clientes</span>
+          </div>
+          <p className="text-xl sm:text-2xl font-semibold text-cocoa-deep">
+            {stats.customerCount}
           </p>
         </div>
       </div>
 
       {/* Analytics + Reviews */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
           <div className="flex items-center gap-2 mb-4">
-            <Eye size={18} className="text-gray-400" />
-            <span className="text-sm font-semibold text-gray-700">
+            <Eye size={18} className="text-taupe" />
+            <span className="text-sm font-semibold text-cocoa-light">
               Visitas
             </span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{stats.pageViews}</p>
+          <p className="text-2xl sm:text-3xl font-semibold text-cocoa-deep">{stats.pageViews}</p>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
           <div className="flex items-center gap-2 mb-4">
-            <MousePointer size={18} className="text-gray-400" />
-            <span className="text-sm font-semibold text-gray-700">
+            <MousePointer size={18} className="text-taupe" />
+            <span className="text-sm font-semibold text-cocoa-light">
               Tasa de conversión
             </span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">
+          <p className="text-2xl sm:text-3xl font-semibold text-cocoa-deep">
             {stats.conversionRate.toFixed(2)}%
           </p>
         </div>
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
           <div className="flex items-center gap-2 mb-4">
-            <Star size={18} className="text-gray-400" />
-            <span className="text-sm font-semibold text-gray-700">
+            <Star size={18} className="text-taupe" />
+            <span className="text-sm font-semibold text-cocoa-light">
               Satisfacción
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-gray-900">
+            <p className="text-2xl sm:text-3xl font-semibold text-cocoa-deep">
               {stats.reviewAvg.toFixed(1)}
             </p>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-on-surface-variant">
               / 5 ({stats.reviewCount} reseñas)
             </span>
           </div>
@@ -189,8 +209,11 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Funnel */}
-      <div className="bg-white rounded-xl p-5 border border-gray-200 mb-8">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">
+      <div className="bg-white rounded-2xl p-5 border border-cream-darker/60 mb-8">
+        <h2
+          className="text-sm font-semibold text-cocoa-light mb-4"
+          style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+        >
           Embudo de conversión
         </h2>
         <div className="space-y-3">
@@ -217,9 +240,9 @@ export default async function AdminDashboard() {
             },
           ].map((step) => (
             <div key={step.label} className="flex items-center gap-3">
-              <span className="text-gray-400">{step.icon}</span>
-              <span className="text-sm text-gray-600 w-44">{step.label}</span>
-              <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
+              <span className="text-taupe">{step.icon}</span>
+              <span className="text-sm text-on-surface-variant w-36 sm:w-44">{step.label}</span>
+              <div className="flex-1 bg-cream-dark rounded-full h-6 overflow-hidden">
                 <div
                   className="bg-cocoa h-full rounded-full flex items-center justify-end px-2"
                   style={{
@@ -238,23 +261,26 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Products */}
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
+          <h2
+            className="text-sm font-semibold text-cocoa-light mb-4"
+            style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+          >
             Productos más vendidos
           </h2>
           {stats.topProducts.length === 0 ? (
-            <p className="text-sm text-gray-400">Aún no hay ventas</p>
+            <p className="text-sm text-taupe">Aún no hay ventas</p>
           ) : (
             <div className="space-y-3">
               {stats.topProducts.map((p: TopProduct, i: number) => (
                 <div key={p.productName} className="flex items-center gap-3">
-                  <span className="text-lg font-bold text-gray-300 w-6">
+                  <span className="text-lg font-semibold text-cream-darker w-6">
                     {i + 1}
                   </span>
-                  <span className="text-sm text-gray-700 flex-1">
+                  <span className="text-sm text-on-surface-variant flex-1">
                     {p.productName}
                   </span>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-semibold text-cocoa-deep">
                     {p._sum.quantity} uds.
                   </span>
                 </div>
@@ -264,12 +290,15 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white rounded-xl p-5 border border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">
+        <div className="bg-white rounded-2xl p-5 border border-cream-darker/60">
+          <h2
+            className="text-sm font-semibold text-cocoa-light mb-4"
+            style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+          >
             Pedidos recientes
           </h2>
           {stats.recentOrders.length === 0 ? (
-            <p className="text-sm text-gray-400">Aún no hay pedidos</p>
+            <p className="text-sm text-taupe">Aún no hay pedidos</p>
           ) : (
             <div className="space-y-3">
               {stats.recentOrders.map((order: RecentOrder) => (
@@ -278,19 +307,19 @@ export default async function AdminDashboard() {
                   className="flex items-center justify-between"
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-cocoa-deep">
                       {order.orderNumber}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-on-surface-variant">
                       {order.customer.name}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold">
+                    <span className="text-sm font-semibold text-cocoa-deep">
                       S/ {order.total.toFixed(2)}
                     </span>
                     <span
-                      className={`text-xs px-2 py-1 rounded-full ${statusColors[order.status] || "bg-gray-100"}`}
+                      className={`text-xs px-2 py-1 rounded-full ${statusColors[order.status] || "bg-cream-dark"}`}
                     >
                       {statusLabels[order.status] || order.status}
                     </span>

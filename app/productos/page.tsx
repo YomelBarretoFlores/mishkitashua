@@ -10,7 +10,7 @@ export const metadata: Metadata = {
         description:
             "Alfajores andinos surtidos y manjares saborizados elaborados con ingredientes de los Andes peruanos.",
         images: [
-            { url: "/images/tres-manjares.png", width: 1200, height: 630 },
+            { url: "/images/tres-manjares-fila.png", width: 1200, height: 630 },
         ],
     },
 };

@@ -11,7 +11,7 @@ function getSessionId(): string {
 }
 
 export function trackEvent(
-  type: "page_view" | "add_to_cart" | "checkout_start" | "purchase",
+  type: "page_view" | "add_to_cart" | "checkout_start" | "purchase" | "chatbot_open",
   data?: { page?: string; productSlug?: string; metadata?: string }
 ) {
   const sessionId = getSessionId();

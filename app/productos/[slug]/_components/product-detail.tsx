@@ -87,7 +87,7 @@ export default function ProductDetailPage() {
               <button
                 key={idx}
                 onClick={() => setSelectedImage(idx)}
-                className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 transition-colors ${
+                className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-colors ${
                   selectedImage === idx
                     ? "border-cocoa"
                     : "border-cream-darker hover:border-taupe"
@@ -222,12 +222,13 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          <div className="relative rounded-2xl overflow-hidden min-h-[300px]">
+          <div className="rounded-2xl overflow-hidden">
             <Image
-              src="/images/ingredientes-andinos.png"
-              alt="Ingredientes andinos Mishkitashua"
-              fill
-              className="object-cover"
+              src={product.images[product.images.length - 1]}
+              alt={`${product.name} — Mishkitashua`}
+              width={800}
+              height={800}
+              className="w-full h-auto"
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
           </div>

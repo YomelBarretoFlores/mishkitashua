@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { MapPin, Clock, Phone, Send, ArrowRight, Camera, Music } from "lucide-react";
 
 export default function ContactoPage() {
@@ -28,16 +29,24 @@ export default function ContactoPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-cocoa py-16 md:py-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-cocoa-deep/50 to-cocoa/80" />
+      <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center overflow-hidden">
+        <Image
+          src="/images/banner-hero-1.png"
+          alt="Contacto Mishkitashua"
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-cocoa-deep/40" />
         <div className="relative text-center px-5">
           <h1
-            className="text-4xl md:text-6xl font-medium text-white mb-4 italic"
+            className="text-4xl md:text-6xl font-medium text-white mb-4 italic drop-shadow-lg"
             style={{ fontFamily: "var(--font-eb-garamond), serif" }}
           >
             Contáctenos
           </h1>
-          <p className="text-white/70 max-w-xl mx-auto">
+          <p className="text-white/90 max-w-xl mx-auto drop-shadow">
             Ya sea que estés consultando sobre un pedido personalizado, un
             evento especial o simplemente quieras saludarnos, nos encantaría
             saber de ti.

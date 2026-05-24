@@ -40,7 +40,7 @@ function ConfirmacionContent() {
 
   useEffect(() => {
     if (!orderId) {
-      setLoading(false);
+      setLoading(false); // eslint-disable-line react-hooks/set-state-in-effect
       return;
     }
     fetch(`/api/orders/${orderId}`)
@@ -236,6 +236,7 @@ function ConfirmacionContent() {
                 <button
                   key={s}
                   type="button"
+                  aria-label={`Calificar ${s} estrella${s > 1 ? "s" : ""}`}
                   onClick={() => setRating(s)}
                   onMouseEnter={() => setHoverRating(s)}
                   onMouseLeave={() => setHoverRating(0)}

@@ -6,6 +6,8 @@ import Footer from "@/app/components/Footer";
 import { CartProvider } from "@/app/lib/cart-context";
 import { organizationJsonLd } from "@/app/lib/jsonld";
 import WhatsAppButton from "@/app/components/WhatsAppButton";
+import Chatbot from "@/app/components/Chatbot";
+import WelcomePopup from "@/app/components/WelcomePopup";
 import PageTracker from "@/app/components/PageTracker";
 
 const ebGaramond = EB_Garamond({
@@ -51,7 +53,7 @@ export const metadata: Metadata = {
       "Repostería artesanal andina. Alfajores y manjares saborizados con ingredientes de los Andes peruanos.",
     images: [
       {
-        url: "/images/tres-sabores-poster.jpg",
+        url: "/images/marca-todos-productos.png",
         width: 1200,
         height: 630,
         alt: "Mishkitashua — Tres sabores, una misma identidad",
@@ -63,12 +65,12 @@ export const metadata: Metadata = {
     title: "Mishkitashua — Sabores que nacen de nuestra tierra",
     description:
       "Alfajores artesanales y manjares saborizados de los Andes peruanos.",
-    images: ["/images/tres-sabores-poster.jpg"],
+    images: ["/images/marca-todos-productos.png"],
   },
   manifest: "/manifest.json",
   icons: {
-    icon: "/images/logo-mishkitashua.jpg",
-    apple: "/images/logo-mishkitashua.jpg",
+    icon: "/images/logo-colibri.jpg",
+    apple: "/images/logo-colibri.jpg",
   },
   other: {
     "theme-color": "#3e2723",
@@ -103,6 +105,8 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
           <WhatsAppButton />
+          <Chatbot />
+          <WelcomePopup />
         </CartProvider>
       </body>
     </html>
