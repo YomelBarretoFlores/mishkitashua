@@ -28,9 +28,10 @@ export default function Navbar() {
                     <Image
                         src="/images/logo.png"
                         alt="Mishkitashua"
-                        width={140}
-                        height={56}
-                        className="object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                        width={1280}
+                        height={723}
+                        priority
+                        className="h-12 md:h-14 w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
                     />
                     <span
                         className="-ml-2 text-xl md:text-2xl font-medium text-cocoa-deep tracking-tight"
