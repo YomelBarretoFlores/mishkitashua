@@ -6,7 +6,7 @@ export default function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/productos/${product.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden border border-cream-darker/60 hover:shadow-lg hover:shadow-cocoa/8 transition-all duration-300"
+      className="group bg-white rounded-2xl overflow-hidden border border-cream-darker/60 hover:shadow-lg hover:shadow-cocoa/8 hover:-translate-y-1 transition-all duration-300"
     >
       <div className="relative overflow-hidden bg-cream-dark">
         <Image

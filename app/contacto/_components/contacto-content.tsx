@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { MapPin, Clock, Phone, Send, ArrowRight, Camera, Music } from "lucide-react";
+import Reveal from "@/app/components/Reveal";
 
 export default function ContactoPage() {
   const [form, setForm] = useState({
@@ -39,7 +40,7 @@ export default function ContactoPage() {
           sizes="100vw"
         />
         <div className="absolute inset-0 bg-cocoa-deep/40" />
-        <div className="relative text-center px-5">
+        <Reveal className="relative text-center px-5">
           <h1
             className="text-4xl md:text-6xl font-medium text-white mb-4 italic drop-shadow-lg"
             style={{ fontFamily: "var(--font-eb-garamond), serif" }}
@@ -51,7 +52,7 @@ export default function ContactoPage() {
             evento especial o simplemente quieras saludarnos, nos encantaría
             saber de ti.
           </p>
-        </div>
+        </Reveal>
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto block">
             <path d="M0,40 C360,80 720,0 1080,40 C1260,60 1380,50 1440,40 L1440,80 L0,80 Z" fill="#fbf9f1" />
@@ -62,7 +63,7 @@ export default function ContactoPage() {
       <div className="max-w-7xl mx-auto px-5 md:px-16 py-16 md:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Info */}
-          <div className="lg:col-span-5 space-y-6">
+          <Reveal direction="right" className="lg:col-span-5 space-y-6">
             <h2
               className="text-2xl md:text-3xl font-medium text-cocoa-deep mb-6"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
@@ -134,10 +135,10 @@ export default function ContactoPage() {
                 referrerPolicy="no-referrer-when-downgrade"
               />
             </div>
-          </div>
+          </Reveal>
 
           {/* Form */}
-          <div className="lg:col-span-7">
+          <Reveal direction="left" delay={0.1} className="lg:col-span-7">
             <div className="bg-white rounded-2xl border border-cream-darker/60 p-6 md:p-8">
               <h2
                 className="text-2xl font-semibold text-cocoa-deep mb-6"
@@ -236,7 +237,7 @@ export default function ContactoPage() {
                 </form>
               )}
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
 

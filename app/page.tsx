@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Leaf, ClipboardList, PackageCheck } from "lucide-react";
+import HeroHome from "@/app/components/HeroHome";
+import Reveal from "@/app/components/Reveal";
 
 export const metadata: Metadata = {
     title: "Mishkitashua — Sabores que nacen de nuestra tierra",
@@ -25,65 +27,13 @@ export const metadata: Metadata = {
 export default function HomePage() {
     return (
         <>
-            {/* Hero */}
-            <section className="relative overflow-hidden bg-cream">
-                <div className="max-w-7xl mx-auto px-5 md:px-16 py-16 md:py-24">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div>
-                            <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-4">
-                                Sabores que nacen de nuestra tierra
-                            </p>
-                            <h1
-                                className="text-4xl md:text-6xl font-medium text-cocoa-deep leading-tight mb-6"
-                                style={{
-                                    fontFamily:
-                                        "var(--font-eb-garamond), serif",
-                                }}
-                            >
-                                Repostería andina con identidad propia
-                            </h1>
-                            <p className="text-lg text-on-surface-variant leading-relaxed mb-8 max-w-lg">
-                                Alfajores y manjares inspirados en los Andes
-                                peruanos, elaborados con sabores de tuna,
-                                aguaymanto y muña. Una propuesta moderna,
-                                innovadora y lista para disfrutar en cualquier
-                                ocasión.
-                            </p>
-                            <div className="flex flex-wrap gap-4">
-                                <Link
-                                    href="/productos"
-                                    className="inline-flex items-center gap-2 bg-cocoa text-white font-semibold px-7 py-3.5 rounded-lg hover:bg-cocoa-deep transition-colors"
-                                >
-                                    Explorar Productos
-                                    <ArrowRight size={18} />
-                                </Link>
-                                <Link
-                                    href="/nosotros"
-                                    className="inline-flex items-center gap-2 border-2 border-cocoa text-cocoa-deep font-semibold px-7 py-3.5 rounded-lg hover:bg-cocoa hover:text-white transition-colors"
-                                >
-                                    Nuestra Historia
-                                </Link>
-                            </div>
-                        </div>
-
-                        <div className="relative aspect-[3/4] max-w-lg mx-auto lg:mx-0">
-                            <Image
-                                src="/images/marca-todos-productos.png"
-                                alt="Productos Mishkitashua - Tres sabores, una misma identidad"
-                                fill
-                                className="object-contain rounded-3xl"
-                                priority
-                                sizes="(max-width: 1024px) 100vw, 50vw"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </section>
+            {/* Hero cinematográfico */}
+            <HeroHome />
 
             {/* Categories */}
             <section className="bg-white py-20 md:py-28">
                 <div className="max-w-7xl mx-auto px-5 md:px-16">
-                    <div className="text-center mb-14">
+                    <Reveal className="text-center mb-14">
                         <h2
                             className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-4"
                             style={{
@@ -100,13 +50,14 @@ export default function HomePage() {
                             cuidada, ideal para consumo personal, regalo o venta
                             comercial.
                         </p>
-                    </div>
+                    </Reveal>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Alfajores — full card */}
+                        <Reveal className="flex" direction="up">
                         <Link
                             href="/productos#alfajores"
-                            className="group rounded-2xl overflow-hidden bg-white border border-cream-darker/60 hover:shadow-lg transition-shadow flex flex-col"
+                            className="group rounded-2xl overflow-hidden bg-white border border-cream-darker/60 hover:shadow-lg transition-shadow flex flex-col w-full"
                         >
                             <div className="overflow-hidden">
                                 <Image
@@ -137,16 +88,18 @@ export default function HomePage() {
                                 </span>
                             </div>
                         </Link>
+                        </Reveal>
 
                         {/* Manjares */}
+                        <Reveal className="flex" direction="up" delay={0.12}>
                         <Link
                             href="/productos#manjares"
-                            className="group rounded-2xl overflow-hidden bg-white border border-cream-darker/60 hover:shadow-lg transition-shadow flex flex-col"
+                            className="group rounded-2xl overflow-hidden bg-white border border-cream-darker/60 hover:shadow-lg transition-shadow flex flex-col w-full"
                         >
                             <div className="overflow-hidden">
                                 <Image
-                                    src="/images/tres-manjares-fila.png"
-                                    alt="Manjares Saborizados"
+                                    src="/images/manjares-frascos-madera.png"
+                                    alt="Manjares saborizados Mishkitashua: Tunaluna, Muña Andina y Sol Aguaymanto"
                                     width={800}
                                     height={1000}
                                     className="w-full h-auto group-hover:scale-105 transition-transform duration-700"
@@ -172,6 +125,62 @@ export default function HomePage() {
                                 </span>
                             </div>
                         </Link>
+                        </Reveal>
+                    </div>
+                </div>
+            </section>
+
+            {/* Historia / Herencia andina */}
+            <section className="relative overflow-hidden bg-cocoa-deep text-white">
+                <div className="max-w-7xl mx-auto px-5 md:px-16 py-20 md:py-28">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                        <Reveal direction="right">
+                            <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl shadow-black/40">
+                                <Image
+                                    src="/images/manjares-frascos-madera.png"
+                                    alt="Manjares Mishkitashua elaborados con ingredientes de los Andes"
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 1024px) 100vw, 50vw"
+                                />
+                            </div>
+                        </Reveal>
+
+                        <Reveal direction="left" delay={0.1}>
+                            <p className="text-sm font-semibold text-caramel-light tracking-widest uppercase mb-4">
+                                Nuestra esencia
+                            </p>
+                            <h2
+                                className="text-3xl md:text-5xl font-medium leading-tight mb-6"
+                                style={{
+                                    fontFamily:
+                                        "var(--font-eb-garamond), serif",
+                                }}
+                            >
+                                Del corazón de los Andes a tu mesa
+                            </h2>
+                            <p className="text-cream/80 text-lg leading-relaxed mb-5">
+                                Cada alfajor y cada manjar nace de la riqueza de
+                                nuestra tierra: la tuna que florece en las
+                                alturas, el aguaymanto dorado por el sol andino y
+                                la muña que perfuma nuestros valles. No vendemos
+                                solo dulces, compartimos la memoria de un
+                                territorio.
+                            </p>
+                            <p className="text-cream/80 text-lg leading-relaxed mb-8">
+                                Trabajamos de la mano de comunidades andinas,
+                                honrando recetas y saberes que pasan de
+                                generación en generación. Tradición, color y
+                                sabor en cada bocado.
+                            </p>
+                            <Link
+                                href="/nosotros"
+                                className="inline-flex items-center gap-2 text-caramel-light font-semibold hover:text-caramel-dim transition-colors"
+                            >
+                                Conoce nuestra historia
+                                <ArrowRight size={18} />
+                            </Link>
+                        </Reveal>
                     </div>
                 </div>
             </section>
@@ -179,7 +188,7 @@ export default function HomePage() {
             {/* Value Proposition */}
             <section className="bg-cream py-20 md:py-28">
                 <div className="max-w-7xl mx-auto px-5 md:px-16">
-                    <div className="text-center mb-14">
+                    <Reveal className="text-center mb-14">
                         <h2
                             className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-4"
                             style={{
@@ -195,10 +204,11 @@ export default function HomePage() {
                             manjar mantenga una experiencia uniforme, atractiva
                             y confiable para nuestros clientes.
                         </p>
-                    </div>
+                    </Reveal>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
+                        <Reveal className="flex">
+                        <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40 w-full">
                             <div className="w-14 h-14 bg-cream-dark rounded-2xl flex items-center justify-center mx-auto mb-5">
                                 <Leaf className="text-caramel" size={26} />
                             </div>
@@ -218,8 +228,10 @@ export default function HomePage() {
                                 nuestra identidad regional.
                             </p>
                         </div>
+                        </Reveal>
 
-                        <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
+                        <Reveal className="flex" delay={0.12}>
+                        <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40 w-full">
                             <div className="w-14 h-14 bg-cream-dark rounded-2xl flex items-center justify-center mx-auto mb-5">
                                 <ClipboardList
                                     className="text-caramel"
@@ -241,8 +253,10 @@ export default function HomePage() {
                                 criterios de uniformidad.
                             </p>
                         </div>
+                        </Reveal>
 
-                        <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
+                        <Reveal className="flex" delay={0.24}>
+                        <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40 w-full">
                             <div className="w-14 h-14 bg-cream-dark rounded-2xl flex items-center justify-center mx-auto mb-5">
                                 <PackageCheck
                                     className="text-caramel"
@@ -264,6 +278,7 @@ export default function HomePage() {
                                 el impacto ambiental.
                             </p>
                         </div>
+                        </Reveal>
                     </div>
                 </div>
             </section>
@@ -280,7 +295,7 @@ export default function HomePage() {
                     />
                     <div className="absolute inset-0 bg-cocoa-deep/70" />
                 </div>
-                <div className="relative max-w-7xl mx-auto px-5 md:px-16 py-20 md:py-28 text-center">
+                <Reveal className="relative max-w-7xl mx-auto px-5 md:px-16 py-20 md:py-28 text-center">
                     <h2
                         className="text-3xl md:text-5xl font-medium text-white mb-4"
                         style={{ fontFamily: "var(--font-eb-garamond), serif" }}
@@ -298,7 +313,7 @@ export default function HomePage() {
                         Comprar Ahora
                         <ArrowRight size={18} />
                     </Link>
-                </div>
+                </Reveal>
             </section>
         </>
     );

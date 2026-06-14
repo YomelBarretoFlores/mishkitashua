@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { useCart } from "@/app/lib/cart-context";
 
 const links = [
@@ -61,11 +62,24 @@ export default function Navbar() {
                         className="relative p-2 text-cocoa-deep hover:text-caramel transition-colors"
                     >
                         <ShoppingBag size={22} />
-                        {hydrated && totalItems > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 bg-cocoa text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold">
-                                {totalItems}
-                            </span>
-                        )}
+                        <AnimatePresence>
+                            {hydrated && totalItems > 0 && (
+                                <motion.span
+                                    key={totalItems}
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    exit={{ scale: 0, opacity: 0 }}
+                                    transition={{
+                                        type: "spring",
+                                        stiffness: 500,
+                                        damping: 18,
+                                    }}
+                                    className="absolute -top-0.5 -right-0.5 bg-cocoa text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-semibold"
+                                >
+                                    {totalItems}
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
                     </Link>
 
                     <Link

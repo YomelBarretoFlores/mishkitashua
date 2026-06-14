@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Truck, Package, Store, ShoppingCart } from "lucide-react";
 import { products, type Product } from "@/app/lib/products";
 import { useCart } from "@/app/lib/cart-context";
+import Reveal from "@/app/components/Reveal";
 
 function AddToCartCard({ product }: { product: Product }) {
   const { addItem } = useCart();
@@ -163,7 +164,7 @@ export default function ProductosContent() {
   return (
     <>
       {/* Header */}
-      <section className="max-w-7xl mx-auto px-5 md:px-16 py-12 md:py-20 text-center">
+      <Reveal className="max-w-7xl mx-auto px-5 md:px-16 py-12 md:py-20 text-center">
         <h1
           className="text-4xl md:text-[64px] font-medium text-cocoa-deep mb-6"
           style={{
@@ -179,7 +180,7 @@ export default function ProductosContent() {
           saborizados con presentaciones modernas, sabores diferenciados y una
           identidad visual inspirada en los Andes.
         </p>
-      </section>
+      </Reveal>
 
       {/* Alfajores Section */}
       <section
@@ -201,8 +202,10 @@ export default function ProductosContent() {
           </p>
         </div>
 
-        {alfajores.map((product) => (
-          <AlfajorHeroCard key={product.slug} product={product} />
+        {alfajores.map((product, i) => (
+          <Reveal key={product.slug} direction="up" delay={i * 0.08}>
+            <AlfajorHeroCard product={product} />
+          </Reveal>
         ))}
       </section>
 
@@ -225,8 +228,12 @@ export default function ProductosContent() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {manjares.map((product) => (
-            <AddToCartCard key={product.slug} product={product} />
+          {manjares.map((product, i) => (
+            <Reveal key={product.slug} className="flex" delay={i * 0.08}>
+              <div className="w-full">
+                <AddToCartCard product={product} />
+              </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -248,7 +255,8 @@ export default function ProductosContent() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-2xl flex flex-col items-center text-center border border-cream-darker/40 hover:border-caramel-light transition-colors">
+            <Reveal className="flex" direction="up">
+            <div className="bg-white p-6 rounded-2xl flex flex-col items-center text-center border border-cream-darker/40 hover:border-caramel-light transition-colors w-full">
               <div className="w-16 h-16 rounded-full bg-caramel-light/30 flex items-center justify-center mb-4">
                 <Truck size={28} className="text-caramel" />
               </div>
@@ -263,8 +271,10 @@ export default function ProductosContent() {
                 24-48 horas hábiles para garantizar la frescura.
               </p>
             </div>
+            </Reveal>
 
-            <div className="bg-white p-6 rounded-2xl flex flex-col items-center text-center border border-cream-darker/40 hover:border-caramel-light transition-colors">
+            <Reveal className="flex" direction="up" delay={0.1}>
+            <div className="bg-white p-6 rounded-2xl flex flex-col items-center text-center border border-cream-darker/40 hover:border-caramel-light transition-colors w-full">
               <div className="w-16 h-16 rounded-full bg-caramel-light/30 flex items-center justify-center mb-4">
                 <Package size={28} className="text-caramel" />
               </div>
@@ -279,8 +289,10 @@ export default function ProductosContent() {
                 los productos no sufran alteraciones durante el viaje.
               </p>
             </div>
+            </Reveal>
 
-            <div className="bg-white p-6 rounded-2xl flex flex-col items-center text-center border border-cream-darker/40 hover:border-caramel-light transition-colors">
+            <Reveal className="flex" direction="up" delay={0.2}>
+            <div className="bg-white p-6 rounded-2xl flex flex-col items-center text-center border border-cream-darker/40 hover:border-caramel-light transition-colors w-full">
               <div className="w-16 h-16 rounded-full bg-caramel-light/30 flex items-center justify-center mb-4">
                 <Store size={28} className="text-caramel" />
               </div>
@@ -295,6 +307,7 @@ export default function ProductosContent() {
                 nuestra boutique sin costo adicional.
               </p>
             </div>
+            </Reveal>
           </div>
         </div>
       </section>

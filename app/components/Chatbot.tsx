@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { products } from "@/app/lib/products";
 import { trackEvent } from "@/app/lib/analytics";
@@ -149,6 +150,7 @@ export default function Chatbot() {
     },
   ]);
   const [input, setInput] = useState("");
+  const reduce = useReducedMotion();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -185,18 +187,34 @@ export default function Chatbot() {
 
   return (
     <>
-      {!open && (
-        <button
-          onClick={handleOpen}
-          className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-cocoa-deep text-white rounded-full flex items-center justify-center shadow-lg hover:bg-cocoa transition-all duration-300 hover:scale-110"
-          aria-label="Abrir chat"
-        >
-          <MessageCircle size={24} />
-        </button>
-      )}
+      <AnimatePresence>
+        {!open && (
+          <motion.button
+            onClick={handleOpen}
+            initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 400, damping: 22 }}
+            className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-cocoa-deep text-white rounded-full flex items-center justify-center shadow-lg hover:bg-cocoa transition-colors hover:scale-110"
+            aria-label="Abrir chat"
+          >
+            <MessageCircle size={24} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
+      <AnimatePresence>
       {open && (
-        <div className="fixed bottom-6 left-6 z-50 w-[340px] sm:w-[380px] h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-cream-darker/60">
+        <motion.div
+          initial={
+            reduce ? { opacity: 0 } : { opacity: 0, scale: 0.85, y: 20 }
+          }
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.85, y: 20 }}
+          transition={{ type: "spring", stiffness: 300, damping: 26 }}
+          style={{ transformOrigin: "bottom left" }}
+          className="fixed bottom-6 left-6 z-50 w-[340px] sm:w-[380px] h-[500px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-cream-darker/60"
+        >
           {/* Header */}
           <div className="bg-cocoa-deep text-white px-4 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
@@ -220,7 +238,16 @@ export default function Chatbot() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-cream">
             {messages.map((msg, i) => (
-              <div key={i}>
+              <motion.div
+                key={i}
+                initial={
+                  reduce
+                    ? { opacity: 0 }
+                    : { opacity: 0, y: 8, x: msg.from === "bot" ? -12 : 12 }
+                }
+                animate={{ opacity: 1, y: 0, x: 0 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              >
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line ${
                     msg.from === "bot"
@@ -253,7 +280,7 @@ export default function Chatbot() {
                     ))}
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -278,8 +305,9 @@ export default function Chatbot() {
               <Send size={16} />
             </button>
           </form>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </>
   );
 }

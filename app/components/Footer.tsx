@@ -1,20 +1,21 @@
 import Link from "next/link";
+import Reveal from "@/app/components/Reveal";
 
 export default function Footer() {
   return (
     <footer className="bg-cream-dark border-t border-cream-darker mt-auto">
       <div className="max-w-7xl mx-auto px-5 md:px-16 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-          <div>
+          <Reveal direction="up">
             <h3 className="font-serif text-xl font-semibold text-cocoa-deep mb-2">
               Mishkitashua
             </h3>
             <p className="text-sm text-on-surface-variant leading-relaxed">
               Sabores que nacen de nuestra tierra.
             </p>
-          </div>
+          </Reveal>
 
-          <div>
+          <Reveal direction="up" delay={0.1}>
             <h4 className="text-sm font-semibold text-cocoa-deep tracking-wide uppercase mb-3">
               Síguenos
             </h4>
@@ -36,9 +37,9 @@ export default function Footer() {
                 TikTok
               </a>
             </div>
-          </div>
+          </Reveal>
 
-          <div>
+          <Reveal direction="up" delay={0.2}>
             <h4 className="text-sm font-semibold text-cocoa-deep tracking-wide uppercase mb-3">
               Legal
             </h4>
@@ -56,7 +57,7 @@ export default function Footer() {
                 Política de Privacidad
               </Link>
             </div>
-          </div>
+          </Reveal>
         </div>
 
         <div className="border-t border-cream-darker mt-10 pt-6">

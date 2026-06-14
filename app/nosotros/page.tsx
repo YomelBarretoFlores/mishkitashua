@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Leaf, ClipboardList, PackageCheck } from "lucide-react";
+import Reveal from "@/app/components/Reveal";
+import Timeline from "@/app/nosotros/_components/Timeline";
 
 export const metadata: Metadata = {
   title: "Nuestra Historia",
@@ -15,27 +17,6 @@ export const metadata: Metadata = {
     ],
   },
 };
-
-const timeline = [
-  {
-    year: "2024",
-    title: "Nace la idea",
-    text: "Se plantea una propuesta de repostería andina basada en el uso de insumos regionales y sabores diferenciados.",
-    side: "right" as const,
-  },
-  {
-    year: "2025",
-    title: "Se define el portafolio",
-    text: "Se estructuran dos líneas de producto: alfajores andinos y manjares saborizados de tuna, aguaymanto y muña.",
-    side: "left" as const,
-  },
-  {
-    year: "2026",
-    title: "Proyección comercial",
-    text: "Mishkitashua se consolida como una marca con presentaciones definidas, envases comerciales, canales digitales y enfoque hacia una producción organizada por lotes.",
-    side: "right" as const,
-  },
-];
 
 export default function NosotrosPage() {
   return (
@@ -52,7 +33,7 @@ export default function NosotrosPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-cocoa-deep/70 via-cocoa-deep/30 to-transparent" />
         <div className="absolute inset-0 flex items-center justify-center text-center px-5">
-          <div>
+          <Reveal>
             <h1
               className="text-4xl md:text-6xl font-medium text-white mb-4 italic"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
@@ -62,7 +43,7 @@ export default function NosotrosPage() {
             <p className="text-white/80 text-lg max-w-xl mx-auto">
               Sabores andinos en una propuesta moderna.
             </p>
-          </div>
+          </Reveal>
         </div>
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto block">
@@ -74,7 +55,7 @@ export default function NosotrosPage() {
       {/* Sobre Mishkitashua */}
       <section className="max-w-7xl mx-auto px-5 md:px-16 py-20 md:py-28">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          <div>
+          <Reveal direction="right">
             <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-3">
               Sobre Mishkitashua
             </p>
@@ -134,120 +115,36 @@ export default function NosotrosPage() {
               independientes, ideales para untar, acompañar postres o utilizar en
               repostería.
             </p>
-          </div>
-          <div className="rounded-2xl overflow-hidden sticky top-24">
-            <Image
-              src="/images/marca-catalogo.png"
-              alt="Portafolio Mishkitashua"
-              width={800}
-              height={800}
-              className="w-full h-auto"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
-          </div>
+          </Reveal>
+          <Reveal direction="left" delay={0.1} className="sticky top-24">
+            <div className="rounded-2xl overflow-hidden">
+              <Image
+                src="/images/marca-catalogo.png"
+                alt="Portafolio Mishkitashua"
+                width={800}
+                height={800}
+                className="w-full h-auto"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            </div>
+          </Reveal>
         </div>
       </section>
 
       {/* Timeline */}
       <section className="bg-white py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-5 md:px-16">
-          <h2
-            className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-2 text-center italic"
-            style={{ fontFamily: "var(--font-eb-garamond), serif" }}
-          >
-            Nuestra Trayectoria
-          </h2>
-          <div className="w-12 h-0.5 bg-caramel mx-auto mb-16" />
+          <Reveal className="text-center">
+            <h2
+              className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-2 italic"
+              style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+            >
+              Nuestra Trayectoria
+            </h2>
+            <div className="w-12 h-0.5 bg-caramel mx-auto mb-16" />
+          </Reveal>
 
-          {/* Desktop Timeline */}
-          <div className="hidden md:block relative max-w-3xl mx-auto">
-            {/* Vertical line */}
-            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-cream-darker -translate-x-1/2" />
-
-            <div className="space-y-16">
-              {timeline.map((item) => (
-                <div key={item.year} className="relative flex items-start">
-                  {/* Left card */}
-                  {item.side === "left" ? (
-                    <div className="w-[calc(50%-32px)] pr-4">
-                      <div className="bg-cream-dark rounded-xl p-6 border border-cream-darker/60">
-                        <h3
-                          className="text-xl font-semibold text-cocoa-deep mb-2"
-                          style={{ fontFamily: "var(--font-eb-garamond), serif" }}
-                        >
-                          {item.title}
-                        </h3>
-                        <p className="text-sm text-on-surface-variant leading-relaxed">
-                          {item.text}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-[calc(50%-32px)]" />
-                  )}
-
-                  {/* Year circle */}
-                  <div className="absolute left-1/2 -translate-x-1/2 w-16 h-16 rounded-full bg-caramel-light/30 border-2 border-caramel-light flex items-center justify-center z-10">
-                    <span
-                      className="text-sm font-semibold text-cocoa-deep"
-                      style={{ fontFamily: "var(--font-eb-garamond), serif" }}
-                    >
-                      {item.year}
-                    </span>
-                  </div>
-
-                  {/* Right card */}
-                  {item.side === "right" ? (
-                    <div className="w-[calc(50%-32px)] ml-auto pl-4">
-                      <div className="bg-cream-dark rounded-xl p-6 border border-cream-darker/60">
-                        <h3
-                          className="text-xl font-semibold text-cocoa-deep mb-2"
-                          style={{ fontFamily: "var(--font-eb-garamond), serif" }}
-                        >
-                          {item.title}
-                        </h3>
-                        <p className="text-sm text-on-surface-variant leading-relaxed">
-                          {item.text}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-[calc(50%-32px)]" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Mobile Timeline */}
-          <div className="md:hidden relative pl-10">
-            {/* Vertical line */}
-            <div className="absolute left-4 top-0 bottom-0 w-px bg-cream-darker" />
-
-            <div className="space-y-10">
-              {timeline.map((item) => (
-                <div key={item.year} className="relative">
-                  {/* Year circle */}
-                  <div className="absolute -left-10 top-0 w-8 h-8 rounded-full bg-caramel-light/30 border-2 border-caramel-light flex items-center justify-center z-10">
-                    <span className="text-[10px] font-semibold text-cocoa-deep">
-                      {item.year}
-                    </span>
-                  </div>
-                  <div className="bg-cream-dark rounded-xl p-5 border border-cream-darker/60">
-                    <h3
-                      className="text-lg font-semibold text-cocoa-deep mb-2"
-                      style={{ fontFamily: "var(--font-eb-garamond), serif" }}
-                    >
-                      {item.title}
-                    </h3>
-                    <p className="text-sm text-on-surface-variant leading-relaxed">
-                      {item.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <Timeline />
         </div>
       </section>
 
@@ -268,7 +165,8 @@ export default function NosotrosPage() {
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
+            <Reveal className="flex">
+            <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40 w-full">
               <div className="w-14 h-14 bg-caramel-light/25 rounded-full flex items-center justify-center mx-auto mb-5">
                 <Leaf className="text-caramel" size={26} />
               </div>
@@ -284,8 +182,10 @@ export default function NosotrosPage() {
                 representativos de nuestra identidad regional.
               </p>
             </div>
+            </Reveal>
 
-            <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
+            <Reveal className="flex" delay={0.1}>
+            <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40 w-full">
               <div className="w-14 h-14 bg-caramel-light/25 rounded-full flex items-center justify-center mx-auto mb-5">
                 <ClipboardList className="text-caramel" size={26} />
               </div>
@@ -300,8 +200,10 @@ export default function NosotrosPage() {
                 producción por lotes y criterios de uniformidad.
               </p>
             </div>
+            </Reveal>
 
-            <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40">
+            <Reveal className="flex" delay={0.2}>
+            <div className="bg-white rounded-2xl p-8 text-center border border-cream-darker/40 w-full">
               <div className="w-14 h-14 bg-caramel-light/25 rounded-full flex items-center justify-center mx-auto mb-5">
                 <PackageCheck className="text-caramel" size={26} />
               </div>
@@ -316,6 +218,7 @@ export default function NosotrosPage() {
                 y pensados para reducir el impacto ambiental.
               </p>
             </div>
+            </Reveal>
           </div>
         </div>
       </section>
