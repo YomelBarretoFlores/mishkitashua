@@ -13,6 +13,10 @@ export type Product = {
     image: string;
     images: string[];
     color: string;
+    // Personalización: el cliente elige la cantidad por sabor hasta completar boxSize.
+    customizable?: boolean;
+    flavorOptions?: string[];
+    boxSize?: number;
 };
 
 export const products: Product[] = [
@@ -48,6 +52,9 @@ export const products: Product[] = [
             "/images/alfajores-caja-claro.png",
         ],
         color: "#3e2723",
+        customizable: true,
+        flavorOptions: ["Tuna", "Aguaymanto", "Muña"],
+        boxSize: 6,
     },
     {
         slug: "manjar-tunaluna",

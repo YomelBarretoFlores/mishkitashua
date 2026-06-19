@@ -13,17 +13,54 @@ import {
   CreditCard,
   Landmark,
   CheckCircle,
+  Gift,
 } from "lucide-react";
-import { useCart } from "@/app/lib/cart-context";
+import { useCart, cartItemKey } from "@/app/lib/cart-context";
+import { usePromotions } from "@/app/lib/promotions-context";
 
 const SHIPPING_COST = 12.0;
 
 type PaymentMethod = "card" | "transfer";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Algoritmo de Luhn para validar el número de tarjeta.
+function luhnValid(num: string): boolean {
+  const digits = num.replace(/\D/g, "");
+  if (digits.length < 13 || digits.length > 19) return false;
+  let sum = 0;
+  let alt = false;
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let d = parseInt(digits[i], 10);
+    if (alt) {
+      d *= 2;
+      if (d > 9) d -= 9;
+    }
+    sum += d;
+    alt = !alt;
+  }
+  return sum % 10 === 0;
+}
+
+function expiryValid(value: string): boolean {
+  const m = value.match(/^(\d{2})\/(\d{2})$/);
+  if (!m) return false;
+  const month = parseInt(m[1], 10);
+  const year = 2000 + parseInt(m[2], 10);
+  if (month < 1 || month > 12) return false;
+  const now = new Date();
+  const expiry = new Date(year, month, 0, 23, 59, 59); // último día del mes
+  return expiry >= now;
+}
+
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
   const router = useRouter();
-  const total = subtotal + SHIPPING_COST;
+  const promo = usePromotions(
+    items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
+  );
+  const shippingCost = promo.freeShipping ? 0 : SHIPPING_COST;
+  const total = subtotal - promo.discount + shippingCost;
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
@@ -38,11 +75,37 @@ export default function CheckoutPage() {
     cardCvv: "",
   });
 
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setTouched((t) => ({ ...t, [e.target.name]: true }));
+  };
+
+  // Errores de validación por campo (vacío = válido).
+  const errors: Record<string, string> = {};
+  if (!form.nombre.trim()) errors.nombre = "Ingresa tu nombre";
+  if (!EMAIL_RE.test(form.email)) errors.email = "Correo electrónico inválido";
+  if (!form.direccion.trim()) errors.direccion = "Ingresa tu dirección";
+  if (!form.ciudad.trim()) errors.ciudad = "Ingresa tu ciudad";
+  if (form.telefono.replace(/\D/g, "").length < 9)
+    errors.telefono = "Teléfono inválido (mínimo 9 dígitos)";
+  if (paymentMethod === "card") {
+    if (!luhnValid(form.cardNumber))
+      errors.cardNumber = "Número de tarjeta inválido";
+    if (!expiryValid(form.cardExpiry))
+      errors.cardExpiry = "Fecha inválida o vencida";
+    if (!/^\d{3,4}$/.test(form.cardCvv)) errors.cardCvv = "CVV inválido";
+  }
+
+  const isValid = Object.keys(errors).length === 0;
+  const showError = (field: string) =>
+    touched[field] ? errors[field] : undefined;
 
   useEffect(() => {
     if (items.length > 0) trackEvent("checkout_start", { page: "/checkout" });
@@ -52,6 +115,22 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Marca todos los campos como tocados para mostrar errores pendientes.
+    if (!isValid) {
+      setTouched({
+        nombre: true,
+        email: true,
+        direccion: true,
+        ciudad: true,
+        telefono: true,
+        cardNumber: true,
+        cardExpiry: true,
+        cardCvv: true,
+      });
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -67,29 +146,32 @@ export default function CheckoutPage() {
             address: form.direccion,
             city: form.ciudad,
           },
+          // El servidor recalcula precios; solo enviamos lo necesario.
           items: items.map((i) => ({
             slug: i.slug,
-            name: i.name,
             quantity: i.quantity,
-            price: i.price,
-            image: i.image,
+            customization: i.customization ?? null,
           })),
           paymentMethod,
-          subtotal,
-          shippingCost: SHIPPING_COST,
-          total,
           sessionId,
         }),
       });
 
-      if (!res.ok) throw new Error("Error");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Error");
+      }
 
       const { id } = await res.json();
       clearCart();
       router.push(`/confirmacion?order=${id}`);
-    } catch {
+    } catch (err) {
       setSubmitting(false);
-      alert("Error al procesar el pedido. Inténtalo de nuevo.");
+      alert(
+        err instanceof Error && err.message
+          ? err.message
+          : "Error al procesar el pedido. Inténtalo de nuevo."
+      );
     }
   };
 
@@ -155,10 +237,20 @@ export default function CheckoutPage() {
                       name="nombre"
                       value={form.nombre}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full px-4 py-3 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg text-sm text-cocoa-deep focus:outline-none transition-colors ${
+                        showError("nombre")
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-cream-darker focus:border-cocoa"
+                      }`}
                       placeholder="María Rodríguez"
                     />
+                    {showError("nombre") && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {showError("nombre")}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-cocoa-deep mb-1.5">
@@ -169,10 +261,20 @@ export default function CheckoutPage() {
                       name="email"
                       value={form.email}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full px-4 py-3 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg text-sm text-cocoa-deep focus:outline-none transition-colors ${
+                        showError("email")
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-cream-darker focus:border-cocoa"
+                      }`}
                       placeholder="maria@ejemplo.com"
                     />
+                    {showError("email") && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {showError("email")}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -185,10 +287,20 @@ export default function CheckoutPage() {
                     name="direccion"
                     value={form.direccion}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     required
-                    className="w-full px-4 py-3 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+                    className={`w-full px-4 py-3 bg-white border rounded-lg text-sm text-cocoa-deep focus:outline-none transition-colors ${
+                      showError("direccion")
+                        ? "border-red-400 focus:border-red-500"
+                        : "border-cream-darker focus:border-cocoa"
+                    }`}
                     placeholder="Av. Libertador 1234, Apt 5B"
                   />
+                  {showError("direccion") && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {showError("direccion")}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -201,10 +313,20 @@ export default function CheckoutPage() {
                       name="ciudad"
                       value={form.ciudad}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full px-4 py-3 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg text-sm text-cocoa-deep focus:outline-none transition-colors ${
+                        showError("ciudad")
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-cream-darker focus:border-cocoa"
+                      }`}
                       placeholder="Huaraz"
                     />
+                    {showError("ciudad") && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {showError("ciudad")}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-cocoa-deep mb-1.5">
@@ -215,10 +337,20 @@ export default function CheckoutPage() {
                       name="telefono"
                       value={form.telefono}
                       onChange={handleChange}
+                      onBlur={handleBlur}
                       required
-                      className="w-full px-4 py-3 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+                      className={`w-full px-4 py-3 bg-white border rounded-lg text-sm text-cocoa-deep focus:outline-none transition-colors ${
+                        showError("telefono")
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-cream-darker focus:border-cocoa"
+                      }`}
                       placeholder="+51 999 999 999"
                     />
+                    {showError("telefono") && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {showError("telefono")}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -280,12 +412,22 @@ export default function CheckoutPage() {
                         name="cardNumber"
                         value={form.cardNumber}
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         required
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+                        className={`w-full pl-10 pr-4 py-3 bg-white border rounded-lg text-sm text-cocoa-deep focus:outline-none transition-colors ${
+                          showError("cardNumber")
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-cream-darker focus:border-cocoa"
+                        }`}
                         placeholder="0000 0000 0000 0000"
                         maxLength={19}
                       />
                     </div>
+                    {showError("cardNumber") && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {showError("cardNumber")}
+                      </p>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -297,11 +439,21 @@ export default function CheckoutPage() {
                         name="cardExpiry"
                         value={form.cardExpiry}
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         required
-                        className="w-full px-4 py-3 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+                        className={`w-full px-4 py-3 bg-white border rounded-lg text-sm text-cocoa-deep focus:outline-none transition-colors ${
+                          showError("cardExpiry")
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-cream-darker focus:border-cocoa"
+                        }`}
                         placeholder="MM/AA"
                         maxLength={5}
                       />
+                      {showError("cardExpiry") && (
+                        <p className="text-xs text-red-500 mt-1">
+                          {showError("cardExpiry")}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-cocoa-deep mb-1.5">
@@ -312,11 +464,21 @@ export default function CheckoutPage() {
                         name="cardCvv"
                         value={form.cardCvv}
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         required
-                        className="w-full px-4 py-3 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+                        className={`w-full px-4 py-3 bg-white border rounded-lg text-sm text-cocoa-deep focus:outline-none transition-colors ${
+                          showError("cardCvv")
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-cream-darker focus:border-cocoa"
+                        }`}
                         placeholder="123"
                         maxLength={4}
                       />
+                      {showError("cardCvv") && (
+                        <p className="text-xs text-red-500 mt-1">
+                          {showError("cardCvv")}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -359,7 +521,10 @@ export default function CheckoutPage() {
 
               <div className="space-y-4 mb-6">
                 {items.map((item) => (
-                  <div key={item.slug} className="flex gap-3 items-center">
+                  <div
+                    key={cartItemKey(item)}
+                    className="flex gap-3 items-center"
+                  >
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden shrink-0">
                       <Image
                         src={item.image}
@@ -376,6 +541,14 @@ export default function CheckoutPage() {
                       <p className="text-xs text-taupe">
                         Cant: {item.quantity}
                       </p>
+                      {item.customization && (
+                        <p className="text-xs text-caramel">
+                          {Object.entries(item.customization)
+                            .filter(([, n]) => n > 0)
+                            .map(([flavor, n]) => `${n} ${flavor}`)
+                            .join(" · ")}
+                        </p>
+                      )}
                     </div>
                     <span className="text-sm font-semibold text-caramel">
                       S/ {(item.price * item.quantity).toFixed(2)}
@@ -389,9 +562,19 @@ export default function CheckoutPage() {
                   <span>Subtotal</span>
                   <span>S/ {subtotal.toFixed(2)}</span>
                 </div>
+                {promo.discount > 0 && (
+                  <div className="flex justify-between text-sm text-green-700 font-medium">
+                    <span>Descuento</span>
+                    <span>- S/ {promo.discount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-on-surface-variant">
                   <span>Costo de Envío</span>
-                  <span>S/ {SHIPPING_COST.toFixed(2)}</span>
+                  {promo.freeShipping ? (
+                    <span className="text-green-700 font-medium">Gratis</span>
+                  ) : (
+                    <span>S/ {SHIPPING_COST.toFixed(2)}</span>
+                  )}
                 </div>
                 <div className="border-t border-cream-darker pt-3 flex justify-between">
                   <span className="font-semibold text-cocoa-deep">Total</span>
@@ -401,10 +584,22 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {promo.gift && (
+                <div className="flex items-start gap-2 bg-caramel-light/20 border border-caramel-light/50 rounded-xl p-3 mb-6">
+                  <Gift size={16} className="text-caramel shrink-0 mt-0.5" />
+                  <p className="text-xs text-cocoa-deep">
+                    <span className="font-semibold">
+                      ¡Regalo sorpresa incluido!
+                    </span>{" "}
+                    {promo.gift}
+                  </p>
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 bg-cocoa text-white font-semibold py-4 rounded-lg hover:bg-cocoa-deep transition-colors disabled:opacity-60"
+                disabled={submitting || !isValid}
+                className="w-full flex items-center justify-center gap-2 bg-cocoa text-white font-semibold py-4 rounded-lg hover:bg-cocoa-deep transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <CheckCircle size={18} />
                 {submitting ? "Procesando..." : "Finalizar Compra"}

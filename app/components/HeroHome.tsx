@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight } from "lucide-react";
+import { SLOGAN } from "@/app/lib/brand";
 
 /**
  * Hero a sangre completa con fotografía real, degradado cálido y un sutil
@@ -59,7 +60,7 @@ export default function HeroHome() {
             variants={item}
             className="text-sm font-semibold text-caramel-light tracking-widest uppercase mb-5"
           >
-            Sabores que nacen de nuestra tierra
+            {SLOGAN}
           </motion.p>
           <motion.h1
             variants={item}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Reveal from "@/app/components/Reveal";
+import { BRAND_NAME, SLOGAN } from "@/app/lib/brand";
 
 export default function Footer() {
   return (
@@ -8,10 +9,10 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
           <Reveal direction="up">
             <h3 className="font-serif text-xl font-semibold text-cocoa-deep mb-2">
-              Mishkitashua
+              {BRAND_NAME}
             </h3>
             <p className="text-sm text-on-surface-variant leading-relaxed">
-              Sabores que nacen de nuestra tierra.
+              {SLOGAN}.
             </p>
           </Reveal>
 
@@ -62,7 +63,7 @@ export default function Footer() {
 
         <div className="border-t border-cream-darker mt-10 pt-6">
           <p className="text-xs text-taupe text-center">
-            &copy; {new Date().getFullYear()} Mishkitashua. Sabores que nacen de nuestra tierra.
+            &copy; {new Date().getFullYear()} {BRAND_NAME}. {SLOGAN}.
           </p>
         </div>
       </div>

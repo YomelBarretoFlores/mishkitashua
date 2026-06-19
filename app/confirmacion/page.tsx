@@ -23,8 +23,13 @@ type Order = {
   status: string;
   createdAt: string;
   customer: { name: string; address: string; city: string };
-  items: { productName: string; quantity: number; price: number }[];
-  review: { rating: number } | null;
+  items: {
+    productSlug: string;
+    productName: string;
+    quantity: number;
+    price: number;
+  }[];
+  reviews: { productSlug: string | null }[];
 };
 
 function ConfirmacionContent() {
@@ -32,11 +37,7 @@ function ConfirmacionContent() {
   const orderId = searchParams.get("order");
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [reviewSent, setReviewSent] = useState(false);
+  const [reviewedSlugs, setReviewedSlugs] = useState<string[]>([]);
 
   useEffect(() => {
     if (!orderId) {
@@ -45,23 +46,25 @@ function ConfirmacionContent() {
     }
     fetch(`/api/orders/${orderId}`)
       .then((r) => r.json())
-      .then((data) => {
+      .then((data: Order) => {
         setOrder(data);
-        if (data.review) setReviewSent(true);
+        setReviewedSlugs(
+          (data.reviews ?? [])
+            .map((r) => r.productSlug)
+            .filter((s): s is string => !!s)
+        );
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [orderId]);
 
-  const submitReview = async () => {
-    if (!order || rating === 0) return;
-    await fetch("/api/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: order.id, rating, comment }),
-    });
-    setReviewSent(true);
-  };
+  // Productos únicos del pedido (para reseñar cada uno una vez)
+  const uniqueProducts = order
+    ? order.items.filter(
+        (item, i) =>
+          order.items.findIndex((x) => x.productSlug === item.productSlug) === i
+      )
+    : [];
 
   if (loading) {
     return (
@@ -210,64 +213,29 @@ function ConfirmacionContent() {
         </div>
       </div>
 
-      {/* Review */}
+      {/* Reviews por producto */}
       <div className="bg-white rounded-2xl border border-cream-darker/60 p-6 md:p-8 mb-8">
         <h2
           className="text-lg font-semibold text-cocoa-deep mb-2"
           style={{ fontFamily: "var(--font-eb-garamond), serif" }}
         >
-          ¿Cómo fue tu experiencia?
+          Califica tus productos
         </h2>
         <p className="text-sm text-on-surface-variant mb-5">
-          Tu opinión nos ayuda a mejorar.
+          Tu opinión ayuda a otros clientes a comprar con confianza.
         </p>
 
-        {reviewSent ? (
-          <div className="flex items-center gap-3 text-green-700 bg-green-50 rounded-lg p-4">
-            <Send size={18} />
-            <span className="text-sm font-medium">
-              ¡Gracias por tu reseña!
-            </span>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  aria-label={`Calificar ${s} estrella${s > 1 ? "s" : ""}`}
-                  onClick={() => setRating(s)}
-                  onMouseEnter={() => setHoverRating(s)}
-                  onMouseLeave={() => setHoverRating(0)}
-                >
-                  <Star
-                    size={28}
-                    className={`transition-colors ${
-                      s <= (hoverRating || rating)
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-gray-200"
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-              placeholder="Cuéntanos tu experiencia (opcional)"
-              className="w-full px-4 py-3 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa resize-none"
+        <div className="space-y-4">
+          {uniqueProducts.map((item) => (
+            <ProductReviewForm
+              key={item.productSlug}
+              orderId={order.id}
+              productSlug={item.productSlug}
+              productName={item.productName}
+              alreadyReviewed={reviewedSlugs.includes(item.productSlug)}
             />
-            <button
-              onClick={submitReview}
-              disabled={rating === 0}
-              className="bg-cocoa text-white font-semibold px-6 py-3 rounded-lg hover:bg-cocoa-deep transition-colors disabled:opacity-40"
-            >
-              Enviar reseña
-            </button>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       {/* Actions */}
@@ -286,6 +254,89 @@ function ConfirmacionContent() {
           <Home size={18} />
         </Link>
       </div>
+    </div>
+  );
+}
+
+function ProductReviewForm({
+  orderId,
+  productSlug,
+  productName,
+  alreadyReviewed,
+}: {
+  orderId: string;
+  productSlug: string;
+  productName: string;
+  alreadyReviewed: boolean;
+}) {
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [sent, setSent] = useState(alreadyReviewed);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async () => {
+    if (rating === 0 || submitting) return;
+    setSubmitting(true);
+    const res = await fetch("/api/reviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, productSlug, rating, comment }),
+    });
+    setSubmitting(false);
+    if (res.ok) setSent(true);
+  };
+
+  return (
+    <div className="border border-cream-darker/60 rounded-xl p-4">
+      <p className="text-sm font-semibold text-cocoa-deep mb-3">
+        {productName}
+      </p>
+
+      {sent ? (
+        <div className="flex items-center gap-2 text-green-700 text-sm font-medium">
+          <Send size={16} />
+          ¡Gracias por tu reseña!
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <button
+                key={s}
+                type="button"
+                aria-label={`Calificar ${s} estrella${s > 1 ? "s" : ""}`}
+                onClick={() => setRating(s)}
+                onMouseEnter={() => setHoverRating(s)}
+                onMouseLeave={() => setHoverRating(0)}
+              >
+                <Star
+                  size={24}
+                  className={`transition-colors ${
+                    s <= (hoverRating || rating)
+                      ? "text-yellow-400 fill-yellow-400"
+                      : "text-gray-200"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={2}
+            placeholder="Cuéntanos tu experiencia (opcional)"
+            className="w-full px-4 py-3 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa resize-none"
+          />
+          <button
+            onClick={submit}
+            disabled={rating === 0 || submitting}
+            className="bg-cocoa text-white font-semibold px-5 py-2.5 rounded-lg text-sm hover:bg-cocoa-deep transition-colors disabled:opacity-40"
+          >
+            {submitting ? "Enviando..." : "Enviar reseña"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

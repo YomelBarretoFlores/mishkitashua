@@ -6,6 +6,7 @@ import Timeline from "@/app/nosotros/_components/Timeline";
 
 export const metadata: Metadata = {
   title: "Nuestra Historia",
+  alternates: { canonical: "/nosotros" },
   description:
     "Conoce el legado de Mishkitashua: tradición, ingredientes andinos y el arte de la repostería artesanal desde Huaraz, Áncash.",
   openGraph: {

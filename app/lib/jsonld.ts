@@ -5,12 +5,15 @@ const BASE_URL = "https://mishkitashua.com";
 export function organizationJsonLd() {
   return {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "Bakery"],
     name: "Mishkitashua",
     url: BASE_URL,
     logo: `${BASE_URL}/images/logo.png`,
+    image: `${BASE_URL}/images/marca-todos-productos.png`,
     description:
       "Repostería artesanal andina. Alfajores y manjares saborizados con ingredientes de los Andes peruanos.",
+    telephone: "+51 943 247 410",
+    priceRange: "S/ 8 - S/ 15",
     address: {
       "@type": "PostalAddress",
       addressLocality: "Huaraz",
@@ -24,8 +27,11 @@ export function organizationJsonLd() {
   };
 }
 
-export function productJsonLd(product: Product) {
-  return {
+export function productJsonLd(
+  product: Product,
+  rating?: { average: number; count: number }
+) {
+  const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
@@ -33,6 +39,7 @@ export function productJsonLd(product: Product) {
     image: `${BASE_URL}${product.image}`,
     offers: {
       "@type": "Offer",
+      url: `${BASE_URL}/productos/${product.slug}`,
       price: product.price.toFixed(2),
       priceCurrency: "PEN",
       availability: "https://schema.org/InStock",
@@ -51,6 +58,19 @@ export function productJsonLd(product: Product) {
       unitCode: "GRM",
     },
   };
+
+  // Estrellas en los resultados de Google cuando hay reseñas.
+  if (rating && rating.count > 0) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: rating.average.toFixed(1),
+      reviewCount: rating.count,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+
+  return jsonLd;
 }
 
 export function faqJsonLd() {

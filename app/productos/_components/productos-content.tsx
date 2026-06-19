@@ -2,13 +2,45 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { Truck, Package, Store, ShoppingCart } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Truck, Package, Store, ShoppingCart, Search, Star, X } from "lucide-react";
 import { products, type Product } from "@/app/lib/products";
 import { useCart } from "@/app/lib/cart-context";
 import Reveal from "@/app/components/Reveal";
 
-function AddToCartCard({ product }: { product: Product }) {
+type RatingSummary = Record<string, { average: number; count: number }>;
+
+function CardStars({ rating, count }: { rating: number; count: number }) {
+  if (!count) return null;
+  return (
+    <div className="flex items-center gap-1.5 mb-2">
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((s) => (
+          <Star
+            key={s}
+            size={13}
+            className={
+              s <= Math.round(rating)
+                ? "text-yellow-400 fill-yellow-400"
+                : "text-cream-darker"
+            }
+          />
+        ))}
+      </div>
+      <span className="text-xs text-taupe">
+        {rating.toFixed(1)} ({count})
+      </span>
+    </div>
+  );
+}
+
+function AddToCartCard({
+  product,
+  rating,
+}: {
+  product: Product;
+  rating?: { average: number; count: number };
+}) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -29,7 +61,7 @@ function AddToCartCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/productos/${product.slug}`}
-      className="group bg-white rounded-2xl overflow-hidden border border-cream-darker/60 hover:shadow-lg hover:shadow-cocoa/8 transition-all duration-300 flex flex-col"
+      className="group bg-white rounded-2xl overflow-hidden border border-cream-darker/60 hover:shadow-lg hover:shadow-cocoa/8 transition-all duration-300 flex flex-col w-full"
     >
       <div className="relative h-[250px] sm:h-[300px] md:h-[350px] overflow-hidden bg-cream-dark">
         <Image
@@ -51,6 +83,7 @@ function AddToCartCard({ product }: { product: Product }) {
         >
           {product.name}
         </h3>
+        {rating && <CardStars rating={rating.average} count={rating.count} />}
         <p className="text-sm text-on-surface-variant leading-relaxed mb-4 flex-grow line-clamp-3">
           {product.description}
         </p>
@@ -58,24 +91,37 @@ function AddToCartCard({ product }: { product: Product }) {
           <span className="text-lg font-semibold text-caramel">
             S/ {product.price.toFixed(2)}
           </span>
-          <button
-            onClick={handleAdd}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              added
-                ? "bg-green-700 text-white"
-                : "bg-cocoa text-white hover:bg-cocoa-deep"
-            }`}
-          >
-            <ShoppingCart size={14} />
-            {added ? "Agregado" : "Agregar"}
-          </button>
+          {product.customizable ? (
+            <span className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-cocoa text-white group-hover:bg-cocoa-deep transition-colors">
+              <ShoppingCart size={14} />
+              Personalizar
+            </span>
+          ) : (
+            <button
+              onClick={handleAdd}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                added
+                  ? "bg-green-700 text-white"
+                  : "bg-cocoa text-white hover:bg-cocoa-deep"
+              }`}
+            >
+              <ShoppingCart size={14} />
+              {added ? "Agregado" : "Agregar"}
+            </button>
+          )}
         </div>
       </div>
     </Link>
   );
 }
 
-function AlfajorHeroCard({ product }: { product: Product }) {
+function AlfajorHeroCard({
+  product,
+  rating,
+}: {
+  product: Product;
+  rating?: { average: number; count: number };
+}) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
@@ -123,6 +169,7 @@ function AlfajorHeroCard({ product }: { product: Product }) {
         <p className="text-on-surface-variant italic mb-4">
           {product.subtitle}
         </p>
+        {rating && <CardStars rating={rating.average} count={rating.count} />}
         <p className="text-on-surface-variant leading-relaxed mb-6">
           {product.longDescription}
         </p>
@@ -140,19 +187,126 @@ function AlfajorHeroCard({ product }: { product: Product }) {
           <span className="text-2xl font-medium text-caramel">
             S/ {product.price.toFixed(2)}
           </span>
-          <button
-            onClick={handleAdd}
-            className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-              added
-                ? "bg-green-700 text-white"
-                : "bg-cocoa text-white hover:bg-cocoa-deep"
-            }`}
-          >
-            <ShoppingCart size={16} />
-            {added ? "Agregado" : "Agregar"}
-          </button>
+          {product.customizable ? (
+            <Link
+              href={`/productos/${product.slug}`}
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold bg-cocoa text-white hover:bg-cocoa-deep transition-colors"
+            >
+              <ShoppingCart size={16} />
+              Personalizar caja
+            </Link>
+          ) : (
+            <button
+              onClick={handleAdd}
+              className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                added
+                  ? "bg-green-700 text-white"
+                  : "bg-cocoa text-white hover:bg-cocoa-deep"
+              }`}
+            >
+              <ShoppingCart size={16} />
+              {added ? "Agregado" : "Agregar"}
+            </button>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+type SortOption = "destacados" | "precio-asc" | "precio-desc" | "mejor-valorados";
+type CategoryFilter = "todos" | "alfajores" | "manjares";
+
+function FilterBar({
+  query,
+  setQuery,
+  category,
+  setCategory,
+  sort,
+  setSort,
+  onClear,
+  active,
+  resultCount,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
+  category: CategoryFilter;
+  setCategory: (v: CategoryFilter) => void;
+  sort: SortOption;
+  setSort: (v: SortOption) => void;
+  onClear: () => void;
+  active: boolean;
+  resultCount: number;
+}) {
+  const categories: { value: CategoryFilter; label: string }[] = [
+    { value: "todos", label: "Todos" },
+    { value: "alfajores", label: "Alfajores" },
+    { value: "manjares", label: "Manjares" },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-5 md:px-16 mb-10">
+      <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4">
+        {/* Búsqueda */}
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-taupe"
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar producto..."
+            className="w-full pl-10 pr-4 py-2.5 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+          />
+        </div>
+
+        {/* Categorías */}
+        <div className="flex gap-2">
+          {categories.map((c) => (
+            <button
+              key={c.value}
+              onClick={() => setCategory(c.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors border ${
+                category === c.value
+                  ? "bg-cocoa text-white border-cocoa"
+                  : "bg-white text-cocoa-deep border-cream-darker hover:border-cocoa-light"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Orden */}
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortOption)}
+          className="px-4 py-2.5 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa transition-colors"
+        >
+          <option value="destacados">Destacados</option>
+          <option value="precio-asc">Precio: menor a mayor</option>
+          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="mejor-valorados">Mejor valorados</option>
+        </select>
+
+        {active && (
+          <button
+            onClick={onClear}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-cocoa hover:text-cocoa-deep transition-colors"
+          >
+            <X size={15} />
+            Limpiar
+          </button>
+        )}
+      </div>
+      {active && (
+        <p className="text-sm text-taupe mt-3 px-1">
+          {resultCount} producto{resultCount !== 1 ? "s" : ""} encontrado
+          {resultCount !== 1 ? "s" : ""}
+        </p>
+      )}
     </div>
   );
 }
@@ -160,6 +314,49 @@ function AlfajorHeroCard({ product }: { product: Product }) {
 export default function ProductosContent() {
   const alfajores = products.filter((p) => p.category === "alfajores");
   const manjares = products.filter((p) => p.category === "manjares");
+
+  const [ratings, setRatings] = useState<RatingSummary>({});
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<CategoryFilter>("todos");
+  const [sort, setSort] = useState<SortOption>("destacados");
+
+  useEffect(() => {
+    fetch("/api/reviews/summary")
+      .then((r) => r.json())
+      .then(setRatings)
+      .catch(() => {});
+  }, []);
+
+  const filtersActive =
+    query.trim() !== "" || category !== "todos" || sort !== "destacados";
+
+  const filtered = useMemo(() => {
+    let list = [...products];
+    if (category !== "todos") list = list.filter((p) => p.category === category);
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.subtitle.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q)
+      );
+    }
+    if (sort === "precio-asc") list.sort((a, b) => a.price - b.price);
+    else if (sort === "precio-desc") list.sort((a, b) => b.price - a.price);
+    else if (sort === "mejor-valorados")
+      list.sort(
+        (a, b) =>
+          (ratings[b.slug]?.average ?? 0) - (ratings[a.slug]?.average ?? 0)
+      );
+    return list;
+  }, [query, category, sort, ratings]);
+
+  const clearFilters = () => {
+    setQuery("");
+    setCategory("todos");
+    setSort("destacados");
+  };
 
   return (
     <>
@@ -182,6 +379,62 @@ export default function ProductosContent() {
         </p>
       </Reveal>
 
+      <FilterBar
+        query={query}
+        setQuery={setQuery}
+        category={category}
+        setCategory={setCategory}
+        sort={sort}
+        setSort={setSort}
+        onClear={clearFilters}
+        active={filtersActive}
+        resultCount={filtered.length}
+      />
+
+      {/* Vista filtrada (grilla unificada) */}
+      {filtersActive ? (
+        <section className="max-w-7xl mx-auto px-5 md:px-16 mb-20 md:mb-28">
+          {filtered.length === 0 ? (
+            <div className="bg-cream-dark rounded-3xl p-12 text-center">
+              <p className="text-on-surface-variant">
+                No encontramos productos con esos filtros.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((product) => (
+                <div key={product.slug} className="flex w-full">
+                  <AddToCartCard product={product} rating={ratings[product.slug]} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : (
+        <DefaultCatalog
+          alfajores={alfajores}
+          manjares={manjares}
+          ratings={ratings}
+        />
+      )}
+
+      {/* Shipping Info */}
+      <ShippingInfo />
+    </>
+  );
+}
+
+function DefaultCatalog({
+  alfajores,
+  manjares,
+  ratings,
+}: {
+  alfajores: Product[];
+  manjares: Product[];
+  ratings: RatingSummary;
+}) {
+  return (
+    <>
       {/* Alfajores Section */}
       <section
         className="max-w-7xl mx-auto px-5 md:px-16 mb-20 md:mb-28"
@@ -204,7 +457,7 @@ export default function ProductosContent() {
 
         {alfajores.map((product, i) => (
           <Reveal key={product.slug} direction="up" delay={i * 0.08}>
-            <AlfajorHeroCard product={product} />
+            <AlfajorHeroCard product={product} rating={ratings[product.slug]} />
           </Reveal>
         ))}
       </section>
@@ -231,16 +484,20 @@ export default function ProductosContent() {
           {manjares.map((product, i) => (
             <Reveal key={product.slug} className="flex" delay={i * 0.08}>
               <div className="w-full">
-                <AddToCartCard product={product} />
+                <AddToCartCard product={product} rating={ratings[product.slug]} />
               </div>
             </Reveal>
           ))}
         </div>
       </section>
+    </>
+  );
+}
 
-      {/* Shipping Info */}
-      <section className="max-w-7xl mx-auto px-5 md:px-16 mb-20 md:mb-28">
-        <div className="bg-cream-dark rounded-3xl p-8 md:p-12 border border-cream-darker/60">
+function ShippingInfo() {
+  return (
+    <section className="max-w-7xl mx-auto px-5 md:px-16 mb-20 md:mb-28">
+      <div className="bg-cream-dark rounded-3xl p-8 md:p-12 border border-cream-darker/60">
           <div className="text-center mb-10">
             <h2
               className="text-2xl md:text-[32px] font-medium text-cocoa-deep mb-4"
@@ -311,6 +568,5 @@ export default function ProductosContent() {
           </div>
         </div>
       </section>
-    </>
   );
 }

@@ -4,9 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight, Leaf, Mountain, Droplets, Minus, Plus, ShoppingBag } from "lucide-react";
+import { ChevronRight, Leaf, Mountain, Droplets, Minus, Plus, ShoppingBag, Zap } from "lucide-react";
 import { getProductBySlug } from "@/app/lib/products";
 import { useCart } from "@/app/lib/cart-context";
+import { isPromotionActive } from "@/app/lib/promotions";
+import { useActivePromotions } from "@/app/lib/promotions-context";
+import ProductReviews from "./product-reviews";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -15,6 +18,24 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [added, setAdded] = useState(false);
+  const [flavors, setFlavors] = useState<Record<string, number>>({});
+  const promos = useActivePromotions();
+
+  const boxSize = product?.boxSize ?? 0;
+  const flavorTotal = Object.values(flavors).reduce((s, n) => s + n, 0);
+  const customizationComplete = !product?.customizable || flavorTotal === boxSize;
+
+  const setFlavor = (flavor: string, value: number) => {
+    setFlavors((prev) => {
+      const next = { ...prev, [flavor]: Math.max(0, value) };
+      const others = Object.entries(next)
+        .filter(([k]) => k !== flavor)
+        .reduce((s, [, n]) => s + n, 0);
+      // No permitir exceder el tamaño de la caja.
+      if (others + next[flavor] > boxSize) next[flavor] = boxSize - others;
+      return next;
+    });
+  };
 
   if (!product) {
     return (
@@ -30,6 +51,7 @@ export default function ProductDetailPage() {
   }
 
   const handleAddToCart = () => {
+    if (product.customizable && !customizationComplete) return;
     addItem(
       {
         slug: product.slug,
@@ -37,6 +59,7 @@ export default function ProductDetailPage() {
         description: `${product.subtitle}, ${product.weight}`,
         price: product.price,
         image: product.image,
+        customization: product.customizable ? { ...flavors } : undefined,
       },
       quantity
     );
@@ -117,12 +140,32 @@ export default function ProductDetailPage() {
             {product.subtitle}
           </p>
 
-          <div className="flex items-baseline gap-3 mb-6">
+          <div className="flex items-baseline gap-3 mb-3">
             <span className="text-2xl font-semibold text-cocoa-deep">
               S/ {product.price.toFixed(2)}
             </span>
             <span className="text-sm text-taupe">/ {product.weight}</span>
           </div>
+
+          {(() => {
+            const promo = promos.find(
+              (p) =>
+                isPromotionActive(p) &&
+                (p.type === "flash_discount" || p.type === "buy_x_get_y") &&
+                (!p.productSlug || p.productSlug === product.slug)
+            );
+            if (!promo) return null;
+            const label =
+              promo.type === "buy_x_get_y"
+                ? "2x1"
+                : `-${promo.value ?? 0}%`;
+            return (
+              <div className="inline-flex items-center gap-1.5 bg-caramel-light/30 text-cocoa-deep text-sm font-semibold px-3 py-1.5 rounded-full mb-6">
+                <Zap size={14} className="text-caramel" />
+                {label} · {promo.title}
+              </div>
+            );
+          })()}
 
           <p className="text-on-surface-variant leading-relaxed mb-6">
             {product.longDescription}
@@ -140,6 +183,66 @@ export default function ProductDetailPage() {
               </span>
             ))}
           </div>
+
+          {/* Personalización de sabores */}
+          {product.customizable && product.flavorOptions && (
+            <div className="mb-6 bg-cream-dark rounded-2xl border border-cream-darker/60 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-cocoa-deep tracking-wide uppercase">
+                  Arma tu caja ({boxSize} unidades)
+                </label>
+                <span
+                  className={`text-sm font-semibold ${
+                    customizationComplete ? "text-green-700" : "text-caramel"
+                  }`}
+                >
+                  {flavorTotal}/{boxSize}
+                </span>
+              </div>
+              <div className="space-y-3">
+                {product.flavorOptions.map((flavor) => {
+                  const value = flavors[flavor] ?? 0;
+                  const atMax = flavorTotal >= boxSize;
+                  return (
+                    <div
+                      key={flavor}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-sm text-cocoa-deep">{flavor}</span>
+                      <div className="inline-flex items-center border border-cream-darker rounded-lg bg-white">
+                        <button
+                          type="button"
+                          onClick={() => setFlavor(flavor, value - 1)}
+                          disabled={value <= 0}
+                          className="p-2 text-cocoa-deep hover:bg-cream-dark transition-colors rounded-l-lg disabled:opacity-30"
+                          aria-label={`Quitar ${flavor}`}
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="px-4 py-1.5 text-sm font-semibold text-cocoa-deep min-w-[2.5rem] text-center">
+                          {value}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setFlavor(flavor, value + 1)}
+                          disabled={atMax}
+                          className="p-2 text-cocoa-deep hover:bg-cream-dark transition-colors rounded-r-lg disabled:opacity-30"
+                          aria-label={`Agregar ${flavor}`}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {!customizationComplete && (
+                <p className="text-xs text-taupe mt-3">
+                  Selecciona {boxSize} unidades en total para continuar.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Quantity & Add to Cart */}
           <div className="space-y-4">
@@ -168,7 +271,8 @@ export default function ProductDetailPage() {
 
             <button
               onClick={handleAddToCart}
-              className={`w-full flex items-center justify-center gap-2 font-semibold py-4 rounded-lg transition-colors ${
+              disabled={!customizationComplete}
+              className={`w-full flex items-center justify-center gap-2 font-semibold py-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 added
                   ? "bg-green-700 text-white"
                   : "bg-cocoa text-white hover:bg-cocoa-deep"
@@ -234,6 +338,9 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </section>
+
+      {/* Reseñas */}
+      <ProductReviews productSlug={product.slug} />
     </div>
   );
 }

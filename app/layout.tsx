@@ -8,6 +8,8 @@ import { organizationJsonLd } from "@/app/lib/jsonld";
 import WhatsAppButton from "@/app/components/WhatsAppButton";
 import Chatbot from "@/app/components/Chatbot";
 import WelcomePopup from "@/app/components/WelcomePopup";
+import FlashOffersBanner from "@/app/components/FlashOffersBanner";
+import { PromotionsProvider } from "@/app/lib/promotions-context";
 import PageTracker from "@/app/components/PageTracker";
 
 const ebGaramond = EB_Garamond({
@@ -68,10 +70,7 @@ export const metadata: Metadata = {
     images: ["/images/marca-todos-productos.png"],
   },
   manifest: "/manifest.json",
-  icons: {
-    icon: "/images/logo.png",
-    apple: "/images/logo.png",
-  },
+  // Los íconos se sirven por convención de archivos: app/icon.png y app/apple-icon.png.
   other: {
     "theme-color": "#3e2723",
   },
@@ -100,13 +99,16 @@ export default function RootLayout({
           }}
         />
         <CartProvider>
-          <PageTracker />
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <WhatsAppButton />
-          <Chatbot />
-          <WelcomePopup />
+          <PromotionsProvider>
+            <PageTracker />
+            <FlashOffersBanner />
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <WhatsAppButton />
+            <Chatbot />
+            <WelcomePopup />
+          </PromotionsProvider>
         </CartProvider>
       </body>
     </html>

@@ -17,9 +17,19 @@ export function trackEvent(
   const sessionId = getSessionId();
   if (!sessionId) return;
 
+  const payload = JSON.stringify({ type, sessionId, ...data });
+
+  // sendBeacon no bloquea el render y sobrevive a la navegación entre páginas.
+  if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+    const blob = new Blob([payload], { type: "application/json" });
+    if (navigator.sendBeacon("/api/analytics", blob)) return;
+  }
+
+  // Fallback: fetch con keepalive para que no se cancele al cambiar de página.
   fetch("/api/analytics", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type, sessionId, ...data }),
+    body: payload,
+    keepalive: true,
   }).catch(() => {});
 }

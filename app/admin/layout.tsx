@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Star, Users, Menu, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  Star,
+  Users,
+  Tag,
+  BarChart3,
+  Menu,
+  X,
+} from "lucide-react";
 
 function NavLinks() {
   return (
@@ -31,6 +40,20 @@ function NavLinks() {
       >
         <Star size={16} />
         Reseñas
+      </Link>
+      <Link
+        href="/admin/promociones"
+        className="flex items-center gap-1.5 text-sm text-white/80 hover:text-caramel-light transition-colors"
+      >
+        <Tag size={16} />
+        Promociones
+      </Link>
+      <Link
+        href="/admin/reportes"
+        className="flex items-center gap-1.5 text-sm text-white/80 hover:text-caramel-light transition-colors"
+      >
+        <BarChart3 size={16} />
+        Reportes
       </Link>
     </>
   );

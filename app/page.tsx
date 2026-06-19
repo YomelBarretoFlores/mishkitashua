@@ -7,6 +7,7 @@ import Reveal from "@/app/components/Reveal";
 
 export const metadata: Metadata = {
     title: "Mishkitashua — Sabores que nacen de nuestra tierra",
+    alternates: { canonical: "/" },
     description:
         "Repostería artesanal andina. Alfajores y manjares saborizados con ingredientes de los Andes peruanos: Tunaluna, Sol Aguaymanto y Muña Andina.",
     openGraph: {

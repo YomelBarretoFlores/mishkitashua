@@ -13,7 +13,7 @@ export async function GET(
       include: {
         items: true,
         customer: true,
-        review: true,
+        reviews: true,
       },
     });
 

@@ -3,6 +3,7 @@ import ProductosContent from "./_components/productos-content";
 
 export const metadata: Metadata = {
     title: "Nuestras Creaciones",
+    alternates: { canonical: "/productos" },
     description:
         "Explora nuestra selección de alfajores artesanales y manjares saborizados de los Andes peruanos. Tunaluna, Sol Aguaymanto y Muña Andina.",
     openGraph: {

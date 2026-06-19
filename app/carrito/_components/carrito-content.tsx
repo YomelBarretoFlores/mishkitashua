@@ -2,14 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Lock } from "lucide-react";
-import { useCart } from "@/app/lib/cart-context";
+import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Lock, Gift } from "lucide-react";
+import { useCart, cartItemKey } from "@/app/lib/cart-context";
+import { usePromotions } from "@/app/lib/promotions-context";
 
 const SHIPPING_COST = 12.0;
 
 export default function CarritoPage() {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
-  const total = subtotal + (items.length > 0 ? SHIPPING_COST : 0);
+  const promo = usePromotions(
+    items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
+  );
+  const shipping = items.length > 0 ? (promo.freeShipping ? 0 : SHIPPING_COST) : 0;
+  const total = subtotal - promo.discount + shipping;
 
   if (items.length === 0) {
     return (
@@ -52,9 +57,11 @@ export default function CarritoPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Items */}
         <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
+          {items.map((item) => {
+            const key = cartItemKey(item);
+            return (
             <div
-              key={item.slug}
+              key={key}
               className="bg-white rounded-2xl border border-cream-darker/60 p-5 md:p-6"
             >
               <div className="flex gap-4 md:gap-6">
@@ -77,9 +84,17 @@ export default function CarritoPage() {
                       <p className="text-sm text-on-surface-variant">
                         {item.description}
                       </p>
+                      {item.customization && (
+                        <p className="text-xs text-caramel mt-1">
+                          {Object.entries(item.customization)
+                            .filter(([, n]) => n > 0)
+                            .map(([flavor, n]) => `${n} ${flavor}`)
+                            .join(" · ")}
+                        </p>
+                      )}
                     </div>
                     <button
-                      onClick={() => removeItem(item.slug)}
+                      onClick={() => removeItem(key)}
                       className="p-2 text-taupe hover:text-red-600 transition-colors"
                       aria-label="Eliminar"
                     >
@@ -91,7 +106,7 @@ export default function CarritoPage() {
                     <div className="inline-flex items-center border border-cream-darker rounded-lg">
                       <button
                         onClick={() =>
-                          updateQuantity(item.slug, item.quantity - 1)
+                          updateQuantity(key, item.quantity - 1)
                         }
                         className="p-2 text-cocoa-deep hover:bg-cream-dark transition-colors rounded-l-lg"
                       >
@@ -102,7 +117,7 @@ export default function CarritoPage() {
                       </span>
                       <button
                         onClick={() =>
-                          updateQuantity(item.slug, item.quantity + 1)
+                          updateQuantity(key, item.quantity + 1)
                         }
                         className="p-2 text-cocoa-deep hover:bg-cream-dark transition-colors rounded-r-lg"
                       >
@@ -116,7 +131,8 @@ export default function CarritoPage() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Order Summary */}
@@ -134,9 +150,19 @@ export default function CarritoPage() {
                 <span>Subtotal</span>
                 <span>S/ {subtotal.toFixed(2)}</span>
               </div>
+              {promo.discount > 0 && (
+                <div className="flex justify-between text-sm text-green-700 font-medium">
+                  <span>Descuento</span>
+                  <span>- S/ {promo.discount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-on-surface-variant">
                 <span>Envío estimado</span>
-                <span>S/ {SHIPPING_COST.toFixed(2)}</span>
+                {promo.freeShipping ? (
+                  <span className="text-green-700 font-medium">Gratis</span>
+                ) : (
+                  <span>S/ {SHIPPING_COST.toFixed(2)}</span>
+                )}
               </div>
               <div className="border-t border-cream-darker pt-3 flex justify-between">
                 <span className="font-semibold text-cocoa-deep">Total</span>
@@ -145,6 +171,16 @@ export default function CarritoPage() {
                 </span>
               </div>
             </div>
+
+            {promo.gift && (
+              <div className="flex items-start gap-2 bg-caramel-light/20 border border-caramel-light/50 rounded-xl p-3 mb-6">
+                <Gift size={16} className="text-caramel shrink-0 mt-0.5" />
+                <p className="text-xs text-cocoa-deep">
+                  <span className="font-semibold">¡Regalo sorpresa incluido!</span>{" "}
+                  {promo.gift}
+                </p>
+              </div>
+            )}
 
             <Link
               href="/checkout"

@@ -1,11 +1,22 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, ArrowRight } from "lucide-react";
+import { X, Send, ArrowRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { products } from "@/app/lib/products";
 import { trackEvent } from "@/app/lib/analytics";
+import { ASSISTANT_NAME, SLOGAN } from "@/app/lib/brand";
+import { useActivePromotions } from "@/app/lib/promotions-context";
+
+// Avatar de Mashuy: burbuja con chispa, reutilizada en botón flotante y header.
+function MashuyAvatar({ size = 18 }: { size?: number }) {
+  return (
+    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-caramel-light/30 text-caramel shrink-0">
+      <Sparkles size={size} />
+    </span>
+  );
+}
 
 type Message = {
   from: "bot" | "user";
@@ -27,12 +38,19 @@ const ingredientsList = products
 
 const MENU_OPTIONS = [
   { label: "Productos y precios", key: "productos" },
+  { label: "🎁 Promociones", key: "promociones" },
   { label: "Ingredientes y alérgenos", key: "ingredientes" },
   { label: "Envíos y entregas", key: "envios" },
   { label: "Métodos de pago", key: "pagos" },
   { label: "Horarios y contacto", key: "horarios" },
   { label: "Hacer un pedido", key: "pedido" },
 ];
+
+type ActivePromotion = {
+  title: string;
+  description: string | null;
+  type: string;
+};
 
 function getResponse(key: string): Message {
   switch (key) {
@@ -78,6 +96,12 @@ function getResponse(key: string): Message {
         link: { label: "Ir a la tienda", href: "/productos" },
         options: [{ label: "← Volver al menú", key: "menu" }],
       };
+    case "saludo":
+      return {
+        from: "bot",
+        text: `¡Hola! 👋 Soy ${ASSISTANT_NAME}, tu asistente de Mishkitashua. ${SLOGAN}. ¿En qué te ayudo hoy?`,
+        options: MENU_OPTIONS,
+      };
     case "menu":
       return {
         from: "bot",
@@ -93,8 +117,46 @@ function getResponse(key: string): Message {
   }
 }
 
+function buildPromotionsMessage(promos: ActivePromotion[]): Message {
+  if (!promos || promos.length === 0) {
+    return {
+      from: "bot",
+      text: "Por ahora no tenemos promociones activas, ¡pero vuelve pronto! 😉",
+      link: { label: "Ver productos", href: "/productos" },
+      options: [{ label: "← Volver al menú", key: "menu" }],
+    };
+  }
+  const list = promos
+    .map((p) => `• ${p.title}${p.description ? ` — ${p.description}` : ""}`)
+    .join("\n");
+  return {
+    from: "bot",
+    text: `¡Tenemos promociones activas! 🎉\n\n${list}`,
+    link: { label: "Aprovechar ahora", href: "/productos" },
+    options: [{ label: "← Volver al menú", key: "menu" }],
+  };
+}
+
 function matchKeyword(text: string): string {
   const lower = text.toLowerCase();
+  if (
+    lower.includes("hola") ||
+    lower.includes("buenas") ||
+    lower.includes("buenos días") ||
+    lower.includes("buenos dias") ||
+    lower.includes("gracias")
+  )
+    return "saludo";
+  if (
+    lower.includes("promo") ||
+    lower.includes("oferta") ||
+    lower.includes("descuento") ||
+    lower.includes("2x1") ||
+    lower.includes("regalo") ||
+    lower.includes("cupón") ||
+    lower.includes("cupon")
+  )
+    return "promociones";
   if (
     lower.includes("precio") ||
     lower.includes("producto") ||
@@ -145,12 +207,13 @@ export default function Chatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       from: "bot",
-      text: "¡Hola! Soy el asistente de Mishkitashua. ¿En qué puedo ayudarte?",
+      text: `¡Hola! 👋 Soy ${ASSISTANT_NAME}, tu asistente andino de Mishkitashua. Puedo ayudarte con productos, promociones, envíos y más. ¿Qué necesitas?`,
       options: MENU_OPTIONS,
     },
   ]);
   const [input, setInput] = useState("");
   const reduce = useReducedMotion();
+  const activePromos = useActivePromotions();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -162,18 +225,22 @@ export default function Chatbot() {
     trackEvent("chatbot_open");
   };
 
-  const handleOption = (key: string) => {
-    if (key === "menu") {
-      setMessages((prev) => [...prev, getResponse("menu")]);
+  const respond = (key: string) => {
+    if (key === "promociones") {
+      setMessages((prev) => [...prev, buildPromotionsMessage(activePromos)]);
       return;
     }
-    const optionLabel =
-      MENU_OPTIONS.find((o) => o.key === key)?.label || key;
-    setMessages((prev) => [
-      ...prev,
-      { from: "user", text: optionLabel },
-      getResponse(key),
-    ]);
+    setMessages((prev) => [...prev, getResponse(key)]);
+  };
+
+  const handleOption = (key: string) => {
+    if (key === "menu") {
+      respond("menu");
+      return;
+    }
+    const optionLabel = MENU_OPTIONS.find((o) => o.key === key)?.label || key;
+    setMessages((prev) => [...prev, { from: "user", text: optionLabel }]);
+    respond(key);
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -181,7 +248,8 @@ export default function Chatbot() {
     if (!input.trim()) return;
     const userMsg: Message = { from: "user", text: input };
     const key = matchKeyword(input);
-    setMessages((prev) => [...prev, userMsg, getResponse(key)]);
+    setMessages((prev) => [...prev, userMsg]);
+    respond(key);
     setInput("");
   };
 
@@ -196,9 +264,9 @@ export default function Chatbot() {
             exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
             transition={{ type: "spring", stiffness: 400, damping: 22 }}
             className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-cocoa-deep text-white rounded-full flex items-center justify-center shadow-lg hover:bg-cocoa transition-colors hover:scale-110"
-            aria-label="Abrir chat"
+            aria-label={`Abrir chat con ${ASSISTANT_NAME}`}
           >
-            <MessageCircle size={24} />
+            <Sparkles size={24} />
           </motion.button>
         )}
       </AnimatePresence>
@@ -217,14 +285,19 @@ export default function Chatbot() {
         >
           {/* Header */}
           <div className="bg-cocoa-deep text-white px-4 py-3 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <MessageCircle size={18} />
-              <span
-                className="font-medium"
-                style={{ fontFamily: "var(--font-eb-garamond), serif" }}
-              >
-                Asistente Mishkitashua
-              </span>
+            <div className="flex items-center gap-2.5">
+              <MashuyAvatar />
+              <div className="leading-tight">
+                <span
+                  className="font-medium block"
+                  style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+                >
+                  {ASSISTANT_NAME}
+                </span>
+                <span className="text-[11px] text-white/70">
+                  Asistente de Mishkitashua
+                </span>
+              </div>
             </div>
             <button
               onClick={() => setOpen(false)}

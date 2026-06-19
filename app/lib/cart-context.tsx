@@ -19,13 +19,29 @@ export type CartItem = {
   price: number;
   quantity: number;
   image: string;
+  // Personalización (ej: cantidad por sabor de la caja de alfajores).
+  customization?: Record<string, number>;
 };
+
+// Clave única de línea de carrito: mismo producto con distinta personalización
+// se trata como ítems separados.
+export function cartItemKey(item: {
+  slug: string;
+  customization?: Record<string, number>;
+}): string {
+  if (!item.customization) return item.slug;
+  const entries = Object.entries(item.customization)
+    .filter(([, n]) => n > 0)
+    .sort(([a], [b]) => a.localeCompare(b));
+  if (entries.length === 0) return item.slug;
+  return `${item.slug}#${entries.map(([k, v]) => `${k}:${v}`).join(",")}`;
+}
 
 type CartContextType = {
   items: CartItem[];
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  removeItem: (slug: string) => void;
-  updateQuantity: (slug: string, quantity: number) => void;
+  removeItem: (key: string) => void;
+  updateQuantity: (key: string, quantity: number) => void;
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
@@ -62,11 +78,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(
     (item: Omit<CartItem, "quantity">, quantity = 1) => {
       trackEvent("add_to_cart", { productSlug: item.slug });
+      const key = cartItemKey(item);
       setItems((prev) => {
-        const existing = prev.find((i) => i.slug === item.slug);
+        const existing = prev.find((i) => cartItemKey(i) === key);
         if (existing) {
           return prev.map((i) =>
-            i.slug === item.slug
+            cartItemKey(i) === key
               ? { ...i, quantity: i.quantity + quantity }
               : i
           );
@@ -77,17 +94,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const removeItem = useCallback((slug: string) => {
-    setItems((prev) => prev.filter((i) => i.slug !== slug));
+  const removeItem = useCallback((key: string) => {
+    setItems((prev) => prev.filter((i) => cartItemKey(i) !== key));
   }, []);
 
-  const updateQuantity = useCallback((slug: string, quantity: number) => {
+  const updateQuantity = useCallback((key: string, quantity: number) => {
     if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.slug !== slug));
+      setItems((prev) => prev.filter((i) => cartItemKey(i) !== key));
       return;
     }
     setItems((prev) =>
-      prev.map((i) => (i.slug === slug ? { ...i, quantity } : i))
+      prev.map((i) => (cartItemKey(i) === key ? { ...i, quantity } : i))
     );
   }, []);
 

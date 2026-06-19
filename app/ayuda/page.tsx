@@ -6,6 +6,7 @@ import { faqJsonLd } from "@/app/lib/jsonld";
 
 export const metadata: Metadata = {
   title: "Preguntas Frecuentes y Envíos",
+  alternates: { canonical: "/ayuda" },
   description:
     "Todo sobre conservación, ingredientes, pedidos y envíos de nuestros alfajores andinos y manjares saborizados Mishkitashua.",
   openGraph: {

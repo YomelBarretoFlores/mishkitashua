@@ -5,7 +5,14 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/carrito", "/checkout", "/confirmacion"],
+      disallow: [
+        "/carrito",
+        "/checkout",
+        "/confirmacion",
+        "/seguimiento",
+        "/admin",
+        "/api",
+      ],
     },
     sitemap: "https://mishkitashua.com/sitemap.xml",
   };
