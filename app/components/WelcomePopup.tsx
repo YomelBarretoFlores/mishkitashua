@@ -7,6 +7,7 @@ import Link from "next/link";
 import { X, ArrowRight, Truck, Sparkles, LogIn } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useAuth } from "@clerk/nextjs";
+import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 
 const HIDDEN_ROUTES = ["/admin", "/checkout", "/confirmacion"];
 const STORAGE_KEY = "mishkitashua-welcome-shown";
@@ -16,6 +17,10 @@ export default function WelcomePopup() {
   const pathname = usePathname();
   const reduce = useReducedMotion();
   const { isLoaded, isSignedIn } = useAuth();
+  const firstPurchaseEligible = useFirstPurchase();
+  // La oferta de envío gratis se muestra a visitantes y a usuarios que aún no
+  // han comprado. Se oculta solo para clientes con sesión que ya tienen pedidos.
+  const showFreeShipping = !isSignedIn || firstPurchaseEligible;
 
   useEffect(() => {
     if (HIDDEN_ROUTES.some((r) => pathname.startsWith(r))) return;
@@ -119,21 +124,23 @@ export default function WelcomePopup() {
                 Sabores que nacen de nuestra tierra
               </motion.p>
 
-              {/* Oferta destacada tipo cupón */}
-              <motion.div
-                variants={pop}
-                className="flex items-center gap-3 bg-caramel-light/25 border border-dashed border-caramel/50 rounded-xl px-4 py-3 mb-5 text-left"
-              >
-                <div className="w-10 h-10 rounded-full bg-caramel/15 flex items-center justify-center shrink-0">
-                  <Truck size={20} className="text-caramel" />
-                </div>
-                <p className="text-sm text-cocoa-deep leading-snug">
-                  <span className="font-bold text-caramel uppercase tracking-wide">
-                    Envío gratis
-                  </span>{" "}
-                  en tu primera compra
-                </p>
-              </motion.div>
+              {/* Oferta destacada tipo cupón — solo si el envío gratis aún aplica */}
+              {showFreeShipping && (
+                <motion.div
+                  variants={pop}
+                  className="flex items-center gap-3 bg-caramel-light/25 border border-dashed border-caramel/50 rounded-xl px-4 py-3 mb-5 text-left"
+                >
+                  <div className="w-10 h-10 rounded-full bg-caramel/15 flex items-center justify-center shrink-0">
+                    <Truck size={20} className="text-caramel" />
+                  </div>
+                  <p className="text-sm text-cocoa-deep leading-snug">
+                    <span className="font-bold text-caramel uppercase tracking-wide">
+                      Envío gratis
+                    </span>{" "}
+                    en tu primera compra
+                  </p>
+                </motion.div>
+              )}
 
               <motion.div variants={item}>
                 <Link
@@ -161,12 +168,14 @@ export default function WelcomePopup() {
                 </motion.div>
               )}
 
-              <motion.p
-                variants={item}
-                className="text-[11px] text-taupe mt-3"
-              >
-                Sin código · se aplica al finalizar tu compra
-              </motion.p>
+              {showFreeShipping && (
+                <motion.p
+                  variants={item}
+                  className="text-[11px] text-taupe mt-3"
+                >
+                  Sin código · se aplica al finalizar tu compra
+                </motion.p>
+              )}
             </motion.div>
           </motion.div>
         </div>
