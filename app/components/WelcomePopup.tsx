@@ -9,7 +9,13 @@ import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useAuth } from "@clerk/nextjs";
 import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 
-const HIDDEN_ROUTES = ["/admin", "/checkout", "/confirmacion"];
+const HIDDEN_ROUTES = [
+  "/admin",
+  "/checkout",
+  "/confirmacion",
+  "/ingresar",
+  "/registro",
+];
 const STORAGE_KEY = "mishkitashua-welcome-shown";
 
 export default function WelcomePopup() {

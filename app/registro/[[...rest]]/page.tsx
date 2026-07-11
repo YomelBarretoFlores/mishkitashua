@@ -1,5 +1,7 @@
 import { SignUp } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import AuthShell from "@/app/components/AuthShell";
+import { authAppearance } from "@/app/lib/clerk-appearance";
 
 export const metadata: Metadata = {
   title: "Crear cuenta",
@@ -8,14 +10,15 @@ export const metadata: Metadata = {
 
 export default function RegistroPage() {
   return (
-    <div className="max-w-7xl mx-auto px-5 py-16 md:py-24 flex justify-center">
+    <AuthShell
+      title="Crea tu cuenta"
+      subtitle="Regístrate y recibe envío gratis en tu primera compra."
+    >
       <SignUp
-        appearance={{
-          variables: { colorPrimary: "#3e2723" },
-        }}
+        appearance={authAppearance}
         signInUrl="/ingresar"
         fallbackRedirectUrl="/cuenta"
       />
-    </div>
+    </AuthShell>
   );
 }

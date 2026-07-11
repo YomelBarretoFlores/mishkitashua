@@ -1,0 +1,18 @@
+// Apariencia compartida de los widgets de Clerk (SignIn / SignUp).
+// Se funde con el AuthShell: sin tarjeta ni sombra propias, y se oculta su
+// encabezado porque el título lo pone el AuthShell con la fuente de la marca.
+export const authAppearance = {
+  variables: {
+    colorPrimary: "#3e2723",
+    fontFamily: "var(--font-plus-jakarta), system-ui, sans-serif",
+    borderRadius: "0.5rem",
+  },
+  elements: {
+    rootBox: "w-full",
+    cardBox: "w-full !shadow-none !border-0",
+    card: "w-full !shadow-none !border-0 !bg-transparent !px-0 !py-0 gap-5",
+    header: "!hidden",
+    footer: "!bg-transparent",
+    footerAction: "!bg-transparent",
+  },
+};
