@@ -1,6 +1,7 @@
-import { SignUp } from "@clerk/nextjs";
+import { SignUp, ClerkLoading, ClerkLoaded } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import AuthShell from "@/app/components/AuthShell";
+import AuthFormSkeleton from "@/app/components/AuthFormSkeleton";
 import { authAppearance } from "@/app/lib/clerk-appearance";
 
 export const metadata: Metadata = {
@@ -14,11 +15,16 @@ export default function RegistroPage() {
       title="Crea tu cuenta"
       subtitle="Regístrate y recibe envío gratis en tu primera compra."
     >
-      <SignUp
-        appearance={authAppearance}
-        signInUrl="/ingresar"
-        fallbackRedirectUrl="/cuenta"
-      />
+      <ClerkLoading>
+        <AuthFormSkeleton />
+      </ClerkLoading>
+      <ClerkLoaded>
+        <SignUp
+          appearance={authAppearance}
+          signInUrl="/ingresar"
+          fallbackRedirectUrl="/cuenta"
+        />
+      </ClerkLoaded>
     </AuthShell>
   );
 }
