@@ -1,28 +1,41 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/app/lib/prisma";
+import { enforceRateLimit } from "@/app/lib/ratelimit";
+
+const eventSchema = z.object({
+  type: z.enum([
+    "page_view",
+    "add_to_cart",
+    "checkout_start",
+    "purchase",
+    "chatbot_open",
+  ]),
+  page: z.string().max(300).optional().nullable(),
+  productSlug: z.string().max(120).optional().nullable(),
+  sessionId: z.string().max(100).optional().nullable(),
+  metadata: z.string().max(2000).optional().nullable(),
+});
 
 export async function POST(request: Request) {
-  try {
-    const { type, page, productSlug, sessionId, metadata } =
-      await request.json();
+  // Límite generoso: se dispara en cada page view.
+  const limited = enforceRateLimit(request, "analytics", 60, 60_000);
+  if (limited) return limited;
 
-    // type es obligatorio; sin él no hay evento que registrar.
-    if (!type) {
-      return NextResponse.json(
-        { error: "type es requerido" },
-        { status: 400 }
-      );
+  try {
+    const parsed = eventSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
+    const { type, page, productSlug, sessionId, metadata } = parsed.data;
 
     await prisma.analyticsEvent.create({
-      // sessionId es obligatorio en el schema: usamos "anonymous" como red de
-      // seguridad para que datos incompletos no generen un 500.
       data: {
         type,
-        page,
-        productSlug,
+        page: page ?? undefined,
+        productSlug: productSlug ?? undefined,
         sessionId: sessionId || "anonymous",
-        metadata,
+        metadata: metadata ?? undefined,
       },
     });
 

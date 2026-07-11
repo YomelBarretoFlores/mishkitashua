@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import SeguimientoContent from "./_components/seguimiento-content";
 
 export const metadata: Metadata = {
@@ -8,5 +9,15 @@ export const metadata: Metadata = {
 };
 
 export default function SeguimientoPage() {
-  return <SeguimientoContent />;
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-3xl mx-auto px-5 py-24 text-center text-on-surface-variant">
+          Cargando...
+        </div>
+      }
+    >
+      <SeguimientoContent />
+    </Suspense>
+  );
 }

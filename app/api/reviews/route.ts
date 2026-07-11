@@ -1,5 +1,14 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/app/lib/prisma";
+import { enforceRateLimit } from "@/app/lib/ratelimit";
+
+const reviewSchema = z.object({
+  orderId: z.string().min(1).max(60),
+  productSlug: z.string().max(120).optional().nullable(),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional().nullable(),
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -41,15 +50,14 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, "reviews", 10, 60_000);
+  if (limited) return limited;
   try {
-    const { orderId, productSlug, rating, comment } = await request.json();
-
-    if (!rating || rating < 1 || rating > 5) {
-      return NextResponse.json(
-        { error: "La calificación debe estar entre 1 y 5" },
-        { status: 400 }
-      );
+    const parsed = reviewSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
     }
+    const { orderId, productSlug, rating, comment } = parsed.data;
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -71,10 +79,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const existing = await prisma.review.findUnique({
-      where: {
-        orderId_productSlug: { orderId, productSlug: productSlug ?? null },
-      },
+    const existing = await prisma.review.findFirst({
+      where: { orderId, productSlug: productSlug ?? null },
     });
 
     if (existing) {

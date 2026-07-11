@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Tag, Power } from "lucide-react";
+import { Plus, Trash2, Tag, Power, Mail } from "lucide-react";
 import { products } from "@/app/lib/products";
 
 type Promotion = {
@@ -89,6 +89,33 @@ export default function PromocionesPage() {
     if (!confirm("¿Eliminar esta promoción?")) return;
     await fetch(`/api/admin/promociones?id=${id}`, { method: "DELETE" });
     load();
+  };
+
+  const [sending, setSending] = useState<string | null>(null);
+  const sendCampaign = async (promo: Promotion) => {
+    if (
+      !confirm(
+        `¿Enviar "${promo.title}" por correo a todos los clientes suscritos?`
+      )
+    )
+      return;
+    setSending(promo.id);
+    const res = await fetch("/api/admin/promociones/campaign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ promotionId: promo.id }),
+    });
+    setSending(null);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      alert(
+        `Campaña enviada a ${data.sent}/${data.recipients} clientes${
+          data.simulated ? " (modo simulación: revisa la consola)" : ""
+        }.`
+      );
+    } else {
+      alert(data.error || "No se pudo enviar la campaña.");
+    }
   };
 
   const showValue = form.type === "flash_discount";
@@ -316,6 +343,14 @@ export default function PromocionesPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => sendCampaign(promo)}
+                    disabled={sending === promo.id}
+                    title="Enviar por correo a los clientes"
+                    className="p-2 text-cocoa hover:bg-cream-dark rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <Mail size={16} />
+                  </button>
                   <button
                     onClick={() => toggleActive(promo)}
                     title={promo.active ? "Desactivar" : "Activar"}

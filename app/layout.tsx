@@ -9,7 +9,10 @@ import WhatsAppButton from "@/app/components/WhatsAppButton";
 import Chatbot from "@/app/components/Chatbot";
 import WelcomePopup from "@/app/components/WelcomePopup";
 import FlashOffersBanner from "@/app/components/FlashOffersBanner";
+import CartSessionSync from "@/app/components/CartSessionSync";
 import { PromotionsProvider } from "@/app/lib/promotions-context";
+import { ClerkProvider } from "@clerk/nextjs";
+import { esES } from "@clerk/localizations";
 import PageTracker from "@/app/components/PageTracker";
 
 const ebGaramond = EB_Garamond({
@@ -82,35 +85,38 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="es"
-      className={`${ebGaramond.variable} ${plusJakarta.variable} h-full antialiased`}
-    >
-      <body
-        className="min-h-full flex flex-col"
-        style={{
-          fontFamily: "var(--font-plus-jakarta), system-ui, sans-serif",
-        }}
+    <ClerkProvider localization={esES}>
+      <html
+        lang="es"
+        className={`${ebGaramond.variable} ${plusJakarta.variable} h-full antialiased`}
       >
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd()),
+        <body
+          className="min-h-full flex flex-col"
+          style={{
+            fontFamily: "var(--font-plus-jakarta), system-ui, sans-serif",
           }}
-        />
-        <CartProvider>
-          <PromotionsProvider>
-            <PageTracker />
-            <FlashOffersBanner />
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <WhatsAppButton />
-            <Chatbot />
-            <WelcomePopup />
-          </PromotionsProvider>
-        </CartProvider>
-      </body>
-    </html>
+        >
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(organizationJsonLd()),
+            }}
+          />
+          <CartProvider>
+            <CartSessionSync />
+            <PromotionsProvider>
+              <PageTracker />
+              <FlashOffersBanner />
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              <WhatsAppButton />
+              <Chatbot />
+              <WelcomePopup />
+            </PromotionsProvider>
+          </CartProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

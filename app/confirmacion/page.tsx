@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
+import { useCart } from "@/app/lib/cart-context";
 import {
   CheckCircle,
   Calendar,
@@ -35,9 +36,20 @@ type Order = {
 function ConfirmacionContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order");
+  const isFresh = searchParams.get("fresh") === "1";
+  const { clearCart } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [reviewedSlugs, setReviewedSlugs] = useState<string[]>([]);
+
+  // Tras una compra nueva (fresh=1), vaciar el carrito. Solo una vez.
+  useEffect(() => {
+    if (isFresh) {
+      clearCart();
+      // Quita el flag de la URL para que un refresh no vuelva a limpiar.
+      window.history.replaceState(null, "", `/confirmacion?order=${orderId}`);
+    }
+  }, [isFresh, clearCart, orderId]);
 
   useEffect(() => {
     if (!orderId) {

@@ -9,6 +9,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { requireAdminPage } from "@/app/lib/auth";
 
 function NavLinks() {
   return (
@@ -59,11 +60,14 @@ function NavLinks() {
   );
 }
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Protección a nivel de recurso: solo admins ven el panel.
+  await requireAdminPage();
+
   return (
     <div className="min-h-screen bg-cream">
       <nav className="bg-cocoa-deep text-white">

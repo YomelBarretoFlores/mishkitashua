@@ -3,10 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, User, LayoutDashboard, Package } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCart } from "@/app/lib/cart-context";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 const links = [
     { href: "/productos", label: "Productos" },
@@ -19,6 +20,8 @@ const links = [
 export default function Navbar() {
     const pathname = usePathname();
     const { totalItems, hydrated } = useCart();
+    const { isSignedIn, user } = useUser();
+    const isAdmin = user?.publicMetadata?.role === "admin";
     const [menuOpen, setMenuOpen] = useState(false);
 
     return (
@@ -41,7 +44,7 @@ export default function Navbar() {
                     </span>
                 </Link>
 
-                <div className="hidden md:flex items-center gap-8">
+                <div className="hidden md:flex items-center gap-5 lg:gap-7">
                     {links.map((link) => (
                         <Link
                             key={link.href}
@@ -57,7 +60,7 @@ export default function Navbar() {
                     ))}
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <Link
                         href="/carrito"
                         className="relative p-2 text-cocoa-deep hover:text-caramel transition-colors"
@@ -82,6 +85,41 @@ export default function Navbar() {
                             )}
                         </AnimatePresence>
                     </Link>
+
+                    {!isSignedIn && (
+                        <Link
+                            href="/ingresar"
+                            className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-cocoa-light hover:text-cocoa-deep transition-colors"
+                        >
+                            <User size={16} />
+                            Ingresar
+                        </Link>
+                    )}
+                    {isSignedIn && (
+                        <UserButton
+                            appearance={{ elements: { avatarBox: "w-8 h-8" } }}
+                        >
+                            <UserButton.MenuItems>
+                                <UserButton.Link
+                                    label="Mi cuenta"
+                                    labelIcon={<User size={15} />}
+                                    href="/cuenta"
+                                />
+                                <UserButton.Link
+                                    label="Mis pedidos"
+                                    labelIcon={<Package size={15} />}
+                                    href="/cuenta/pedidos"
+                                />
+                                {isAdmin && (
+                                    <UserButton.Link
+                                        label="Panel de administración"
+                                        labelIcon={<LayoutDashboard size={15} />}
+                                        href="/admin"
+                                    />
+                                )}
+                            </UserButton.MenuItems>
+                        </UserButton>
+                    )}
 
                     <Link
                         href="/productos"
@@ -117,6 +155,42 @@ export default function Navbar() {
                                 {link.label}
                             </Link>
                         ))}
+                        {!isSignedIn && (
+                            <Link
+                                href="/ingresar"
+                                onClick={() => setMenuOpen(false)}
+                                className="block text-base font-medium py-2 text-cocoa-deep"
+                            >
+                                Ingresar
+                            </Link>
+                        )}
+                        {isSignedIn && (
+                            <>
+                                <Link
+                                    href="/cuenta"
+                                    onClick={() => setMenuOpen(false)}
+                                    className="block text-base font-medium py-2 text-cocoa-deep"
+                                >
+                                    Mi cuenta
+                                </Link>
+                                <Link
+                                    href="/cuenta/pedidos"
+                                    onClick={() => setMenuOpen(false)}
+                                    className="block text-base font-medium py-2 text-cocoa-deep"
+                                >
+                                    Mis pedidos
+                                </Link>
+                                {isAdmin && (
+                                    <Link
+                                        href="/admin"
+                                        onClick={() => setMenuOpen(false)}
+                                        className="block text-base font-medium py-2 text-cocoa-deep"
+                                    >
+                                        Admin
+                                    </Link>
+                                )}
+                            </>
+                        )}
                         <Link
                             href="/productos"
                             onClick={() => setMenuOpen(false)}

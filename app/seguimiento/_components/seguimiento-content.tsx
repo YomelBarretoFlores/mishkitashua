@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Package, ChefHat, Truck, CheckCircle } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import { Search } from "lucide-react";
+import { ORDER_STEPS as steps, orderStepIndex } from "@/app/lib/order-status";
 
 type Order = {
   id: string;
@@ -13,27 +15,20 @@ type Order = {
   items: { productName: string; quantity: number; price: number }[];
 };
 
-const steps = [
-  { key: "confirmado", label: "Confirmado", icon: Package },
-  { key: "preparando", label: "En preparación", icon: ChefHat },
-  { key: "enviado", label: "Enviado", icon: Truck },
-  { key: "entregado", label: "Entregado", icon: CheckCircle },
-];
-
 export default function SeguimientoContent() {
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  const runSearch = useCallback(async (value: string) => {
+    if (!value.trim()) return;
     setLoading(true);
     setError("");
     setOrder(null);
 
-    const res = await fetch(`/api/orders/${encodeURIComponent(query.trim())}`);
+    const res = await fetch(`/api/orders/${encodeURIComponent(value.trim())}`);
     if (!res.ok) {
       setError("Pedido no encontrado. Verifica tu número de orden.");
       setLoading(false);
@@ -41,11 +36,23 @@ export default function SeguimientoContent() {
     }
     setOrder(await res.json());
     setLoading(false);
+  }, []);
+
+  // Autollenar y buscar si viene ?q= (ej. desde "Mis pedidos").
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      setQuery(q);
+      runSearch(q);
+    }
+  }, [searchParams, runSearch]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch(query);
   };
 
-  const currentStepIndex = order
-    ? steps.findIndex((s) => s.key === order.status)
-    : -1;
+  const currentStepIndex = order ? orderStepIndex(order.status) : -1;
 
   return (
     <div className="max-w-3xl mx-auto px-5 md:px-16 py-12 md:py-20">

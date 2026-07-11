@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { adminGuard } from "@/app/lib/auth";
 
 const VALID_TYPES = [
   "flash_discount",
@@ -9,6 +10,8 @@ const VALID_TYPES = [
 ];
 
 export async function GET() {
+  const guard = await adminGuard();
+  if (guard) return guard;
   const promotions = await prisma.promotion.findMany({
     orderBy: { createdAt: "desc" },
   });
@@ -16,6 +19,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const guard = await adminGuard();
+  if (guard) return guard;
   try {
     const body = await request.json();
     const {
@@ -67,6 +72,8 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const guard = await adminGuard();
+  if (guard) return guard;
   try {
     const { id, ...fields } = await request.json();
     if (!id) {
@@ -99,6 +106,8 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const guard = await adminGuard();
+  if (guard) return guard;
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

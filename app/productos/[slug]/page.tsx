@@ -47,15 +47,21 @@ export default async function ProductPage({ params }: Props) {
   if (!product) notFound();
 
   // Resumen de reseñas para el aggregateRating (estrellas en Google).
-  const agg = await prisma.review.aggregate({
-    where: { productSlug: slug },
-    _avg: { rating: true },
-    _count: true,
-  });
-  const rating =
-    agg._count > 0
-      ? { average: agg._avg.rating ?? 0, count: agg._count }
-      : undefined;
+  // Envuelto en try/catch: un hipo de conexión a la BD durante el build/ISR no
+  // debe romper el prerender de la página (se renderiza sin aggregateRating).
+  let rating: { average: number; count: number } | undefined;
+  try {
+    const agg = await prisma.review.aggregate({
+      where: { productSlug: slug },
+      _avg: { rating: true },
+      _count: true,
+    });
+    if (agg._count > 0) {
+      rating = { average: agg._avg.rating ?? 0, count: agg._count };
+    }
+  } catch (err) {
+    console.error("[producto] no se pudo cargar el rating:", err);
+  }
 
   return (
     <>

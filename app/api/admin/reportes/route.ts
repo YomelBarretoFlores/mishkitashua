@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { adminGuard } from "@/app/lib/auth";
 
 // Reporte de ventas de un mes concreto (param month=YYYY-MM, por defecto el actual).
 export async function GET(request: Request) {
+  const guard = await adminGuard();
+  if (guard) return guard;
   try {
     const { searchParams } = new URL(request.url);
     const monthParam = searchParams.get("month"); // "2026-06"

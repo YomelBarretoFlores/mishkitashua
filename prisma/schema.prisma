@@ -8,17 +8,22 @@ datasource db {
 }
 
 model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  phone     String
-  address   String
-  city      String
-  orders    Order[]
-  reviews   Review[]
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  clerkUserId    String?  @unique
+  name           String
+  email          String
+  phone          String
+  address        String
+  city           String
+  role           String   @default("customer")
+  birthdate      DateTime?
+  marketingOptIn Boolean  @default(true)
+  orders         Order[]
+  reviews        Review[]
+  createdAt      DateTime @default(now())
 
   @@index([email])
+  @@index([birthdate])
 }
 
 model Order {
@@ -33,6 +38,11 @@ model Order {
   shippingCost    Float
   total           Float
   paymentMethod   String
+  // Metadatos de pago NO sensibles (PCI SAQ-A): nunca PAN/CVV.
+  chargeId        String?
+  cardBrand       String?
+  cardLast4       String?
+  paymentStatus   String      @default("pagado")
   status        String      @default("confirmado")
   reviews       Review[]
   createdAt     DateTime    @default(now())

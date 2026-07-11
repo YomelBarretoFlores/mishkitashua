@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { adminGuard } from "@/app/lib/auth";
 
 export async function GET() {
+  const guard = await adminGuard();
+  if (guard) return guard;
   try {
     // Sin cargar las filas de pedidos: agregamos conteo y suma por cliente en la BD.
     const [customers, grouped] = await Promise.all([
