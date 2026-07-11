@@ -41,7 +41,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[analytics] error:", error);
-    return NextResponse.json({ error: "Error" }, { status: 500 });
+    // La analítica es best-effort: si la BD está despertando, no devolvemos 500
+    // (no debe afectar la navegación ni ensuciar la consola del cliente).
+    console.error("[analytics] no registrado (BD no disponible):", error);
+    return NextResponse.json({ ok: false });
   }
 }

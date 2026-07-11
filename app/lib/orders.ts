@@ -45,7 +45,8 @@ type Fail = { ok: false; status: number; error: string };
 
 // Valida los items y recalcula el precio en el SERVIDOR (fuente de verdad).
 export async function priceCheckout(
-  items: CheckoutItem[]
+  items: CheckoutItem[],
+  opts?: { freeShipping?: boolean }
 ): Promise<({ ok: true } & Priced) | Fail> {
   if (!Array.isArray(items) || items.length === 0) {
     return { ok: false, status: 400, error: "El carrito está vacío" };
@@ -83,11 +84,28 @@ export async function priceCheckout(
     now
   );
 
-  const shippingCost = pricing.freeShipping ? 0 : SHIPPING_COST;
+  // Envío gratis si: lo da una promoción, o es primera compra (opts.freeShipping).
+  const freeShipping = pricing.freeShipping || !!opts?.freeShipping;
+  const shippingCost = freeShipping ? 0 : SHIPPING_COST;
   const total =
     Math.round((pricing.subtotal - pricing.discount + shippingCost) * 100) / 100;
 
-  return { ok: true, resolved, pricing, shippingCost, total };
+  return { ok: true, resolved, pricing: { ...pricing, freeShipping }, shippingCost, total };
+}
+
+// ¿El usuario autenticado no tiene pedidos aún? (para el envío gratis de bienvenida).
+// Los invitados (sin userId) no califican: no se puede verificar su historial.
+export async function isFirstPurchaseForUser(
+  userId: string | null | undefined
+): Promise<boolean> {
+  if (!userId) return false;
+  const customer = await prisma.customer.findUnique({
+    where: { clerkUserId: userId },
+    select: { id: true },
+  });
+  if (!customer) return true; // sin registro → sin pedidos → primera compra
+  const count = await prisma.order.count({ where: { customerId: customer.id } });
+  return count === 0;
 }
 
 // Crea el pedido (cliente ligado a la sesión si existe; si no, invitado).
@@ -116,12 +134,9 @@ export async function createOrderFromCheckout(input: {
     return { ok: false, status: 400, error: "Correo electrónico inválido" };
   }
 
-  const priced = await priceCheckout(input.items);
-  if (!priced.ok) return priced;
-  const { resolved, pricing, shippingCost, total } = priced;
-
   const orderNumber = `MSK-${Date.now().toString(36).toUpperCase()}`;
 
+  // Resolver el cliente ANTES de precios, para saber si es su primera compra.
   const { userId } = await auth();
   let customerId: string;
   if (userId) {
@@ -163,6 +178,14 @@ export async function createOrderFromCheckout(input: {
       ).id;
   }
 
+  // Envío gratis de bienvenida: solo usuarios logueados sin pedidos previos.
+  const priorOrders = await prisma.order.count({ where: { customerId } });
+  const firstPurchase = !!userId && priorOrders === 0;
+
+  const priced = await priceCheckout(input.items, { freeShipping: firstPurchase });
+  if (!priced.ok) return priced;
+  const { resolved, pricing, shippingCost, total } = priced;
+
   const order = await prisma.order.create({
     data: {
       orderNumber,
@@ -192,17 +215,26 @@ export async function createOrderFromCheckout(input: {
     },
   });
 
-  await prisma.analyticsEvent.create({
-    data: {
-      type: "purchase",
-      sessionId: input.sessionId || "server",
-      metadata: JSON.stringify({
-        orderId: order.id,
-        total,
-        discount: pricing.discount,
-        itemCount: resolved.length,
-      }),
-    },
+  // Analítica de compra: en segundo plano (no bloquea el redirect a la confirmación).
+  const analyticsPayload = {
+    orderId: order.id,
+    total,
+    discount: pricing.discount,
+    itemCount: resolved.length,
+  };
+  const analyticsSession = input.sessionId || "server";
+  after(async () => {
+    try {
+      await prisma.analyticsEvent.create({
+        data: {
+          type: "purchase",
+          sessionId: analyticsSession,
+          metadata: JSON.stringify(analyticsPayload),
+        },
+      });
+    } catch (err) {
+      console.error("[orders] analytics purchase failed:", err);
+    }
   });
 
   // Correo de confirmación: se envía DESPUÉS de responder (no bloquea el

@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { priceCheckout, createOrderFromCheckout } from "@/app/lib/orders";
+import { auth } from "@clerk/nextjs/server";
+import {
+  priceCheckout,
+  createOrderFromCheckout,
+  isFirstPurchaseForUser,
+} from "@/app/lib/orders";
 import { stripeConfigured, getStripe } from "@/app/lib/stripe";
 import { enforceRateLimit } from "@/app/lib/ratelimit";
 
@@ -35,8 +40,12 @@ export async function POST(request: Request) {
     }
     const data = parsed.data;
 
+    // Envío gratis de bienvenida si es la primera compra del usuario logueado.
+    const { userId } = await auth();
+    const firstPurchase = await isFirstPurchaseForUser(userId);
+
     // Recalcular el monto en el servidor (anti-manipulación de precios).
-    const priced = await priceCheckout(data.items);
+    const priced = await priceCheckout(data.items, { freeShipping: firstPurchase });
     if (!priced.ok) {
       return NextResponse.json({ error: priced.error }, { status: priced.status });
     }

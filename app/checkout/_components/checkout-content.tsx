@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
+import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 
 const SHIPPING_COST = 12.0;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,7 +31,9 @@ export default function CheckoutPage() {
   const promo = usePromotions(
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
-  const shippingCost = promo.freeShipping ? 0 : SHIPPING_COST;
+  const firstPurchase = useFirstPurchase();
+  const freeShipping = promo.freeShipping || firstPurchase;
+  const shippingCost = freeShipping ? 0 : SHIPPING_COST;
   const total = subtotal - promo.discount + shippingCost;
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
@@ -439,8 +442,15 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className="flex justify-between text-sm text-on-surface-variant">
-                <span>Costo de Envío</span>
-                {promo.freeShipping ? (
+                <span>
+                  Costo de Envío
+                  {firstPurchase && !promo.freeShipping && (
+                    <span className="block text-xs text-green-700">
+                      🎉 Gratis en tu primera compra
+                    </span>
+                  )}
+                </span>
+                {freeShipping ? (
                   <span className="text-green-700 font-medium">Gratis</span>
                 ) : (
                   <span>S/ {SHIPPING_COST.toFixed(2)}</span>

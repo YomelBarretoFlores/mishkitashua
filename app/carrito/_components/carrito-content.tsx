@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Lock, Gift } from "lucide-react";
 import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
+import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 
 const SHIPPING_COST = 12.0;
 
@@ -13,7 +14,9 @@ export default function CarritoPage() {
   const promo = usePromotions(
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
-  const shipping = items.length > 0 ? (promo.freeShipping ? 0 : SHIPPING_COST) : 0;
+  const firstPurchase = useFirstPurchase();
+  const freeShipping = promo.freeShipping || firstPurchase;
+  const shipping = items.length > 0 ? (freeShipping ? 0 : SHIPPING_COST) : 0;
   const total = subtotal - promo.discount + shipping;
 
   if (items.length === 0) {
@@ -157,8 +160,15 @@ export default function CarritoPage() {
                 </div>
               )}
               <div className="flex justify-between text-sm text-on-surface-variant">
-                <span>Envío estimado</span>
-                {promo.freeShipping ? (
+                <span>
+                  Envío estimado
+                  {firstPurchase && !promo.freeShipping && (
+                    <span className="block text-xs text-green-700">
+                      🎉 Gratis en tu primera compra
+                    </span>
+                  )}
+                </span>
+                {freeShipping ? (
                   <span className="text-green-700 font-medium">Gratis</span>
                 ) : (
                   <span>S/ {SHIPPING_COST.toFixed(2)}</span>
