@@ -10,7 +10,8 @@ export const authAppearance = {
   elements: {
     rootBox: "w-full",
     cardBox: "w-full !shadow-none !border-0",
-    card: "w-full !shadow-none !border-0 !bg-transparent !px-0 !py-0 gap-5",
+    card: "w-full !shadow-none !border-0 !bg-transparent !px-2 !pt-3 !pb-0 gap-5",
+    socialButtonsBlockButton: "!mt-1",
     header: "!hidden",
     footer: "!bg-transparent",
     footerAction: "!bg-transparent",

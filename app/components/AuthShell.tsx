@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Truck, PackageSearch, ShieldCheck } from "lucide-react";
+import AuthReloadGuard from "@/app/components/AuthReloadGuard";
 
 const BENEFITS = [
   { icon: Truck, text: "Envío gratis en tu primera compra" },
@@ -22,6 +23,7 @@ export default function AuthShell({
 }) {
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-5 py-12 md:py-16">
+      <AuthReloadGuard />
       <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-cream-darker/60 bg-white shadow-xl shadow-cocoa-deep/5 grid md:grid-cols-[0.85fr_1fr]">
         {/* Panel de marca (se oculta en móvil para priorizar el formulario) */}
         <aside className="relative hidden md:block">
