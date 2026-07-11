@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { X, ArrowRight, Truck, Sparkles } from "lucide-react";
+import { X, ArrowRight, Truck, Sparkles, LogIn } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { useAuth } from "@clerk/nextjs";
 
 const HIDDEN_ROUTES = ["/admin", "/checkout", "/confirmacion"];
 const STORAGE_KEY = "mishkitashua-welcome-shown";
@@ -14,6 +15,7 @@ export default function WelcomePopup() {
   const [visible, setVisible] = useState(false);
   const pathname = usePathname();
   const reduce = useReducedMotion();
+  const { isLoaded, isSignedIn } = useAuth();
 
   useEffect(() => {
     if (HIDDEN_ROUTES.some((r) => pathname.startsWith(r))) return;
@@ -143,6 +145,22 @@ export default function WelcomePopup() {
                   <ArrowRight size={18} />
                 </Link>
               </motion.div>
+
+              {/* Solo cuando NO hay sesión: acceso rápido para registrarse
+                  y así aprovechar el envío gratis de primera compra. */}
+              {isLoaded && !isSignedIn && (
+                <motion.div variants={item} className="mt-3">
+                  <Link
+                    href="/ingresar"
+                    onClick={handleClose}
+                    className="inline-flex w-full items-center justify-center gap-2 border border-cocoa/25 text-cocoa-deep font-semibold px-6 py-3 rounded-lg hover:bg-cream-dark transition-colors"
+                  >
+                    <LogIn size={17} />
+                    Iniciar sesión
+                  </Link>
+                </motion.div>
+              )}
+
               <motion.p
                 variants={item}
                 className="text-[11px] text-taupe mt-3"

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-// Content-Security-Policy: permite lo propio + Clerk (auth) + Culqi (pagos).
+// Content-Security-Policy: permite lo propio + Clerk (auth) + Stripe (pagos).
 // 'unsafe-inline'/'unsafe-eval' son necesarios para Next y los SDKs; el resto
 // está restringido a dominios conocidos.
 const csp = [

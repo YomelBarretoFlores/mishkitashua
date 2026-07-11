@@ -22,13 +22,21 @@ export async function POST(request: Request) {
   const limited = enforceRateLimit(request, "analytics", 60, 60_000);
   if (limited) return limited;
 
+  // Entrada del cliente: JSON malformado o esquema inválido → 400 (no es un
+  // fallo del servidor, sino una petición mal formada).
+  let body: unknown;
   try {
-    const parsed = eventSchema.safeParse(await request.json());
-    if (!parsed.success) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
-    }
-    const { type, page, productSlug, sessionId, metadata } = parsed.data;
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+  }
+  const parsed = eventSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+  }
+  const { type, page, productSlug, sessionId, metadata } = parsed.data;
 
+  try {
     await prisma.analyticsEvent.create({
       data: {
         type,
