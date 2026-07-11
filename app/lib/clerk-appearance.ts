@@ -13,7 +13,9 @@ export const authAppearance = {
     card: "w-full !shadow-none !border-0 !bg-transparent !px-2 !pt-3 !pb-0 gap-5",
     socialButtonsBlockButton: "!mt-1",
     header: "!hidden",
-    footer: "!bg-transparent",
-    footerAction: "!bg-transparent",
+    // El footer de Clerk pinta un gradiente sutil (imagen de fondo), no un
+    // color; por eso !bg-none además de !bg-transparent para dejarlo blanco.
+    footer: "!bg-transparent !bg-none",
+    footerAction: "!bg-transparent !bg-none",
   },
 };
