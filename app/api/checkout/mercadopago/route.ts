@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { priceCheckout, isFirstPurchaseForUser } from "@/app/lib/orders";
 import {
   mercadoPagoConfigured,
+  mercadoPagoIsTest,
   getPreferenceClient,
 } from "@/app/lib/mercadopago";
 import { enforceRateLimit } from "@/app/lib/ratelimit";
@@ -101,8 +102,11 @@ export async function POST(request: Request) {
       },
     });
 
-    // sandbox_init_point solo existe con credenciales de prueba.
-    const url = preference.sandbox_init_point ?? preference.init_point;
+    // El entorno lo manda MP_TEST_MODE, no la respuesta: así nunca se mezcla
+    // el checkout de sandbox con credenciales de producción ni al revés.
+    const url = mercadoPagoIsTest()
+      ? (preference.sandbox_init_point ?? preference.init_point)
+      : preference.init_point;
     if (!url) {
       return NextResponse.json(
         { error: "No se pudo iniciar el pago" },
