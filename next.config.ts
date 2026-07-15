@@ -1,18 +1,18 @@
 import type { NextConfig } from "next";
 
-// Content-Security-Policy: permite lo propio + Clerk (auth) + Stripe (pagos).
-// 'unsafe-inline'/'unsafe-eval' son necesarios para Next y los SDKs; el resto
-// está restringido a dominios conocidos.
+// Content-Security-Policy: permite lo propio + Clerk (auth) + Stripe y
+// Mercado Pago (pagos). 'unsafe-inline'/'unsafe-eval' son necesarios para Next
+// y los SDKs; el resto está restringido a dominios conocidos.
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://js.stripe.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://js.stripe.com https://sdk.mercadopago.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://img.clerk.com",
+  "img-src 'self' data: blob: https://img.clerk.com https://http2.mlstatic.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com https://api.stripe.com https://*.neon.tech",
-  // Stripe Checkout es hospedado (redirección de página completa); form-action lo permite.
-  "form-action 'self' https://checkout.stripe.com",
-  "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com",
+  "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com https://api.stripe.com https://*.neon.tech https://api.mercadopago.com",
+  // Los checkouts son hospedados (redirección de página completa); form-action los permite.
+  "form-action 'self' https://checkout.stripe.com https://www.mercadopago.com.pe https://www.mercadopago.com",
+  "frame-src 'self' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://js.stripe.com https://hooks.stripe.com https://www.mercadopago.com.pe",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",

@@ -15,6 +15,7 @@ import {
   CheckCircle,
   Gift,
   ShieldCheck,
+  Wallet,
 } from "lucide-react";
 import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
@@ -23,7 +24,7 @@ import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 const SHIPPING_COST = 12.0;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type PaymentMethod = "card" | "transfer";
+type PaymentMethod = "card" | "mercadopago" | "transfer";
 
 export default function CheckoutPage() {
   const { items, subtotal } = useCart();
@@ -120,6 +121,35 @@ export default function CheckoutPage() {
     }
   };
 
+  // Inicia el pago con Mercado Pago: crea la preferencia y redirige al
+  // Checkout Pro hospedado (tarjetas peruanas). Mismo patrón que Stripe.
+  const payWithMercadoPago = async () => {
+    setError("");
+    if (!isValid) return markAllTouched();
+    setSubmitting(true);
+    try {
+      const sessionId = sessionStorage.getItem("msk-session") || "";
+      const res = await fetch("/api/checkout/mercadopago", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: customerPayload(),
+          items: itemsPayload(),
+          sessionId,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "No se pudo iniciar el pago");
+      }
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (err) {
+      setSubmitting(false);
+      setError(err instanceof Error ? err.message : "Error al iniciar el pago");
+    }
+  };
+
   const payWithTransfer = async () => {
     setError("");
     if (!isValid) return markAllTouched();
@@ -150,6 +180,7 @@ export default function CheckoutPage() {
 
   const handlePay = () => {
     if (paymentMethod === "transfer") payWithTransfer();
+    else if (paymentMethod === "mercadopago") payWithMercadoPago();
     else payWithCard();
   };
 
@@ -323,10 +354,11 @@ export default function CheckoutPage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-3 gap-3 mb-6">
               {(
                 [
                   { key: "card", label: "Tarjeta", icon: CreditCard },
+                  { key: "mercadopago", label: "Mercado Pago", icon: Wallet },
                   { key: "transfer", label: "Transferencia", icon: Landmark },
                 ] as const
               ).map((m) => (
@@ -363,6 +395,23 @@ export default function CheckoutPage() {
                     Titular: Mishkitashua S.A.C.
                   </p>
                 </div>
+              </div>
+            ) : paymentMethod === "mercadopago" ? (
+              <div className="bg-cream rounded-xl p-5 flex items-start gap-3">
+                <ShieldCheck size={20} className="text-green-700 shrink-0 mt-0.5" />
+                <p className="text-sm text-on-surface-variant leading-relaxed">
+                  Pago protegido con{" "}
+                  <span className="font-semibold text-cocoa-deep">
+                    Mercado Pago
+                  </span>
+                  . Serás redirigido a la pasarela segura, donde puedes pagar con
+                  tarjeta de crédito o débito. Tus datos de tarjeta se procesan
+                  cifrados y{" "}
+                  <span className="font-semibold">
+                    nunca se almacenan en nuestros servidores
+                  </span>
+                  .
+                </p>
               </div>
             ) : (
               <div className="bg-cream rounded-xl p-5 flex items-start gap-3">
