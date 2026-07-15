@@ -57,6 +57,38 @@ export const products: Product[] = [
         boxSize: 6,
     },
     {
+        slug: "alfajor-unitario",
+        name: "Alfajor Andino",
+        subtitle: "Unidad",
+        category: "alfajores",
+        price: 5.0,
+        weight: "44g",
+        description:
+            "Alfajor andino por unidad, ideal para probar nuestros sabores antes de llevar la caja.",
+        longDescription:
+            "La versión individual de nuestro alfajor insignia: tapas elaboradas a base de harina de mashua negra con relleno de manjar saborizado andino. Pensado para quien quiere conocer el producto por primera vez o darse un gusto puntual.",
+        ingredients: [
+            "Harina de trigo sin preparar",
+            "Mantequilla",
+            "Azúcar impalpable",
+            "Manjar saborizado",
+            "Huevos",
+            "Maicena",
+            "Esencia de vainilla",
+        ],
+        features: [
+            "Venta por unidad",
+            "Hecho con orgullo en los Andes",
+            "Ideal para probar",
+        ],
+        image: "/images/alfajores-caja-claro.png",
+        images: [
+            "/images/alfajores-caja-claro.png",
+            "/images/alfajores-caja-madera.png",
+        ],
+        color: "#5d4037",
+    },
+    {
         slug: "manjar-tunaluna",
         name: "Tunaluna",
         subtitle: "Manjar saborizado de tuna",
