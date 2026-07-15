@@ -65,6 +65,10 @@ export async function POST(request: Request) {
     }
 
     const origin = request.headers.get("origin") ?? new URL(request.url).origin;
+    // Mercado Pago rechaza auto_return si las back_urls no son públicas
+    // (localhost). En desarrollo se omite: el comprador vuelve con el botón
+    // "Volver al sitio" del checkout.
+    const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)/.test(origin);
 
     const preference = await getPreferenceClient().create({
       body: {
@@ -86,7 +90,7 @@ export async function POST(request: Request) {
           pending: `${origin}/checkout/mp-retorno`,
           failure: `${origin}/checkout`,
         },
-        auto_return: "approved",
+        ...(isLocal ? {} : { auto_return: "approved" as const }),
         // Datos para recrear el pedido tras el pago (nunca datos de tarjeta).
         metadata: {
           customer: JSON.stringify(data.customer),

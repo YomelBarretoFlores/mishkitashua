@@ -6,10 +6,11 @@ export function mercadoPagoConfigured(): boolean {
   return !!process.env.MP_ACCESS_TOKEN;
 }
 
-// Las credenciales de prueba empiezan con "TEST-". Sirve para mostrar avisos
-// de entorno de pruebas en la interfaz.
+// OJO: las credenciales de prueba de Mercado Pago también empiezan con
+// "APP_USR-", igual que las de producción; el prefijo NO distingue el entorno.
+// Por eso el modo de pruebas se declara explícitamente por variable de entorno.
 export function mercadoPagoIsTest(): boolean {
-  return (process.env.MP_ACCESS_TOKEN ?? "").startsWith("TEST-");
+  return process.env.MP_TEST_MODE === "true";
 }
 
 let client: MercadoPagoConfig | null = null;
