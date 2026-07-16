@@ -25,13 +25,18 @@ export type Audience = {
 };
 
 // Destinatarios de una campaña: suscritos a marketing y con correo entregable.
+// Se deduplica por correo: una misma persona puede tener varias filas (p. ej.
+// una compra antigua y su cuenta actual) y recibiría el mismo envío dos veces.
 export async function getCampaignAudience(): Promise<Audience> {
   const subscribed = await prisma.customer.findMany({
     where: { marketingOptIn: true, email: { not: "" } },
     select: { email: true },
   });
-  const recipients = subscribed
-    .map((c) => c.email)
-    .filter((e) => isDeliverable(e));
-  return { recipients, skipped: subscribed.length - recipients.length };
+  const unique = new Map<string, string>();
+  for (const c of subscribed) {
+    const key = c.email.trim().toLowerCase();
+    if (!unique.has(key)) unique.set(key, c.email);
+  }
+  const recipients = [...unique.values()].filter(isDeliverable);
+  return { recipients, skipped: unique.size - recipients.length };
 }

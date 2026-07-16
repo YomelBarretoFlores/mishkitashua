@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Tag, Power, Mail, Cake } from "lucide-react";
 import { products } from "@/app/lib/products";
+import ConfirmDialog from "@/app/admin/_components/confirm-dialog";
+import Toast, { type ToastMessage } from "@/app/admin/_components/toast";
 
 type Promotion = {
   id: string;
@@ -44,9 +46,15 @@ export default function PromocionesPage() {
   const [error, setError] = useState("");
   const [birthdayCount, setBirthdayCount] = useState<number | null>(null);
   const [sendingBirthdays, setSendingBirthdays] = useState(false);
-  const [audience, setAudience] = useState<{
-    recipients: number;
-    skipped: number;
+  const [audience, setAudience] = useState<{ recipients: number } | null>(null);
+  const [toast, setToast] = useState<ToastMessage>(null);
+  // Confirmación pendiente: qué se preguntó y qué hacer si dice que sí.
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    message: string;
+    confirmLabel: string;
+    danger?: boolean;
+    action: () => void | Promise<void>;
   } | null>(null);
 
   const load = () => {
@@ -65,7 +73,7 @@ export default function PromocionesPage() {
       .catch(() => setBirthdayCount(null));
     fetch("/api/admin/promociones/audiencia")
       .then((r) => r.json())
-      .then((d) => setAudience({ recipients: d.recipients ?? 0, skipped: d.skipped ?? 0 }))
+      .then((d) => setAudience({ recipients: d.recipients ?? 0 }))
       .catch(() => setAudience(null));
   }, []);
 
@@ -102,63 +110,81 @@ export default function PromocionesPage() {
     load();
   };
 
-  const remove = async (id: string) => {
-    if (!confirm("¿Eliminar esta promoción?")) return;
-    await fetch(`/api/admin/promociones?id=${id}`, { method: "DELETE" });
-    load();
+  const remove = (promo: Promotion) => {
+    setConfirmState({
+      title: "Eliminar promoción",
+      message: `Se eliminará "${promo.title}". Esta acción no se puede deshacer.`,
+      confirmLabel: "Eliminar",
+      danger: true,
+      action: async () => {
+        await fetch(`/api/admin/promociones?id=${promo.id}`, { method: "DELETE" });
+        load();
+        setToast({ text: "Promoción eliminada.", kind: "ok" });
+      },
+    });
   };
 
   const [sending, setSending] = useState<string | null>(null);
-  const sendCampaign = async (promo: Promotion) => {
+  const sendCampaign = (promo: Promotion) => {
     const cuantos = audience
-      ? `${audience.recipients} cliente(s)${
-          audience.skipped > 0
-            ? `\n\nSe omitirán ${audience.skipped} correo(s) de prueba para no dañar la reputación del dominio.`
-            : ""
-        }`
-      : "todos los clientes suscritos";
-    if (!confirm(`¿Enviar "${promo.title}" por correo a ${cuantos}?`)) return;
-    setSending(promo.id);
-    const res = await fetch("/api/admin/promociones/campaign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ promotionId: promo.id }),
+      ? `${audience.recipients} cliente${audience.recipients !== 1 ? "s" : ""}`
+      : "los clientes suscritos";
+    setConfirmState({
+      title: "Enviar campaña",
+      message: `Se enviará "${promo.title}" por correo a ${cuantos}.`,
+      confirmLabel: "Enviar",
+      action: async () => {
+        setSending(promo.id);
+        const res = await fetch("/api/admin/promociones/campaign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ promotionId: promo.id }),
+        });
+        setSending(null);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setToast({
+            text: `Campaña enviada a ${data.sent} de ${data.recipients} clientes${
+              data.simulated ? " (modo simulación: revisa la consola)" : ""
+            }.`,
+            kind: "ok",
+          });
+        } else {
+          setToast({
+            text: data.error || "No se pudo enviar la campaña.",
+            kind: "error",
+          });
+        }
+      },
     });
-    setSending(null);
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) {
-      alert(
-        `Campaña enviada a ${data.sent}/${data.recipients} clientes${
-          data.skipped ? ` · ${data.skipped} omitidos (correos de prueba)` : ""
-        }${data.simulated ? " (modo simulación: revisa la consola)" : ""}.`
-      );
-    } else {
-      alert(data.error || "No se pudo enviar la campaña.");
-    }
   };
 
-  const handleSendBirthdays = async () => {
-    if (
-      !confirm(
-        birthdayCount === 0
-          ? "Hoy no cumple años ningún cliente, así que no se enviará nada. ¿Continuar?"
-          : `¿Enviar el cupón de cumpleaños a ${birthdayCount} cliente(s)?`
-      )
-    )
-      return;
-    setSendingBirthdays(true);
-    const res = await fetch("/api/admin/promociones/birthdays", { method: "POST" });
-    setSendingBirthdays(false);
-    const data = await res.json().catch(() => ({}));
-    if (res.ok) {
-      alert(
-        data.birthdays === 0
-          ? "Hoy no cumple años ningún cliente. No se envió nada."
-          : `Cupón enviado a ${data.sent}/${data.birthdays} cliente(s).`
-      );
-    } else {
-      alert(data.error || "No se pudo enviar.");
-    }
+  const handleSendBirthdays = () => {
+    setConfirmState({
+      title: "Enviar cupón de cumpleaños",
+      message: `Se enviará ahora mismo a ${birthdayCount} cliente${
+        birthdayCount !== 1 ? "s" : ""
+      } que cumple${birthdayCount !== 1 ? "n" : ""} años hoy.`,
+      confirmLabel: "Enviar",
+      action: async () => {
+        setSendingBirthdays(true);
+        const res = await fetch("/api/admin/promociones/birthdays", {
+          method: "POST",
+        });
+        setSendingBirthdays(false);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          setToast({
+            text: `Cupón enviado a ${data.sent} de ${data.birthdays} cliente${
+              data.birthdays !== 1 ? "s" : ""
+            }.`,
+            kind: "ok",
+          });
+        } else {
+          setToast({ text: data.error || "No se pudo enviar.", kind: "error" });
+        }
+      },
+    });
   };
 
   const showValue = form.type === "flash_discount";
@@ -175,20 +201,6 @@ export default function PromocionesPage() {
       >
         Promociones
       </h1>
-
-      {audience && audience.skipped > 0 && (
-        <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 mb-4 flex items-start gap-3">
-          <Mail className="w-4 h-4 text-taupe mt-0.5 shrink-0" aria-hidden />
-          <p className="text-sm text-on-surface-variant">
-            Las campañas llegarán a{" "}
-            <strong className="text-cocoa-deep">
-              {audience.recipients} cliente{audience.recipients !== 1 ? "s" : ""}
-            </strong>
-            . Se omiten {audience.skipped} correos de prueba: enviarles rebotaría
-            y el proveedor podría suspender el dominio.
-          </p>
-        </div>
-      )}
 
       {/* Correo de cumpleaños: el cron lo manda solo, pero se puede forzar. */}
       <div className="bg-white rounded-2xl border border-cream-darker/60 p-5 md:p-6 mb-8">
@@ -211,7 +223,7 @@ export default function PromocionesPage() {
           </div>
           <button
             onClick={handleSendBirthdays}
-            disabled={sendingBirthdays || birthdayCount === null}
+            disabled={sendingBirthdays || !birthdayCount}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cocoa-deep text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
             <Mail size={16} aria-hidden />
@@ -450,7 +462,7 @@ export default function PromocionesPage() {
                     <Power size={16} />
                   </button>
                   <button
-                    onClick={() => remove(promo.id)}
+                    onClick={() => remove(promo)}
                     title="Eliminar"
                     className="p-2 text-taupe hover:text-red-600 transition-colors"
                   >
@@ -462,6 +474,22 @@ export default function PromocionesPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmState !== null}
+        title={confirmState?.title ?? ""}
+        message={confirmState?.message ?? ""}
+        confirmLabel={confirmState?.confirmLabel}
+        danger={confirmState?.danger}
+        onCancel={() => setConfirmState(null)}
+        onConfirm={() => {
+          const pending = confirmState;
+          setConfirmState(null);
+          void pending?.action();
+        }}
+      />
+
+      <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   );
 }
