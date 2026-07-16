@@ -44,6 +44,10 @@ export default function PromocionesPage() {
   const [error, setError] = useState("");
   const [birthdayCount, setBirthdayCount] = useState<number | null>(null);
   const [sendingBirthdays, setSendingBirthdays] = useState(false);
+  const [audience, setAudience] = useState<{
+    recipients: number;
+    skipped: number;
+  } | null>(null);
 
   const load = () => {
     fetch("/api/admin/promociones")
@@ -59,6 +63,10 @@ export default function PromocionesPage() {
       .then((r) => r.json())
       .then((d) => setBirthdayCount(d.birthdays ?? 0))
       .catch(() => setBirthdayCount(null));
+    fetch("/api/admin/promociones/audiencia")
+      .then((r) => r.json())
+      .then((d) => setAudience({ recipients: d.recipients ?? 0, skipped: d.skipped ?? 0 }))
+      .catch(() => setAudience(null));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,12 +110,14 @@ export default function PromocionesPage() {
 
   const [sending, setSending] = useState<string | null>(null);
   const sendCampaign = async (promo: Promotion) => {
-    if (
-      !confirm(
-        `¿Enviar "${promo.title}" por correo a todos los clientes suscritos?`
-      )
-    )
-      return;
+    const cuantos = audience
+      ? `${audience.recipients} cliente(s)${
+          audience.skipped > 0
+            ? `\n\nSe omitirán ${audience.skipped} correo(s) de prueba para no dañar la reputación del dominio.`
+            : ""
+        }`
+      : "todos los clientes suscritos";
+    if (!confirm(`¿Enviar "${promo.title}" por correo a ${cuantos}?`)) return;
     setSending(promo.id);
     const res = await fetch("/api/admin/promociones/campaign", {
       method: "POST",
@@ -119,8 +129,8 @@ export default function PromocionesPage() {
     if (res.ok) {
       alert(
         `Campaña enviada a ${data.sent}/${data.recipients} clientes${
-          data.simulated ? " (modo simulación: revisa la consola)" : ""
-        }.`
+          data.skipped ? ` · ${data.skipped} omitidos (correos de prueba)` : ""
+        }${data.simulated ? " (modo simulación: revisa la consola)" : ""}.`
       );
     } else {
       alert(data.error || "No se pudo enviar la campaña.");
@@ -165,6 +175,20 @@ export default function PromocionesPage() {
       >
         Promociones
       </h1>
+
+      {audience && audience.skipped > 0 && (
+        <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 mb-4 flex items-start gap-3">
+          <Mail className="w-4 h-4 text-taupe mt-0.5 shrink-0" aria-hidden />
+          <p className="text-sm text-on-surface-variant">
+            Las campañas llegarán a{" "}
+            <strong className="text-cocoa-deep">
+              {audience.recipients} cliente{audience.recipients !== 1 ? "s" : ""}
+            </strong>
+            . Se omiten {audience.skipped} correos de prueba: enviarles rebotaría
+            y el proveedor podría suspender el dominio.
+          </p>
+        </div>
+      )}
 
       {/* Correo de cumpleaños: el cron lo manda solo, pero se puede forzar. */}
       <div className="bg-white rounded-2xl border border-cream-darker/60 p-5 md:p-6 mb-8">
