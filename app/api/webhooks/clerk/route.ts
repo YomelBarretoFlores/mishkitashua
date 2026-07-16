@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
-import { prisma } from "@/app/lib/prisma";
+import { linkClerkUserToCustomer } from "@/app/lib/customers";
 import { sendEmail } from "@/app/lib/resend";
 import { welcomeEmail } from "@/app/lib/emails/templates";
 
@@ -38,18 +38,7 @@ export async function POST(request: NextRequest) {
       "Cliente";
 
     try {
-      await prisma.customer.upsert({
-        where: { clerkUserId: data.id },
-        update: { name, email },
-        create: {
-          clerkUserId: data.id,
-          name,
-          email,
-          phone: "",
-          address: "",
-          city: "",
-        },
-      });
+      await linkClerkUserToCustomer({ clerkUserId: data.id, email, name });
 
       if (email) {
         const mail = welcomeEmail(name);

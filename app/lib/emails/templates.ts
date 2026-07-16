@@ -1,49 +1,95 @@
-// Plantillas de correo con estilos en línea (requisito de los clientes de email).
-// Estética tipo Temu/AliExpress: color de marca, oferta destacada y CTA grande.
+// Plantillas de correo. Los clientes de email no soportan hojas de estilo
+// externas ni flexbox de forma fiable: todo va en línea y maquetado con tablas.
 
 const BASE = "https://mishkitashua.com";
 const COCOA = "#3e2723";
 const CARAMEL = "#b06a3b";
 const CREAM = "#fbf9f1";
+const SAND = "#faf6ee";
+const BORDER = "#efe7d9";
+const TEXT = "#5b5147";
+const MUTED = "#9a8f80";
+// Georgia está en Windows, macOS y Android; el serif de la marca no existe en
+// el correo, así que se aproxima con la pila de fuentes del sistema.
+const SERIF = "Georgia,'Times New Roman',serif";
+const SANS = "'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
+// Escapa lo que viene de la base de datos: un título con "<" rompería el HTML
+// del correo, y un <script> o un href ajeno serían inyección directa.
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function layout(inner: string, preheader = ""): string {
-  return `<!doctype html><html><body style="margin:0;padding:0;background:${CREAM};font-family:Segoe UI,Arial,sans-serif;">
-  <span style="display:none;opacity:0;color:${CREAM}">${preheader}</span>
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:${CREAM};padding:24px 0">
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="color-scheme" content="light only"/>
+</head>
+<body style="margin:0;padding:0;background:${CREAM};font-family:${SANS};-webkit-font-smoothing:antialiased">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;color:${CREAM}">${esc(preheader)}</span>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${CREAM};padding:32px 12px">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #efe7d9">
-        <tr><td style="background:${COCOA};padding:22px 28px;text-align:center">
-          <span style="color:#fff;font-size:22px;font-weight:700;letter-spacing:.5px">Mishkitashua</span>
-          <div style="color:#e9c9a8;font-size:12px;margin-top:2px">Sabores que nacen de nuestra tierra</div>
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid ${BORDER}">
+        <tr><td style="background:${COCOA};padding:28px;text-align:center">
+          <div style="color:#ffffff;font-family:${SERIF};font-size:26px;letter-spacing:.4px">Mishkitashua</div>
+          <div style="color:#c9ab8d;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;margin-top:6px">Sabores que nacen de nuestra tierra</div>
         </td></tr>
-        <tr><td style="padding:32px 28px">${inner}</td></tr>
-        <tr><td style="padding:20px 28px;background:#faf6ee;color:#9a8f80;font-size:12px;text-align:center">
-          Mishkitashua · Huaraz, Áncash, Perú<br/>
-          <a href="${BASE}/cuenta" style="color:${CARAMEL}">Gestiona tus preferencias de correo</a> para darte de baja.
+        <tr><td style="padding:36px 32px">${inner}</td></tr>
+        <tr><td style="padding:22px 32px;background:${SAND};border-top:1px solid ${BORDER};color:${MUTED};font-size:12px;line-height:1.7;text-align:center">
+          Mishkitashua &middot; Huaraz, Áncash, Perú<br/>
+          <a href="${BASE}/cuenta" style="color:${CARAMEL};text-decoration:underline">Gestiona tus preferencias</a> para dejar de recibir estos correos.
         </td></tr>
       </table>
     </td></tr>
   </table></body></html>`;
 }
 
+// Botón maquetado con tabla: Outlook ignora el padding de un <a>.
 function button(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;background:${COCOA};color:#fff;text-decoration:none;font-weight:700;padding:14px 30px;border-radius:10px;font-size:15px">${label}</a>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto">
+    <tr><td align="center" style="background:${COCOA};border-radius:8px">
+      <a href="${href}" style="display:inline-block;padding:14px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;font-family:${SANS}">${label}</a>
+    </td></tr></table>`;
+}
+
+function heading(text: string): string {
+  return `<h1 style="margin:0 0 14px;color:${COCOA};font-family:${SERIF};font-size:26px;font-weight:400;line-height:1.3;text-align:center">${text}</h1>`;
+}
+
+function paragraph(text: string): string {
+  return `<p style="margin:0 0 18px;color:${TEXT};font-size:15px;line-height:1.7;text-align:center">${text}</p>`;
+}
+
+// Recuadro para destacar el dato principal (la oferta, el cupón, el total).
+function highlight(label: string, value: string, note = ""): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0">
+    <tr><td align="center" style="background:${SAND};border:1px solid ${BORDER};border-radius:12px;padding:24px">
+      <div style="color:${CARAMEL};font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase">${label}</div>
+      <div style="color:${COCOA};font-family:${SERIF};font-size:32px;line-height:1.2;margin-top:8px">${value}</div>
+      ${note ? `<div style="color:${MUTED};font-size:13px;margin-top:8px">${note}</div>` : ""}
+    </td></tr></table>`;
 }
 
 export function welcomeEmail(name: string): { subject: string; html: string } {
   const inner = `
-    <h1 style="color:${COCOA};font-size:24px;margin:0 0 12px">¡Bienvenido/a, ${name}! 🎉</h1>
-    <p style="color:#5b5147;font-size:15px;line-height:1.6">
-      Gracias por unirte a la familia Mishkitashua. Ya puedes comprar nuestros
-      alfajores andinos y manjares artesanales, y recibirás <b>ofertas exclusivas</b>,
-      promociones flash y un <b>regalo en tu cumpleaños</b> 🎂.
-    </p>
-    <div style="background:#fdf0e2;border-radius:12px;padding:18px;margin:20px 0;text-align:center">
-      <div style="color:${CARAMEL};font-size:13px;font-weight:700;text-transform:uppercase">Tu primer pedido</div>
-      <div style="color:${COCOA};font-size:26px;font-weight:800;margin:4px 0">¡Envío GRATIS! 🚚</div>
-    </div>
-    <div style="text-align:center;margin-top:8px">${button(`${BASE}/productos`, "Explorar productos")}</div>`;
-  return { subject: "¡Bienvenido/a a Mishkitashua! 🎉", html: layout(inner, "Tu dulce andino te espera") };
+    ${heading(`Bienvenido, ${esc(name)}`)}
+    ${paragraph(
+      "Gracias por unirte. Nuestros alfajores y manjares se elaboran en Huaraz con ingredientes andinos: tuna, aguaymanto y muña."
+    )}
+    ${highlight("Tu primera compra", "Envío gratis", "Se aplica solo, sin códigos")}
+    ${paragraph(
+      "También te avisaremos de nuestras promociones y te escribiremos el día de tu cumpleaños."
+    )}
+    <div style="text-align:center;margin-top:26px">${button(`${BASE}/productos`, "Ver productos")}</div>`;
+  return {
+    subject: "Bienvenido a Mishkitashua",
+    html: layout(inner, "Tu primera compra tiene envío gratis"),
+  };
 }
 
 export function orderConfirmationEmail(order: {
@@ -54,48 +100,134 @@ export function orderConfirmationEmail(order: {
   const rows = order.items
     .map(
       (i) =>
-        `<tr><td style="padding:6px 0;color:#5b5147;font-size:14px">${i.productName} × ${i.quantity}</td></tr>`
+        `<tr>
+          <td style="padding:12px 0;border-bottom:1px solid ${BORDER};color:${TEXT};font-size:14px">${esc(i.productName)}</td>
+          <td style="padding:12px 0;border-bottom:1px solid ${BORDER};color:${MUTED};font-size:14px;text-align:right;white-space:nowrap">× ${i.quantity}</td>
+        </tr>`
     )
     .join("");
   const inner = `
-    <h1 style="color:${COCOA};font-size:22px;margin:0 0 8px">¡Gracias por tu compra! ✅</h1>
-    <p style="color:#5b5147;font-size:15px;line-height:1.6">Tu pedido <b>#${order.orderNumber}</b> está confirmado. Lo prepararemos con mucho cariño.</p>
-    <table width="100%" style="margin:16px 0;border-top:1px solid #efe7d9">${rows}</table>
-    <div style="text-align:right;color:${COCOA};font-weight:800;font-size:18px">Total: S/ ${order.total.toFixed(2)}</div>
-    <div style="text-align:center;margin-top:20px">${button(`${BASE}/seguimiento?q=${order.orderNumber}`, "Seguir mi pedido")}</div>`;
+    ${heading("Pedido confirmado")}
+    ${paragraph(`Recibimos tu pedido <strong style="color:${COCOA}">#${esc(order.orderNumber)}</strong>. Lo prepararemos y te avisaremos cuando salga.`)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0">
+      <tr><td style="padding-bottom:4px;color:${MUTED};font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase">Tu pedido</td></tr>
+      <tr><td>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ${BORDER}">
+          ${rows}
+          <tr>
+            <td style="padding:14px 0;color:${COCOA};font-size:15px;font-weight:600">Total</td>
+            <td style="padding:14px 0;color:${COCOA};font-family:${SERIF};font-size:22px;text-align:right;white-space:nowrap">S/ ${order.total.toFixed(2)}</td>
+          </tr>
+        </table>
+      </td></tr>
+    </table>
+    <div style="text-align:center;margin-top:8px">${button(`${BASE}/seguimiento?q=${encodeURIComponent(order.orderNumber)}`, "Seguir mi pedido")}</div>`;
   return {
-    subject: `Pedido confirmado #${order.orderNumber} 🧾`,
-    html: layout(inner, "Tu pedido está en camino"),
+    subject: `Pedido confirmado #${order.orderNumber}`,
+    html: layout(inner, `Tu pedido #${order.orderNumber} está confirmado`),
   };
 }
 
-export function birthdayEmail(name: string, code: string): { subject: string; html: string } {
+// No se anuncia ningún cupón: el motor de promociones no valida códigos y el
+// checkout no tiene dónde escribirlos, así que prometer uno sería engañar al
+// cliente. Si se implementan cupones por persona, el regalo va aquí.
+export function birthdayEmail(name: string): { subject: string; html: string } {
   const inner = `
-    <div style="text-align:center;font-size:44px">🎂🎁</div>
-    <h1 style="color:${COCOA};font-size:24px;margin:8px 0;text-align:center">¡Feliz cumpleaños, ${name}!</h1>
-    <p style="color:#5b5147;font-size:15px;line-height:1.6;text-align:center">
-      En Mishkitashua queremos celebrarte con un dulce regalo. Usa este código y date un gusto andino 🍮
-    </p>
-    <div style="background:${COCOA};border-radius:12px;padding:22px;margin:20px 0;text-align:center">
-      <div style="color:#e9c9a8;font-size:12px;text-transform:uppercase;letter-spacing:1px">Cupón de cumpleaños</div>
-      <div style="color:#fff;font-size:30px;font-weight:800;letter-spacing:2px;margin-top:6px">${code}</div>
-      <div style="color:#e9c9a8;font-size:13px;margin-top:6px">15% de descuento · válido 7 días</div>
-    </div>
-    <div style="text-align:center">${button(`${BASE}/productos`, "Reclamar mi regalo")}</div>`;
-  return { subject: `🎉 ${name}, tu regalo de cumpleaños te espera`, html: layout(inner, "Un regalo dulce para ti") };
+    ${heading(`Feliz cumpleaños, ${esc(name)}`)}
+    ${paragraph(
+      "Hoy es tu día y queremos celebrarlo contigo. Gracias por acompañarnos desde los Andes."
+    )}
+    ${highlight(
+      "Para celebrar",
+      "Date un gusto",
+      "Mira nuestras promociones activas"
+    )}
+    <div style="text-align:center;margin-top:26px">${button(`${BASE}/productos`, "Ver productos")}</div>`;
+  return {
+    subject: `${name}, feliz cumpleaños de parte de Mishkitashua`,
+    html: layout(inner, "Un saludo en tu día"),
+  };
+}
+
+// Describe la promoción tal como la aplica el motor (app/lib/promotions.ts):
+// sin códigos, en automático al llegar al checkout.
+export function describePromotion(promo: {
+  type: string;
+  value?: number | null;
+  minPurchase?: number | null;
+  giftDescription?: string | null;
+  productName?: string | null;
+}): { label: string; note: string } {
+  const enProducto = promo.productName
+    ? `Solo en ${promo.productName}`
+    : "En todos los productos";
+  switch (promo.type) {
+    case "flash_discount":
+      return {
+        label: `${promo.value ?? 0}% de descuento`,
+        note: enProducto,
+      };
+    case "buy_x_get_y":
+      return {
+        label: "2 × 1",
+        note: promo.productName
+          ? `Lleva 2 de ${promo.productName} y paga 1`
+          : "Cada 2 unidades, 1 gratis",
+      };
+    case "free_shipping":
+      return {
+        label: "Envío gratis",
+        note: promo.minPurchase
+          ? `En compras desde S/ ${promo.minPurchase.toFixed(2)}`
+          : "En tu pedido",
+      };
+    case "free_gift":
+      return {
+        label: promo.giftDescription || "Regalo sorpresa",
+        note: promo.minPurchase
+          ? `En compras desde S/ ${promo.minPurchase.toFixed(2)}`
+          : "Con tu pedido",
+      };
+    default:
+      return { label: "Oferta especial", note: enProducto };
+  }
 }
 
 export function promoCampaignEmail(promo: {
   title: string;
   description?: string | null;
+  type: string;
+  value?: number | null;
+  minPurchase?: number | null;
+  giftDescription?: string | null;
+  productName?: string | null;
+  endsAt?: Date | string | null;
 }): { subject: string; html: string } {
+  const offer = describePromotion(promo);
+  const hasta = promo.endsAt
+    ? new Date(promo.endsAt).toLocaleDateString("es-PE", {
+        day: "numeric",
+        month: "long",
+        timeZone: "America/Lima",
+      })
+    : null;
+
   const inner = `
-    <div style="text-align:center;font-size:40px">🔥</div>
-    <h1 style="color:${COCOA};font-size:26px;margin:8px 0;text-align:center">${promo.title}</h1>
-    ${promo.description ? `<p style="color:#5b5147;font-size:15px;line-height:1.6;text-align:center">${promo.description}</p>` : ""}
-    <div style="background:#fdf0e2;border-radius:12px;padding:18px;margin:20px 0;text-align:center">
-      <div style="color:${CARAMEL};font-size:15px;font-weight:800">¡Solo por tiempo limitado! ⏳</div>
-    </div>
-    <div style="text-align:center">${button(`${BASE}/productos`, "Comprar ahora")}</div>`;
-  return { subject: `🔥 ${promo.title}`, html: layout(inner, promo.description || "Oferta por tiempo limitado") };
+    ${heading(esc(promo.title))}
+    ${promo.description ? paragraph(esc(promo.description)) : ""}
+    ${highlight("Promoción", esc(offer.label), esc(offer.note))}
+    ${paragraph(
+      `Se aplica sola al finalizar tu compra, sin códigos.${
+        hasta ? ` Válida hasta el ${hasta}.` : ""
+      }`
+    )}
+    <div style="text-align:center;margin-top:26px">${button(`${BASE}/productos`, "Comprar ahora")}</div>`;
+
+  // Si el título ya dice la oferta ("Envío gratis"), repetirla sobra.
+  const sameAsTitle =
+    promo.title.trim().toLowerCase() === offer.label.trim().toLowerCase();
+  return {
+    subject: sameAsTitle ? promo.title : `${promo.title} — ${offer.label}`,
+    html: layout(inner, promo.description || offer.note),
+  };
 }

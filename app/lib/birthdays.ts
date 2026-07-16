@@ -38,18 +38,9 @@ export async function sendBirthdayEmails(): Promise<BirthdayRun> {
   const people = await findBirthdaysToday();
   let sent = 0;
   for (const person of people) {
-    const code = `CUMPLE-${Math.abs(hash(person.email)) % 10000}`
-      .padEnd(11, "0")
-      .slice(0, 11);
-    const mail = birthdayEmail(person.name.split(" ")[0] || person.name, code);
+    const mail = birthdayEmail(person.name.split(" ")[0] || person.name);
     const r = await sendEmail({ to: person.email, ...mail });
     if (r.ok) sent++;
   }
   return { birthdays: people.length, sent };
-}
-
-function hash(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i);
-  return h;
 }

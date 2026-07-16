@@ -5,6 +5,7 @@ import { adminGuard } from "@/app/lib/auth";
 import { sendEmail } from "@/app/lib/resend";
 import { getCampaignAudience } from "@/app/lib/email-audience";
 import { promoCampaignEmail } from "@/app/lib/emails/templates";
+import { products } from "@/app/lib/products";
 
 const schema = z.object({ promotionId: z.string().min(1).max(60) });
 
@@ -27,9 +28,19 @@ export async function POST(request: Request) {
 
   const { recipients, skipped } = await getCampaignAudience();
 
+  // El correo describe la promoción completa: sin el tipo y el valor, un
+  // "20% de descuento" llegaba como un título suelto sin la oferta.
   const mail = promoCampaignEmail({
     title: promo.title,
     description: promo.description,
+    type: promo.type,
+    value: promo.value,
+    minPurchase: promo.minPurchase,
+    giftDescription: promo.giftDescription,
+    productName: promo.productSlug
+      ? (products.find((p) => p.slug === promo.productSlug)?.name ?? null)
+      : null,
+    endsAt: promo.endsAt,
   });
 
   let sent = 0;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { prisma } from "@/app/lib/prisma";
+import { linkClerkUserToCustomer } from "@/app/lib/customers";
 import type { Customer } from "@prisma/client";
 
 // ¿El usuario autenticado tiene rol admin? (fuente de verdad: publicMetadata de Clerk)
@@ -69,17 +69,5 @@ export async function getCurrentCustomer(): Promise<Customer | null> {
     email ||
     "Cliente";
 
-  return prisma.customer.upsert({
-    where: { clerkUserId: user.id },
-    update: { name, email },
-    create: {
-      clerkUserId: user.id,
-      name,
-      email,
-      phone: "",
-      address: "",
-      city: "",
-      role: (user.publicMetadata?.role as string) ?? "customer",
-    },
-  });
+  return linkClerkUserToCustomer({ clerkUserId: user.id, email, name });
 }
