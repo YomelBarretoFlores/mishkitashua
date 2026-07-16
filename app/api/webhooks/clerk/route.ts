@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
+import { prisma } from "@/app/lib/prisma";
 import { linkClerkUserToCustomer } from "@/app/lib/customers";
 import { sendEmail } from "@/app/lib/resend";
 import { welcomeEmail } from "@/app/lib/emails/templates";
@@ -46,6 +47,20 @@ export async function POST(request: NextRequest) {
       }
     } catch (err) {
       console.error("[clerk webhook] error procesando user.created:", err);
+    }
+  }
+
+  // Al borrarse una cuenta, su fila conservaría un clerkUserId que ya no existe
+  // y quedaría bloqueada: nadie podría reclamarla. Se suelta, manteniendo los
+  // pedidos. Requiere suscribir el evento "user.deleted" en el panel de Clerk.
+  if (evt.type === "user.deleted" && evt.data.id) {
+    try {
+      await prisma.customer.updateMany({
+        where: { clerkUserId: evt.data.id },
+        data: { clerkUserId: null },
+      });
+    } catch (err) {
+      console.error("[clerk webhook] error procesando user.deleted:", err);
     }
   }
 

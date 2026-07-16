@@ -25,14 +25,18 @@ export async function linkClerkUserToCustomer(input: {
   }
 
   if (email) {
-    // La más antigua conserva el historial de pedidos y reseñas.
-    const orphan = await prisma.customer.findFirst({
-      where: { email, clerkUserId: null },
+    // Se reclama por correo, sin exigir que la fila esté suelta. Clerk no
+    // permite dos cuentas con el mismo correo, así que si una fila lo tiene
+    // con OTRO clerkUserId es que esa cuenta se borró y su id quedó muerto:
+    // reutilizarla conserva sus pedidos en vez de duplicar a la persona.
+    // La más antigua es la que guarda el historial.
+    const previous = await prisma.customer.findFirst({
+      where: { email },
       orderBy: { createdAt: "asc" },
     });
-    if (orphan) {
+    if (previous) {
       return prisma.customer.update({
-        where: { id: orphan.id },
+        where: { id: previous.id },
         data: { clerkUserId, name, ...extra },
       });
     }

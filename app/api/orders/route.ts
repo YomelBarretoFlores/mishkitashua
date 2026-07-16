@@ -22,6 +22,7 @@ export async function POST(request: Request) {
       items: body.items,
       paymentMethod: "transfer",
       sessionId: body.sessionId,
+      couponCode: body.couponCode ?? null,
       payment: { paymentStatus: "pendiente" }, // transferencia: confirma el admin
     });
 

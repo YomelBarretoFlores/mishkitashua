@@ -33,9 +33,46 @@ export default function CheckoutPage() {
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
   const firstPurchase = useFirstPurchase();
-  const freeShipping = promo.freeShipping || firstPurchase;
+
+  // El cupón validado por el servidor. Este cálculo es SOLO para mostrar: el
+  // precio que se cobra lo recalcula el servidor al crear el pedido.
+  const [coupon, setCoupon] = useState<{
+    code: string;
+    label: string;
+    type: "percent" | "free_shipping";
+    value: number;
+  } | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+
+  const couponDiscount =
+    coupon?.type === "percent"
+      ? Math.round((subtotal - promo.discount) * coupon.value) / 100
+      : 0;
+  const discount = Math.min(promo.discount + couponDiscount, subtotal);
+  const freeShipping =
+    promo.freeShipping || firstPurchase || coupon?.type === "free_shipping";
   const shippingCost = freeShipping ? 0 : SHIPPING_COST;
-  const total = subtotal - promo.discount + shippingCost;
+  const total = subtotal - discount + shippingCost;
+
+  const applyCoupon = async () => {
+    setCouponError("");
+    setCheckingCoupon(true);
+    const res = await fetch("/api/coupons/validar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: couponInput }),
+    });
+    setCheckingCoupon(false);
+    const data = await res.json().catch(() => ({}));
+    if (data.ok) {
+      setCoupon(data);
+      setCouponInput("");
+    } else {
+      setCouponError(data.error || "No se pudo validar el cupón");
+    }
+  };
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [form, setForm] = useState({
@@ -106,6 +143,7 @@ export default function CheckoutPage() {
           customer: customerPayload(),
           items: itemsPayload(),
           sessionId,
+          couponCode: coupon?.code ?? null,
         }),
       });
       if (!res.ok) {
@@ -136,6 +174,7 @@ export default function CheckoutPage() {
           customer: customerPayload(),
           items: itemsPayload(),
           sessionId,
+          couponCode: coupon?.code ?? null,
         }),
       });
       if (!res.ok) {
@@ -164,6 +203,7 @@ export default function CheckoutPage() {
           items: itemsPayload(),
           paymentMethod: "transfer",
           sessionId,
+          couponCode: coupon?.code ?? null,
         }),
       });
       if (!res.ok) {
@@ -490,6 +530,12 @@ export default function CheckoutPage() {
                   <span>- S/ {promo.discount.toFixed(2)}</span>
                 </div>
               )}
+              {coupon && couponDiscount > 0 && (
+                <div className="flex justify-between text-sm text-green-700 font-medium">
+                  <span>Cupón {coupon.code}</span>
+                  <span>- S/ {couponDiscount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm text-on-surface-variant">
                 <span>
                   Costo de Envío
@@ -511,6 +557,62 @@ export default function CheckoutPage() {
                   S/ {total.toFixed(2)}
                 </span>
               </div>
+            </div>
+
+            <div className="mb-6">
+              {coupon ? (
+                <div className="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-xl p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-green-800 truncate">
+                      Cupón {coupon.code}
+                    </p>
+                    <p className="text-xs text-green-700">{coupon.label}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCoupon(null)}
+                    className="text-xs text-green-800 underline shrink-0"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <label
+                    htmlFor="cupon"
+                    className="block text-xs text-on-surface-variant mb-1.5"
+                  >
+                    ¿Tienes un cupón?
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="cupon"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          if (couponInput.trim()) void applyCoupon();
+                        }
+                      }}
+                      placeholder="CUMPLE-A1B2C3"
+                      autoComplete="off"
+                      className="flex-1 min-w-0 rounded-lg border border-cream-darker px-3 py-2 text-sm focus:border-caramel focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={checkingCoupon || !couponInput.trim()}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-cocoa-deep text-white disabled:opacity-40 transition-opacity"
+                    >
+                      {checkingCoupon ? "..." : "Aplicar"}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="text-xs text-red-600 mt-1.5">{couponError}</p>
+                  )}
+                </>
+              )}
             </div>
 
             {promo.gift && (

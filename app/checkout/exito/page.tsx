@@ -36,6 +36,7 @@ export default async function CheckoutExitoPage({ searchParams }: Props) {
     items,
     paymentMethod: "card",
     sessionId: meta.sessionId || undefined,
+    couponCode: meta.coupon || null,
     payment: {
       chargeId: session.id,
       cardBrand: "Tarjeta (Stripe)",

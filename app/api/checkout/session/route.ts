@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/app/lib/prisma";
 import {
   priceCheckout,
   createOrderFromCheckout,
@@ -27,6 +28,7 @@ const schema = z.object({
     )
     .min(1),
   sessionId: z.string().max(100).optional(),
+  couponCode: z.string().trim().max(40).nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -45,7 +47,17 @@ export async function POST(request: Request) {
     const firstPurchase = await isFirstPurchaseForUser(userId);
 
     // Recalcular el monto en el servidor (anti-manipulación de precios).
-    const priced = await priceCheckout(data.items, { freeShipping: firstPurchase });
+    const customer = userId
+      ? await prisma.customer.findUnique({
+          where: { clerkUserId: userId },
+          select: { id: true },
+        })
+      : null;
+    const priced = await priceCheckout(data.items, {
+      freeShipping: firstPurchase,
+      couponCode: data.couponCode,
+      customerId: customer?.id ?? null,
+    });
     if (!priced.ok) {
       return NextResponse.json({ error: priced.error }, { status: priced.status });
     }
@@ -57,6 +69,7 @@ export async function POST(request: Request) {
         items: data.items,
         paymentMethod: "card",
         sessionId: data.sessionId,
+        couponCode: data.couponCode,
         payment: { cardBrand: "Simulado", paymentStatus: "simulado" },
       });
       if (!result.ok) {
@@ -96,6 +109,7 @@ export async function POST(request: Request) {
         customer: JSON.stringify(data.customer),
         items: JSON.stringify(data.items),
         sessionId: data.sessionId ?? "",
+        coupon: priced.coupon?.code ?? "",
       },
     });
 

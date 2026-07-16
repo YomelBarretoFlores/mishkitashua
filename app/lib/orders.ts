@@ -7,6 +7,8 @@ import {
   type Promotion,
   type AppliedPromotions,
 } from "@/app/lib/promotions";
+import { checkCoupon, redeemCoupon } from "@/app/lib/coupons";
+import { linkClerkUserToCustomer } from "@/app/lib/customers";
 import { sendEmail } from "@/app/lib/resend";
 import { orderConfirmationEmail } from "@/app/lib/emails/templates";
 
@@ -39,6 +41,7 @@ type Priced = {
   pricing: AppliedPromotions;
   shippingCost: number;
   total: number;
+  coupon: { code: string; label: string; amount: number } | null;
 };
 
 type Fail = { ok: false; status: number; error: string };
@@ -46,7 +49,7 @@ type Fail = { ok: false; status: number; error: string };
 // Valida los items y recalcula el precio en el SERVIDOR (fuente de verdad).
 export async function priceCheckout(
   items: CheckoutItem[],
-  opts?: { freeShipping?: boolean }
+  opts?: { freeShipping?: boolean; couponCode?: string | null; customerId?: string | null }
 ): Promise<({ ok: true } & Priced) | Fail> {
   if (!Array.isArray(items) || items.length === 0) {
     return { ok: false, status: 400, error: "El carrito está vacío" };
@@ -84,13 +87,42 @@ export async function priceCheckout(
     now
   );
 
-  // Envío gratis si: lo da una promoción, o es primera compra (opts.freeShipping).
-  const freeShipping = pricing.freeShipping || !!opts?.freeShipping;
-  const shippingCost = freeShipping ? 0 : SHIPPING_COST;
-  const total =
-    Math.round((pricing.subtotal - pricing.discount + shippingCost) * 100) / 100;
+  // El cupón se valida contra la base, nunca se confía en lo que llega del
+  // navegador. Si no es válido el pedido se rechaza, en vez de cobrar de más
+  // en silencio a quien creía tener descuento.
+  let coupon: Priced["coupon"] = null;
+  let couponFreeShipping = false;
+  let couponDiscount = 0;
+  if (opts?.couponCode) {
+    const check = await checkCoupon(opts.couponCode, opts.customerId ?? null);
+    if (!check.ok) return { ok: false, status: 400, error: check.error };
+    if (check.type === "free_shipping") {
+      couponFreeShipping = true;
+    } else {
+      // Se calcula sobre lo que queda tras las promociones, no sobre el
+      // subtotal: si no, dos descuentos podrían superar el precio real.
+      const base = pricing.subtotal - pricing.discount;
+      couponDiscount = Math.round(((base * check.value) / 100) * 100) / 100;
+    }
+    coupon = { code: check.code, label: check.label, amount: couponDiscount };
+  }
 
-  return { ok: true, resolved, pricing: { ...pricing, freeShipping }, shippingCost, total };
+  // Envío gratis si: lo da una promoción, un cupón, o es primera compra.
+  const freeShipping =
+    pricing.freeShipping || couponFreeShipping || !!opts?.freeShipping;
+  const shippingCost = freeShipping ? 0 : SHIPPING_COST;
+  const discount = Math.min(pricing.discount + couponDiscount, pricing.subtotal);
+  const total =
+    Math.round((pricing.subtotal - discount + shippingCost) * 100) / 100;
+
+  return {
+    ok: true,
+    resolved,
+    pricing: { ...pricing, discount, freeShipping },
+    shippingCost,
+    total,
+    coupon,
+  };
 }
 
 // ¿El usuario autenticado no tiene pedidos aún? (para el envío gratis de bienvenida).
@@ -115,6 +147,7 @@ export async function createOrderFromCheckout(input: {
   paymentMethod: string;
   sessionId?: string;
   payment?: PaymentMeta;
+  couponCode?: string | null;
 }): Promise<
   { ok: true; id: string; orderNumber: string; total: number } | Fail
 > {
@@ -140,19 +173,11 @@ export async function createOrderFromCheckout(input: {
   const { userId } = await auth();
   let customerId: string;
   if (userId) {
-    const linked = await prisma.customer.upsert({
-      where: { clerkUserId: userId },
-      update: {
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        address: customer.address,
-        city: customer.city,
-      },
-      create: {
-        clerkUserId: userId,
-        name: customer.name,
-        email: customer.email,
+    const linked = await linkClerkUserToCustomer({
+      clerkUserId: userId,
+      email: customer.email,
+      name: customer.name,
+      extra: {
         phone: customer.phone,
         address: customer.address,
         city: customer.city,
@@ -182,9 +207,13 @@ export async function createOrderFromCheckout(input: {
   const priorOrders = await prisma.order.count({ where: { customerId } });
   const firstPurchase = !!userId && priorOrders === 0;
 
-  const priced = await priceCheckout(input.items, { freeShipping: firstPurchase });
+  const priced = await priceCheckout(input.items, {
+    freeShipping: firstPurchase,
+    couponCode: input.couponCode,
+    customerId,
+  });
   if (!priced.ok) return priced;
-  const { resolved, pricing, shippingCost, total } = priced;
+  const { resolved, pricing, shippingCost, total, coupon } = priced;
 
   const order = await prisma.order.create({
     data: {
@@ -200,6 +229,7 @@ export async function createOrderFromCheckout(input: {
       cardBrand: input.payment?.cardBrand ?? null,
       cardLast4: input.payment?.cardLast4 ?? null,
       paymentStatus: input.payment?.paymentStatus ?? "pagado",
+      couponCode: coupon?.code ?? null,
       items: {
         create: resolved.map((r) => ({
           productSlug: r.product.slug,
@@ -214,6 +244,16 @@ export async function createOrderFromCheckout(input: {
       },
     },
   });
+
+  // El cupón se marca usado al crear el pedido, no antes: si algo fallara en
+  // la creación, el cliente se quedaría sin cupón y sin compra.
+  if (coupon) {
+    const redeemed = await redeemCoupon(coupon.code, customerId, order.id);
+    if (!redeemed) {
+      // Alguien lo canjeó entre la validación y ahora (doble pestaña).
+      console.error(`[orders] cupón ${coupon.code} ya estaba usado en ${order.id}`);
+    }
+  }
 
   // Analítica de compra: en segundo plano (no bloquea el redirect a la confirmación).
   const analyticsPayload = {

@@ -52,6 +52,7 @@ export default async function MercadoPagoRetornoPage({ searchParams }: Props) {
     items,
     paymentMethod: payment.payment_method_id ?? "mercadopago",
     sessionId: meta.session_id || undefined,
+    couponCode: meta.coupon || null,
     payment: {
       chargeId: String(payment.id ?? payment_id),
       cardBrand: `${payment.payment_method_id ?? "Mercado Pago"}`,

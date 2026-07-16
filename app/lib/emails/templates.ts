@@ -128,24 +128,27 @@ export function orderConfirmationEmail(order: {
   };
 }
 
-// No se anuncia ningún cupón: el motor de promociones no valida códigos y el
-// checkout no tiene dónde escribirlos, así que prometer uno sería engañar al
-// cliente. Si se implementan cupones por persona, el regalo va aquí.
-export function birthdayEmail(name: string): { subject: string; html: string } {
+export function birthdayEmail(
+  name: string,
+  coupon: { code: string; discount: number; validDays: number }
+): { subject: string; html: string } {
   const inner = `
     ${heading(`Feliz cumpleaños, ${esc(name)}`)}
     ${paragraph(
-      "Hoy es tu día y queremos celebrarlo contigo. Gracias por acompañarnos desde los Andes."
+      "Hoy es tu día y queremos celebrarlo contigo. Este código es solo tuyo:"
     )}
-    ${highlight(
-      "Para celebrar",
-      "Date un gusto",
-      "Mira nuestras promociones activas"
-    )}
-    <div style="text-align:center;margin-top:26px">${button(`${BASE}/productos`, "Ver productos")}</div>`;
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0">
+      <tr><td align="center" style="background:${COCOA};border-radius:12px;padding:26px">
+        <div style="color:#c9ab8d;font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase">${coupon.discount}% de descuento</div>
+        <div style="color:#ffffff;font-family:${SERIF};font-size:30px;letter-spacing:3px;margin:10px 0">${esc(coupon.code)}</div>
+        <div style="color:#c9ab8d;font-size:13px">Válido ${coupon.validDays} días · un solo uso</div>
+      </td></tr>
+    </table>
+    ${paragraph("Escríbelo en el checkout, en el campo de cupón, antes de pagar.")}
+    <div style="text-align:center;margin-top:26px">${button(`${BASE}/productos`, "Usar mi regalo")}</div>`;
   return {
-    subject: `${name}, feliz cumpleaños de parte de Mishkitashua`,
-    html: layout(inner, "Un saludo en tu día"),
+    subject: `${name}, tu regalo de cumpleaños te espera`,
+    html: layout(inner, `${coupon.discount}% de descuento para tu día`),
   };
 }
 

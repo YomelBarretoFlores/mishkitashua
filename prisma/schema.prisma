@@ -8,32 +8,33 @@ datasource db {
 }
 
 model Customer {
-  id             String   @id @default(cuid())
-  clerkUserId    String?  @unique
+  id             String    @id @default(cuid())
+  clerkUserId    String?   @unique
   name           String
   email          String
   phone          String
   address        String
   city           String
-  role           String   @default("customer")
+  role           String    @default("customer")
   birthdate      DateTime?
-  marketingOptIn Boolean  @default(true)
+  marketingOptIn Boolean   @default(true)
   orders         Order[]
   reviews        Review[]
-  createdAt      DateTime @default(now())
+  coupons        Coupon[]
+  createdAt      DateTime  @default(now())
 
   @@index([email])
   @@index([birthdate])
 }
 
 model Order {
-  id            String      @id @default(cuid())
-  orderNumber   String      @unique
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  customerId    String
-  items         OrderItem[]
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  customerId      String
+  items           OrderItem[]
   subtotal        Float
-  discount        Float    @default(0)
+  discount        Float       @default(0)
   giftDescription String?
   shippingCost    Float
   total           Float
@@ -43,10 +44,11 @@ model Order {
   cardBrand       String?
   cardLast4       String?
   paymentStatus   String      @default("pagado")
-  status        String      @default("confirmado")
-  reviews       Review[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  couponCode      String?
+  status          String      @default("confirmado")
+  reviews         Review[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   @@index([status])
   @@index([createdAt])
@@ -69,18 +71,18 @@ model OrderItem {
 }
 
 model Promotion {
-  id               String   @id @default(cuid())
-  title            String
-  description      String?
-  type             String
-  value            Float?
-  productSlug      String?
-  minPurchase      Float?
-  giftDescription  String?
-  startsAt         DateTime
-  endsAt           DateTime
-  active           Boolean  @default(true)
-  createdAt        DateTime @default(now())
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  type            String
+  value           Float?
+  productSlug     String?
+  minPurchase     Float?
+  giftDescription String?
+  startsAt        DateTime
+  endsAt          DateTime
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
 
   @@index([active, startsAt, endsAt])
 }
@@ -113,4 +115,24 @@ model Review {
   @@index([productSlug])
   @@index([createdAt])
   @@index([customerId])
+}
+
+// Cupón nominal: se emite a UNA persona (p. ej. en su cumpleaños), caduca y
+// solo puede canjearse una vez. A diferencia de Promotion, que se aplica sola
+// a todo el mundo, este exige que el cliente escriba el código.
+model Coupon {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  type       String // "percent" | "free_shipping"
+  value      Float? // porcentaje cuando type = "percent"
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+  reason     String    @default("cumpleanos")
+  expiresAt  DateTime
+  usedAt     DateTime?
+  orderId    String?
+  createdAt  DateTime  @default(now())
+
+  @@index([customerId])
+  @@index([expiresAt])
 }
