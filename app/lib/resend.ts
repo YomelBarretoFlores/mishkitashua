@@ -4,6 +4,9 @@ import { Resend } from "resend";
 // SIMULACIÓN (registra en consola) para que la demo no se rompa.
 const apiKey = process.env.RESEND_API_KEY;
 const FROM = process.env.EMAIL_FROM || "Mishkitashua <onboarding@resend.dev>";
+// El dominio solo tiene envío habilitado, no recepción: las respuestas de los
+// clientes se redirigen a una bandeja real (Gmail) vía Reply-To.
+const REPLY_TO = process.env.EMAIL_REPLY_TO;
 
 const resend = apiKey ? new Resend(apiKey) : null;
 
@@ -22,6 +25,7 @@ export async function sendEmail(opts: {
     const { error } = await resend.emails.send({
       from: FROM,
       to: opts.to,
+      ...(REPLY_TO ? { replyTo: REPLY_TO } : {}),
       subject: opts.subject,
       html: opts.html,
     });
