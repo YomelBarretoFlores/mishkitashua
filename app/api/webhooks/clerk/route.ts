@@ -5,8 +5,17 @@ import { sendEmail } from "@/app/lib/resend";
 import { welcomeEmail } from "@/app/lib/emails/templates";
 
 // Webhook de Clerk. Al crearse un usuario: crea/actualiza el Customer en Neon y
-// envía el correo de bienvenida. Requiere CLERK_WEBHOOK_SECRET.
+// envía el correo de bienvenida.
+// El secreto va en CLERK_WEBHOOK_SIGNING_SECRET: ese nombre exacto lo lee
+// verifyWebhook() internamente, no es configurable desde aquí.
 export async function POST(request: NextRequest) {
+  if (!process.env.CLERK_WEBHOOK_SIGNING_SECRET) {
+    console.error(
+      "[clerk webhook] falta CLERK_WEBHOOK_SIGNING_SECRET: no se enviará el correo de bienvenida"
+    );
+    return NextResponse.json({ error: "Webhook no configurado" }, { status: 500 });
+  }
+
   let evt;
   try {
     evt = await verifyWebhook(request);
