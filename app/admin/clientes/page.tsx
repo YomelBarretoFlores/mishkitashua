@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { UserCheck, ShoppingBag } from "lucide-react";
+import { UserCheck, User } from "lucide-react";
 
 type Customer = {
   id: string;
@@ -15,7 +15,9 @@ type Customer = {
   birthdate: string | null;
 };
 
-type Filter = "todos" | "cuenta" | "invitados";
+// "Sin cuenta" = sin clerkUserId ligado. No implica que comprara como invitado:
+// el checkout exige sesión. Son datos de demo y filas de cuentas ya borradas.
+type Filter = "todos" | "cuenta" | "sin-cuenta";
 
 export default function ClientesPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -39,14 +41,14 @@ export default function ClientesPage() {
 
   const visible = useMemo(() => {
     if (filter === "cuenta") return customers.filter((c) => c.hasAccount);
-    if (filter === "invitados") return customers.filter((c) => !c.hasAccount);
+    if (filter === "sin-cuenta") return customers.filter((c) => !c.hasAccount);
     return customers;
   }, [customers, filter]);
 
   const TABS: { key: Filter; label: string; count: number }[] = [
     { key: "todos", label: "Todos", count: customers.length },
     { key: "cuenta", label: "Con cuenta", count: conCuenta },
-    { key: "invitados", label: "Invitados", count: customers.length - conCuenta },
+    { key: "sin-cuenta", label: "Sin cuenta", count: customers.length - conCuenta },
   ];
 
   if (loading)
@@ -61,7 +63,8 @@ export default function ClientesPage() {
         Clientes
       </h1>
       <p className="text-sm text-on-surface-variant mb-4">
-        Quienes crearon una cuenta y quienes compraron como invitados.
+        &quot;Con cuenta&quot; son quienes se registraron. &quot;Sin cuenta&quot; son
+        datos de demostración y registros de cuentas ya eliminadas.
       </p>
 
       <div className="flex flex-wrap gap-2 mb-4">
@@ -119,12 +122,12 @@ export default function ClientesPage() {
                     {c.hasAccount ? (
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-cocoa-deep">
                         <UserCheck className="w-3.5 h-3.5" aria-hidden />
-                        Cuenta
+                        Con cuenta
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 text-xs text-taupe">
-                        <ShoppingBag className="w-3.5 h-3.5" aria-hidden />
-                        Invitado
+                        <User className="w-3.5 h-3.5" aria-hidden />
+                        Sin cuenta
                       </span>
                     )}
                   </td>
