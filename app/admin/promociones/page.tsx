@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Tag, Power, Mail } from "lucide-react";
+import { Plus, Trash2, Tag, Power, Mail, Cake } from "lucide-react";
 import { products } from "@/app/lib/products";
 
 type Promotion = {
@@ -42,6 +42,8 @@ export default function PromocionesPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [birthdayCount, setBirthdayCount] = useState<number | null>(null);
+  const [sendingBirthdays, setSendingBirthdays] = useState(false);
 
   const load = () => {
     fetch("/api/admin/promociones")
@@ -51,6 +53,13 @@ export default function PromocionesPage() {
   };
 
   useEffect(load, []);
+
+  useEffect(() => {
+    fetch("/api/admin/promociones/birthdays")
+      .then((r) => r.json())
+      .then((d) => setBirthdayCount(d.birthdays ?? 0))
+      .catch(() => setBirthdayCount(null));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +127,30 @@ export default function PromocionesPage() {
     }
   };
 
+  const handleSendBirthdays = async () => {
+    if (
+      !confirm(
+        birthdayCount === 0
+          ? "Hoy no cumple años ningún cliente, así que no se enviará nada. ¿Continuar?"
+          : `¿Enviar el cupón de cumpleaños a ${birthdayCount} cliente(s)?`
+      )
+    )
+      return;
+    setSendingBirthdays(true);
+    const res = await fetch("/api/admin/promociones/birthdays", { method: "POST" });
+    setSendingBirthdays(false);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      alert(
+        data.birthdays === 0
+          ? "Hoy no cumple años ningún cliente. No se envió nada."
+          : `Cupón enviado a ${data.sent}/${data.birthdays} cliente(s).`
+      );
+    } else {
+      alert(data.error || "No se pudo enviar.");
+    }
+  };
+
   const showValue = form.type === "flash_discount";
   const showProduct = form.type === "flash_discount" || form.type === "buy_x_get_y";
   const showMinPurchase =
@@ -132,6 +165,36 @@ export default function PromocionesPage() {
       >
         Promociones
       </h1>
+
+      {/* Correo de cumpleaños: el cron lo manda solo, pero se puede forzar. */}
+      <div className="bg-white rounded-2xl border border-cream-darker/60 p-5 md:p-6 mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Cake className="w-5 h-5 text-cocoa-deep mt-0.5 shrink-0" aria-hidden />
+            <div>
+              <h2 className="font-medium text-cocoa-deep">Correo de cumpleaños</h2>
+              <p className="text-sm text-on-surface-variant">
+                Se envía solo cada día a las 8:00 am. Usa el botón para enviarlo ahora.
+              </p>
+              <p className="text-sm text-taupe mt-1">
+                {birthdayCount === null
+                  ? "Consultando…"
+                  : birthdayCount === 0
+                    ? "Hoy no cumple años nadie."
+                    : `Cumplen hoy: ${birthdayCount} cliente${birthdayCount !== 1 ? "s" : ""}.`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleSendBirthdays}
+            disabled={sendingBirthdays || birthdayCount === null}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cocoa-deep text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+          >
+            <Mail size={16} aria-hidden />
+            {sendingBirthdays ? "Enviando…" : "Enviar ahora"}
+          </button>
+        </div>
+      </div>
 
       {/* Formulario de creación */}
       <form

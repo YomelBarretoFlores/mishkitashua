@@ -10,7 +10,16 @@ export async function GET() {
     const [customers, grouped] = await Promise.all([
       prisma.customer.findMany({
         orderBy: { createdAt: "desc" },
-        select: { id: true, name: true, email: true, city: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          city: true,
+          createdAt: true,
+          // Distingue a quien creó una cuenta de quien compró como invitado.
+          clerkUserId: true,
+          birthdate: true,
+        },
       }),
       prisma.order.groupBy({
         by: ["customerId"],
@@ -34,6 +43,9 @@ export async function GET() {
       totalOrders: stats.get(c.id)?.totalOrders ?? 0,
       totalSpent: stats.get(c.id)?.totalSpent ?? 0,
       createdAt: c.createdAt,
+      // El id de Clerk no se expone: solo si tiene cuenta o compró como invitado.
+      hasAccount: c.clerkUserId !== null,
+      birthdate: c.birthdate,
     }));
 
     return NextResponse.json(result);

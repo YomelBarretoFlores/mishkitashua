@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { UserCheck, ShoppingBag } from "lucide-react";
 
 type Customer = {
   id: string;
@@ -10,20 +11,43 @@ type Customer = {
   totalOrders: number;
   totalSpent: number;
   createdAt: string;
+  hasAccount: boolean;
+  birthdate: string | null;
 };
+
+type Filter = "todos" | "cuenta" | "invitados";
 
 export default function ClientesPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Filter>("todos");
 
   useEffect(() => {
     fetch("/api/admin/customers")
       .then((r) => r.json())
       .then((data) => {
-        setCustomers(data);
+        setCustomers(Array.isArray(data) ? data : []);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
+
+  const conCuenta = useMemo(
+    () => customers.filter((c) => c.hasAccount).length,
+    [customers]
+  );
+
+  const visible = useMemo(() => {
+    if (filter === "cuenta") return customers.filter((c) => c.hasAccount);
+    if (filter === "invitados") return customers.filter((c) => !c.hasAccount);
+    return customers;
+  }, [customers, filter]);
+
+  const TABS: { key: Filter; label: string; count: number }[] = [
+    { key: "todos", label: "Todos", count: customers.length },
+    { key: "cuenta", label: "Con cuenta", count: conCuenta },
+    { key: "invitados", label: "Invitados", count: customers.length - conCuenta },
+  ];
 
   if (loading)
     return <p className="text-taupe py-12 text-center">Cargando...</p>;
@@ -31,25 +55,52 @@ export default function ClientesPage() {
   return (
     <div>
       <h1
-        className="text-xl sm:text-2xl font-medium text-cocoa-deep mb-6"
+        className="text-xl sm:text-2xl font-medium text-cocoa-deep mb-2"
         style={{ fontFamily: "var(--font-eb-garamond), serif" }}
       >
         Clientes
       </h1>
-
-      <p className="text-sm text-on-surface-variant mb-3">
-        {customers.length} cliente{customers.length !== 1 ? "s" : ""} registrado{customers.length !== 1 ? "s" : ""}
+      <p className="text-sm text-on-surface-variant mb-4">
+        Quienes crearon una cuenta y quienes compraron como invitados.
       </p>
 
-      {customers.length === 0 ? (
-        <p className="text-taupe text-center py-12">Aún no hay clientes registrados</p>
+      <div className="flex flex-wrap gap-2 mb-4">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setFilter(t.key)}
+            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+              filter === t.key
+                ? "bg-cocoa-deep text-white border-cocoa-deep"
+                : "bg-white text-on-surface-variant border-cream-darker/60 hover:bg-cream"
+            }`}
+          >
+            {t.label}{" "}
+            <span
+              className={
+                filter === t.key ? "text-white/70" : "text-taupe"
+              }
+            >
+              {t.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {visible.length === 0 ? (
+        <p className="text-taupe text-center py-12">
+          {customers.length === 0
+            ? "Aún no hay clientes registrados"
+            : "No hay nadie en esta categoría"}
+        </p>
       ) : (
         <div className="bg-white rounded-2xl border border-cream-darker/60 overflow-x-auto">
-          <table className="w-full text-sm min-w-[600px]">
+          <table className="w-full text-sm min-w-[720px]">
             <thead className="bg-cream border-b border-cream-darker/60">
               <tr>
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Nombre</th>
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Email</th>
+                <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Tipo</th>
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Ciudad</th>
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Pedidos</th>
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Total gastado</th>
@@ -57,16 +108,31 @@ export default function ClientesPage() {
               </tr>
             </thead>
             <tbody>
-              {customers.map((c) => (
+              {visible.map((c) => (
                 <tr
                   key={c.id}
                   className="border-b border-cream-darker/40 hover:bg-cream transition-colors"
                 >
                   <td className="py-3 px-4 font-medium text-cocoa-deep">{c.name}</td>
                   <td className="py-3 px-4 text-on-surface-variant">{c.email}</td>
-                  <td className="py-3 px-4 text-on-surface-variant">{c.city}</td>
+                  <td className="py-3 px-4">
+                    {c.hasAccount ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-cocoa-deep">
+                        <UserCheck className="w-3.5 h-3.5" aria-hidden />
+                        Cuenta
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-xs text-taupe">
+                        <ShoppingBag className="w-3.5 h-3.5" aria-hidden />
+                        Invitado
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-on-surface-variant">{c.city || "—"}</td>
                   <td className="py-3 px-4 text-cocoa-deep font-semibold">{c.totalOrders}</td>
-                  <td className="py-3 px-4 text-cocoa-deep font-semibold">S/ {c.totalSpent.toFixed(2)}</td>
+                  <td className="py-3 px-4 text-cocoa-deep font-semibold">
+                    S/ {c.totalSpent.toFixed(2)}
+                  </td>
                   <td className="py-3 px-4 text-taupe text-xs">
                     {new Date(c.createdAt).toLocaleDateString("es-PE")}
                   </td>
