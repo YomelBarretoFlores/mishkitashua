@@ -115,6 +115,7 @@ model Review {
   @@index([productSlug])
   @@index([createdAt])
   @@index([customerId])
+  @@index([rating])
 }
 
 // Cupón nominal: se emite a UNA persona (p. ej. en su cumpleaños), caduca y

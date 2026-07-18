@@ -13,15 +13,40 @@ const reviewSchema = z.object({
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const productSlug = searchParams.get("productSlug");
+  const ratingParam = searchParams.get("rating"); // "1".."5"
+  const sort = searchParams.get("sort"); // "recientes" | "mejor" | "peor"
+  const daysParam = searchParams.get("days"); // "7" | "30" | "90" | "365"
 
-  const where = productSlug ? { productSlug } : undefined;
+  const where: {
+    productSlug?: string;
+    rating?: number;
+    createdAt?: { gte: Date };
+  } = {};
+  if (productSlug) where.productSlug = productSlug;
 
-  // Promedio/total sobre TODAS las reseñas; la lista se limita a 50.
+  const rating = Number(ratingParam);
+  if (Number.isInteger(rating) && rating >= 1 && rating <= 5) {
+    where.rating = rating;
+  }
+
+  const days = Number(daysParam);
+  if (Number.isInteger(days) && days > 0) {
+    where.createdAt = { gte: new Date(Date.now() - days * 86_400_000) };
+  }
+
+  // El promedio/total respeta los filtros aplicados; la lista se limita a 50.
+  const orderBy =
+    sort === "mejor"
+      ? [{ rating: "desc" as const }, { createdAt: "desc" as const }]
+      : sort === "peor"
+        ? [{ rating: "asc" as const }, { createdAt: "desc" as const }]
+        : [{ createdAt: "desc" as const }];
+
   const [agg, reviews] = await Promise.all([
     prisma.review.aggregate({ where, _avg: { rating: true }, _count: true }),
     prisma.review.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy,
       take: 50,
       include: { customer: { select: { name: true } } },
     }),
