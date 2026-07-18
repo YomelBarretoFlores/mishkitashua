@@ -62,17 +62,19 @@ export default function AuthShell({
         </aside>
 
         {/* Panel del formulario */}
-        <div className="p-7 sm:p-10 flex flex-col justify-center">
+        <div className="px-5 py-8 sm:p-10 flex flex-col justify-center min-w-0">
           <div className="mb-6 text-center md:text-left">
             <h1
-              className="text-3xl font-medium text-cocoa-deep"
+              className="text-2xl sm:text-3xl font-medium text-cocoa-deep"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
             >
               {title}
             </h1>
             <p className="text-sm text-on-surface-variant mt-1.5">{subtitle}</p>
           </div>
-          <div className="flex justify-center md:justify-start">{children}</div>
+          <div className="w-full flex justify-center md:justify-start [&_.cl-rootBox]:w-full [&_.cl-card]:w-full">
+            {children}
+          </div>
           <p className="mt-6 text-center md:text-left text-xs text-taupe">
             Al continuar aceptas nuestros{" "}
             <Link href="/ayuda" className="underline hover:text-cocoa">

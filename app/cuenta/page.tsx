@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { auth } from "@clerk/nextjs/server";
 import { getCurrentCustomer, requireAuthPage } from "@/app/lib/auth";
+import { prisma } from "@/app/lib/prisma";
 import AccountForm from "./_components/account-form";
 import AccountNav from "./_components/account-nav";
 
@@ -12,7 +14,15 @@ export const dynamic = "force-dynamic";
 
 export default async function CuentaPage() {
   await requireAuthPage("/cuenta");
-  const customer = await getCurrentCustomer();
+
+  // Camino rápido: leer el cliente directo por el userId del token (sin llamar a
+  // la API de Clerk). Solo si la fila no existe se usa getCurrentCustomer, que
+  // sí consulta Clerk y la crea. Esto acelera mucho el cambio de pestaña.
+  const { userId } = await auth();
+  let customer = userId
+    ? await prisma.customer.findUnique({ where: { clerkUserId: userId } })
+    : null;
+  if (!customer) customer = await getCurrentCustomer();
 
   return (
     <div className="max-w-2xl mx-auto px-5 md:px-8 py-12 md:py-16">

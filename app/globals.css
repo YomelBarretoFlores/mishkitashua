@@ -55,3 +55,12 @@ h1, h2, h3, h4 {
     transform: scale(1.08);
   }
 }
+
+/* Oculta la barra de scroll (nav del admin con scroll horizontal). */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
