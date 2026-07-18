@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { X, Send, ArrowRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { products } from "@/app/lib/products";
 import { trackEvent } from "@/app/lib/analytics";
 import { ASSISTANT_NAME, SLOGAN } from "@/app/lib/brand";
 import { useActivePromotions } from "@/app/lib/promotions-context";
@@ -25,16 +24,29 @@ type Message = {
   link?: { label: string; href: string };
 };
 
-const productList = products
-  .map((p) => `• ${p.name}: S/ ${p.price.toFixed(2)} (${p.weight})`)
-  .join("\n");
+// Datos del catálogo que necesita el chatbot (llegan de /api/products).
+type ChatProduct = {
+  name: string;
+  price: number;
+  weight: string;
+  ingredients: string[];
+  allergens: string | null;
+};
 
-const ingredientsList = products
-  .map(
-    (p) =>
-      `${p.name}:\n${p.ingredients.map((i) => `  - ${i}`).join("\n")}${p.allergens ? `\n  Alérgenos: ${p.allergens}` : ""}`
-  )
-  .join("\n\n");
+function buildProductList(products: ChatProduct[]): string {
+  return products
+    .map((p) => `• ${p.name}: S/ ${p.price.toFixed(2)} (${p.weight})`)
+    .join("\n");
+}
+
+function buildIngredientsList(products: ChatProduct[]): string {
+  return products
+    .map(
+      (p) =>
+        `${p.name}:\n${p.ingredients.map((i) => `  - ${i}`).join("\n")}${p.allergens ? `\n  Alérgenos: ${p.allergens}` : ""}`
+    )
+    .join("\n\n");
+}
 
 const MENU_OPTIONS = [
   { label: "Productos y precios", key: "productos" },
@@ -52,7 +64,11 @@ type ActivePromotion = {
   type: string;
 };
 
-function getResponse(key: string): Message {
+function getResponse(
+  key: string,
+  productList: string,
+  ingredientsList: string
+): Message {
   switch (key) {
     case "productos":
       return {
@@ -215,6 +231,20 @@ export default function Chatbot() {
   const reduce = useReducedMotion();
   const activePromos = useActivePromotions();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [catalog, setCatalog] = useState<ChatProduct[]>([]);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((data: ChatProduct[]) => setCatalog(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
+  const productList = useMemo(() => buildProductList(catalog), [catalog]);
+  const ingredientsList = useMemo(
+    () => buildIngredientsList(catalog),
+    [catalog]
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -230,7 +260,10 @@ export default function Chatbot() {
       setMessages((prev) => [...prev, buildPromotionsMessage(activePromos)]);
       return;
     }
-    setMessages((prev) => [...prev, getResponse(key)]);
+    setMessages((prev) => [
+      ...prev,
+      getResponse(key, productList, ingredientsList),
+    ]);
   };
 
   const handleOption = (key: string) => {

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
-import { products } from "@/app/lib/products";
+
+type ProductOption = { slug: string; name: string };
 
 type ReviewRow = {
   id: string;
@@ -26,11 +27,19 @@ export default function ResenasPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sort, setSort] = useState("recientes");
+  const [products, setProducts] = useState<ProductOption[]>([]);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((d) => setProducts(Array.isArray(d) ? d : []))
+      .catch(() => setProducts([]));
+  }, []);
 
   // Mapa slug → nombre para mostrar el producto reseñado.
   const nameBySlug = useMemo(
     () => Object.fromEntries(products.map((p) => [p.slug, p.name])),
-    []
+    [products]
   );
 
   const fetchReviews = useCallback(async () => {

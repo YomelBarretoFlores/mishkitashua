@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import { getAllProducts } from "@/app/lib/products";
 import ProductosContent from "./_components/productos-content";
+
+// ISR: refresca el catálogo cada 5 min desde la BD.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
     title: "Nuestras Creaciones",
@@ -16,6 +20,7 @@ export const metadata: Metadata = {
     },
 };
 
-export default function ProductosPage() {
-    return <ProductosContent />;
+export default async function ProductosPage() {
+    const products = await getAllProducts();
+    return <ProductosContent products={products} />;
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProductBySlug, products } from "@/app/lib/products";
+import { getProductBySlug, getAllProducts } from "@/app/lib/products";
 import { productJsonLd } from "@/app/lib/jsonld";
 import { prisma } from "@/app/lib/prisma";
 import ProductDetail from "./_components/product-detail";
@@ -13,12 +13,19 @@ type Props = {
 export const revalidate = 300;
 
 export async function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+  // Si la BD no responde en build, dejar que las páginas se generen on-demand
+  // (dynamicParams por defecto = true), en vez de romper el build.
+  try {
+    const products = await getAllProducts();
+    return products.map((p) => ({ slug: p.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return { title: "Producto no encontrado" };
 
   return {
@@ -43,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
   // Resumen de reseñas para el aggregateRating (estrellas en Google).
@@ -71,7 +78,7 @@ export default async function ProductPage({ params }: Props) {
           __html: JSON.stringify(productJsonLd(product, rating)),
         }}
       />
-      <ProductDetail />
+      <ProductDetail product={product} />
     </>
   );
 }

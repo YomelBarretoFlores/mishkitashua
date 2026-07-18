@@ -2,18 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ChevronRight, Leaf, Mountain, Droplets, Minus, Plus, ShoppingBag, Zap } from "lucide-react";
-import { getProductBySlug } from "@/app/lib/products";
+import type { Product } from "@/app/lib/products";
 import { useCart } from "@/app/lib/cart-context";
 import { isPromotionActive } from "@/app/lib/promotions";
 import { useActivePromotions } from "@/app/lib/promotions-context";
 import ProductReviews from "./product-reviews";
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const product = getProductBySlug(params.slug as string);
+// El producto llega ya resuelto desde el server component (page.tsx), que hace
+// notFound() si no existe; aquí siempre está presente.
+export default function ProductDetailPage({ product }: { product: Product }) {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -21,9 +20,9 @@ export default function ProductDetailPage() {
   const [flavors, setFlavors] = useState<Record<string, number>>({});
   const promos = useActivePromotions();
 
-  const boxSize = product?.boxSize ?? 0;
+  const boxSize = product.boxSize ?? 0;
   const flavorTotal = Object.values(flavors).reduce((s, n) => s + n, 0);
-  const customizationComplete = !product?.customizable || flavorTotal === boxSize;
+  const customizationComplete = !product.customizable || flavorTotal === boxSize;
 
   const setFlavor = (flavor: string, value: number) => {
     setFlavors((prev) => {
@@ -36,19 +35,6 @@ export default function ProductDetailPage() {
       return next;
     });
   };
-
-  if (!product) {
-    return (
-      <div className="max-w-7xl mx-auto px-5 md:px-16 py-20 text-center">
-        <h1 className="text-2xl font-serif text-cocoa-deep mb-4">
-          Producto no encontrado
-        </h1>
-        <Link href="/productos" className="text-caramel hover:underline">
-          Volver al catálogo
-        </Link>
-      </div>
-    );
-  }
 
   const handleAddToCart = () => {
     if (product.customizable && !customizationComplete) return;
@@ -185,7 +171,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Personalización de sabores */}
-          {product.customizable && product.flavorOptions && (
+          {product.customizable && product.flavorOptions.length > 0 && (
             <div className="mb-6 bg-cream-dark rounded-2xl border border-cream-darker/60 p-5">
               <div className="flex items-center justify-between mb-3">
                 <label className="text-sm font-semibold text-cocoa-deep tracking-wide uppercase">

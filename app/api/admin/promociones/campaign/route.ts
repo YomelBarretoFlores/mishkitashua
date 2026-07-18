@@ -5,7 +5,7 @@ import { adminGuard } from "@/app/lib/auth";
 import { sendEmail } from "@/app/lib/resend";
 import { getCampaignAudience } from "@/app/lib/email-audience";
 import { promoCampaignEmail } from "@/app/lib/emails/templates";
-import { products } from "@/app/lib/products";
+import { getProductBySlug } from "@/app/lib/products";
 
 const schema = z.object({ promotionId: z.string().min(1).max(60) });
 
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     minPurchase: promo.minPurchase,
     giftDescription: promo.giftDescription,
     productName: promo.productSlug
-      ? (products.find((p) => p.slug === promo.productSlug)?.name ?? null)
+      ? ((await getProductBySlug(promo.productSlug))?.name ?? null)
       : null,
     endsAt: promo.endsAt,
   });

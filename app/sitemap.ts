@@ -1,9 +1,12 @@
 import type { MetadataRoute } from "next";
-import { products } from "@/app/lib/products";
+import { getAllProducts } from "@/app/lib/products";
 
 const BASE_URL = "https://mishkitashua.com";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+// Regenerar cada hora: el sitemap ahora lee productos de la BD.
+export const revalidate = 3600;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: BASE_URL,
@@ -36,6 +39,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
   ];
+
+  // Si la BD falla en build, degradar a solo rutas estáticas (no romper build).
+  let products: Awaited<ReturnType<typeof getAllProducts>> = [];
+  try {
+    products = await getAllProducts();
+  } catch {
+    products = [];
+  }
 
   const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
     url: `${BASE_URL}/productos/${product.slug}`,

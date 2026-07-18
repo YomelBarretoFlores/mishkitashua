@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Truck, Package, Store, ShoppingCart, Search, Star, X } from "lucide-react";
-import { products, type Product } from "@/app/lib/products";
+import { type Product } from "@/app/lib/products";
 import { useCart } from "@/app/lib/cart-context";
 import Reveal from "@/app/components/Reveal";
 
@@ -311,7 +311,11 @@ function FilterBar({
   );
 }
 
-export default function ProductosContent() {
+export default function ProductosContent({
+  products,
+}: {
+  products: Product[];
+}) {
   const alfajores = products.filter((p) => p.category === "alfajores");
   const manjares = products.filter((p) => p.category === "manjares");
 
@@ -331,7 +335,7 @@ export default function ProductosContent() {
     query.trim() !== "" || category !== "todos" || sort !== "destacados";
 
   const filtered = useMemo(() => {
-    let list = [...products];
+    let list: Product[] = [...products];
     if (category !== "todos") list = list.filter((p) => p.category === category);
     if (query.trim()) {
       const q = query.trim().toLowerCase();

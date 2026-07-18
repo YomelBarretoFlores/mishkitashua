@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Tag, Power, Mail, Cake } from "lucide-react";
-import { products } from "@/app/lib/products";
 import ConfirmDialog from "@/app/admin/_components/confirm-dialog";
 import Toast, { type ToastMessage } from "@/app/admin/_components/toast";
+
+// Solo se necesita slug + nombre para el selector de producto.
+type ProductOption = { slug: string; name: string };
 
 type Promotion = {
   id: string;
@@ -46,6 +48,7 @@ export default function PromocionesPage() {
   const [error, setError] = useState("");
   const [birthdayCount, setBirthdayCount] = useState<number | null>(null);
   const [sendingBirthdays, setSendingBirthdays] = useState(false);
+  const [products, setProducts] = useState<ProductOption[]>([]);
   const [audience, setAudience] = useState<{ recipients: number } | null>(null);
   const [toast, setToast] = useState<ToastMessage>(null);
   // Confirmación pendiente: qué se preguntó y qué hacer si dice que sí.
@@ -67,6 +70,10 @@ export default function PromocionesPage() {
   useEffect(load, []);
 
   useEffect(() => {
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((d) => setProducts(Array.isArray(d) ? d : []))
+      .catch(() => setProducts([]));
     fetch("/api/admin/promociones/birthdays")
       .then((r) => r.json())
       .then((d) => setBirthdayCount(d.birthdays ?? 0))
@@ -310,7 +317,7 @@ export default function PromocionesPage() {
                 className="w-full px-4 py-2.5 bg-cream-dark border border-cream-darker rounded-lg text-sm focus:outline-none focus:border-cocoa"
               >
                 <option value="">Todos los productos</option>
-                {products.map((p) => (
+                {products.map((p: ProductOption) => (
                   <option key={p.slug} value={p.slug}>
                     {p.name}
                   </option>

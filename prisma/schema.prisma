@@ -87,6 +87,43 @@ model Promotion {
   @@index([active, startsAt, endsAt])
 }
 
+model Product {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  subtitle        String
+  category        String // "alfajores" | "manjares" (validado en la app)
+  price           Float
+  weight          String
+  description     String
+  longDescription String
+  ingredients     String[]
+  allergens       String?
+  features        String[]
+  image           String
+  images          String[]
+  color           String
+  customizable    Boolean  @default(false)
+  flavorOptions   String[]
+  boxSize         Int?
+  active          Boolean  @default(true) // soft delete / archivar
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([active])
+  @@index([category])
+}
+
+// Configuración editable del sitio (fila única). Los OrderItem son snapshots,
+// así que cambiar esto no afecta pedidos ya hechos.
+model SiteSetting {
+  id                    String   @id @default("singleton")
+  shippingCost          Float    @default(12.0)
+  freeShippingThreshold Float? // null = sin umbral de envío gratis
+  updatedAt             DateTime @updatedAt
+}
+
 model AnalyticsEvent {
   id          String   @id @default(cuid())
   type        String

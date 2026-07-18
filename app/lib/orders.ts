@@ -57,7 +57,9 @@ export async function priceCheckout(
 
   const resolved: Priced["resolved"] = [];
   for (const item of items) {
-    const product = getProductBySlug(item.slug);
+    // getProductBySlug ya excluye archivados: un producto retirado no se puede
+    // comprar, pero los OrderItem de pedidos pasados (snapshots) no se tocan.
+    const product = await getProductBySlug(item.slug);
     if (!product) {
       return { ok: false, status: 400, error: `Producto no válido: ${item.slug}` };
     }
