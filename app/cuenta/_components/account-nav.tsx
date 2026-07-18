@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { User, Package } from "lucide-react";
+import { User, Package, RotateCcw } from "lucide-react";
 
 // Sub-navegación del área de cuenta. `active` marca la pestaña actual.
-export default function AccountNav({ active }: { active: "datos" | "pedidos" }) {
+export default function AccountNav({
+  active,
+}: {
+  active: "datos" | "pedidos" | "devoluciones";
+}) {
   const tabs = [
     { key: "datos", label: "Mis datos", href: "/cuenta", icon: User },
     { key: "pedidos", label: "Mis pedidos", href: "/cuenta/pedidos", icon: Package },
+    { key: "devoluciones", label: "Devoluciones", href: "/cuenta/devoluciones", icon: RotateCcw },
   ] as const;
 
   return (

@@ -9,6 +9,7 @@ import {
   Cookie,
   Settings,
   Radio,
+  RotateCcw,
   Menu,
   X,
 } from "lucide-react";
@@ -30,6 +31,13 @@ function NavLinks() {
       >
         <ShoppingBag size={16} />
         Pedidos
+      </Link>
+      <Link
+        href="/admin/devoluciones"
+        className="flex items-center gap-1.5 text-sm text-white/80 hover:text-caramel-light transition-colors"
+      >
+        <RotateCcw size={16} />
+        Devoluciones
       </Link>
       <Link
         href="/admin/productos"

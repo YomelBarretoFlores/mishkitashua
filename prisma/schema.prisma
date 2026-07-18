@@ -47,6 +47,7 @@ model Order {
   couponCode      String?
   status          String      @default("confirmado")
   reviews         Review[]
+  returns         Return[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -122,6 +123,27 @@ model SiteSetting {
   shippingCost          Float    @default(12.0)
   freeShippingThreshold Float? // null = sin umbral de envío gratis
   updatedAt             DateTime @updatedAt
+}
+
+// Devolución (logística inversa). El cliente la solicita sobre un pedido
+// entregado; el admin la aprueba/rechaza y marca reembolsada. El reembolso del
+// dinero se hace manualmente en el panel de la pasarela (usando el chargeId del
+// pedido); el sistema refleja el estado y avisa al cliente por correo.
+model Return {
+  id         String    @id @default(cuid())
+  order      Order     @relation(fields: [orderId], references: [id])
+  orderId    String
+  customerId String
+  reason     String
+  status     String    @default("solicitada") // solicitada|aprobada|rechazada|reembolsada
+  refundAmount Float?
+  adminNote  String?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([status])
+  @@index([orderId])
+  @@index([customerId])
 }
 
 // Presencia aproximada para el panel de "conectados" (fidelización). Un latido

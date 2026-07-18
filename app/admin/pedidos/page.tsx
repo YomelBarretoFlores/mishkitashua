@@ -9,6 +9,7 @@ type Order = {
   total: number;
   status: string;
   paymentMethod: string;
+  paymentStatus: string;
   createdAt: string;
   customer: { name: string; email: string; city: string };
   items: { productName: string; quantity: number }[];
@@ -171,6 +172,16 @@ export default function PedidosPage() {
                     </td>
                     <td className="py-3 px-4 text-on-surface-variant capitalize">
                       {order.paymentMethod === "card" ? "Tarjeta" : "Transferencia"}
+                      {order.paymentStatus === "reembolsado" && (
+                        <span className="block text-xs text-red-600 font-medium">
+                          Reembolsado
+                        </span>
+                      )}
+                      {order.paymentStatus === "pendiente" && (
+                        <span className="block text-xs text-amber-600">
+                          Pago pendiente
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-4">
                       <select

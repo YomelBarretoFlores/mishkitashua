@@ -6,6 +6,7 @@ import { requireAuthPage } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { statusBadgeClasses, statusLabel } from "@/app/lib/order-status";
 import AccountNav from "../_components/account-nav";
+import RequestReturnButton from "../_components/request-return-button";
 
 export const metadata: Metadata = {
   title: "Mis pedidos",
@@ -23,7 +24,11 @@ export default async function MisPedidosPage() {
   const orders = userId
     ? await prisma.order.findMany({
         where: { customer: { clerkUserId: userId } },
-        include: { items: true, reviews: { select: { id: true } } },
+        include: {
+          items: true,
+          reviews: { select: { id: true } },
+          returns: { select: { id: true, status: true } },
+        },
         orderBy: { createdAt: "desc" },
         take: 50,
       })
@@ -102,7 +107,7 @@ export default async function MisPedidosPage() {
                 <span className="font-semibold text-caramel">
                   Total: S/ {order.total.toFixed(2)}
                 </span>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   {order.status === "entregado" &&
                     order.reviews.length === 0 && (
                       <Link
@@ -112,6 +117,13 @@ export default async function MisPedidosPage() {
                         <Star size={15} />
                         Dejar reseña
                       </Link>
+                    )}
+                  {order.status === "entregado" &&
+                    order.returns.length === 0 && (
+                      <RequestReturnButton
+                        orderId={order.id}
+                        orderNumber={order.orderNumber}
+                      />
                     )}
                   <Link
                     href={`/seguimiento?q=${order.orderNumber}`}

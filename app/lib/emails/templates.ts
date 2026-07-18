@@ -234,3 +234,63 @@ export function promoCampaignEmail(promo: {
     html: layout(inner, promo.description || offer.note),
   };
 }
+
+// Confirmación al cliente de que recibimos su solicitud de devolución.
+export function returnRequestedEmail(data: {
+  orderNumber: string;
+}): { subject: string; html: string } {
+  const inner = `
+    ${heading("Solicitud de devolución recibida")}
+    ${paragraph(
+      `Recibimos tu solicitud de devolución para el pedido <strong style="color:${COCOA}">#${esc(data.orderNumber)}</strong>. La revisaremos y te avisaremos por este medio cuando tengamos una respuesta.`
+    )}
+    ${paragraph("Gracias por tu paciencia.")}
+    <div style="text-align:center;margin-top:26px">${button(`${BASE}/cuenta/devoluciones`, "Ver mis devoluciones")}</div>`;
+  return {
+    subject: `Devolución recibida · Pedido #${data.orderNumber}`,
+    html: layout(inner, "Estamos revisando tu solicitud"),
+  };
+}
+
+// Resolución de una devolución: aprobada, rechazada o reembolsada.
+export function returnResolvedEmail(data: {
+  orderNumber: string;
+  status: "aprobada" | "rechazada" | "reembolsada";
+  adminNote?: string | null;
+  refundAmount?: number | null;
+}): { subject: string; html: string } {
+  const map = {
+    aprobada: {
+      title: "Devolución aprobada",
+      body: "Tu solicitud de devolución fue aprobada. Procesaremos el reembolso a la brevedad y te avisaremos cuando esté hecho.",
+      highlightLabel: "Estado",
+      highlightValue: "Aprobada",
+    },
+    rechazada: {
+      title: "Sobre tu solicitud de devolución",
+      body: "Tras revisar tu solicitud, no pudimos aprobar la devolución en esta ocasión.",
+      highlightLabel: "Estado",
+      highlightValue: "No aprobada",
+    },
+    reembolsada: {
+      title: "Reembolso realizado",
+      body: "Procesamos el reembolso de tu pedido. Según tu banco o método de pago, puede tardar unos días en reflejarse.",
+      highlightLabel: "Reembolso",
+      highlightValue: data.refundAmount != null
+        ? `S/ ${data.refundAmount.toFixed(2)}`
+        : "Realizado",
+    },
+  }[data.status];
+
+  const inner = `
+    ${heading(map.title)}
+    ${paragraph(`Pedido <strong style="color:${COCOA}">#${esc(data.orderNumber)}</strong>.`)}
+    ${paragraph(map.body)}
+    ${highlight(map.highlightLabel, esc(map.highlightValue))}
+    ${data.adminNote ? paragraph(`Nota: ${esc(data.adminNote)}`) : ""}
+    <div style="text-align:center;margin-top:26px">${button(`${BASE}/cuenta/devoluciones`, "Ver mis devoluciones")}</div>`;
+  return {
+    subject: `Devolución ${data.status} · Pedido #${data.orderNumber}`,
+    html: layout(inner, map.title),
+  };
+}
