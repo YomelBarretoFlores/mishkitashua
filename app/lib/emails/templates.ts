@@ -94,34 +94,75 @@ export function welcomeEmail(name: string): { subject: string; html: string } {
 
 export function orderConfirmationEmail(order: {
   orderNumber: string;
+  items: { productName: string; quantity: number; price?: number }[];
+  subtotal?: number;
+  discount?: number;
+  shippingCost?: number;
   total: number;
-  items: { productName: string; quantity: number }[];
+  paymentMethod?: string;
+  couponCode?: string | null;
 }): { subject: string; html: string } {
+  // Filas de producto con precio unitario y subtotal por línea (comprobante).
   const rows = order.items
-    .map(
-      (i) =>
-        `<tr>
-          <td style="padding:12px 0;border-bottom:1px solid ${BORDER};color:${TEXT};font-size:14px">${esc(i.productName)}</td>
-          <td style="padding:12px 0;border-bottom:1px solid ${BORDER};color:${MUTED};font-size:14px;text-align:right;white-space:nowrap">× ${i.quantity}</td>
-        </tr>`
-    )
+    .map((i) => {
+      const lineTotal = i.price != null ? i.price * i.quantity : null;
+      const detail =
+        i.price != null
+          ? `${i.quantity} × S/ ${i.price.toFixed(2)}`
+          : `× ${i.quantity}`;
+      return `<tr>
+          <td style="padding:10px 0;border-bottom:1px solid ${BORDER};color:${TEXT};font-size:14px">
+            ${esc(i.productName)}
+            <div style="color:${MUTED};font-size:12px;margin-top:2px">${detail}</div>
+          </td>
+          <td style="padding:10px 0;border-bottom:1px solid ${BORDER};color:${TEXT};font-size:14px;text-align:right;white-space:nowrap">${
+            lineTotal != null ? `S/ ${lineTotal.toFixed(2)}` : ""
+          }</td>
+        </tr>`;
+    })
     .join("");
+
+  // Fila de resumen (label + monto), opcional.
+  const summaryRow = (label: string, value: string, strong = false) =>
+    `<tr>
+      <td style="padding:6px 0;color:${strong ? COCOA : MUTED};font-size:${strong ? "15px" : "13px"};${strong ? "font-weight:600" : ""}">${esc(label)}</td>
+      <td style="padding:6px 0;color:${strong ? COCOA : TEXT};font-size:${strong ? "15px" : "13px"};text-align:right;white-space:nowrap;${strong ? "font-weight:600" : ""}">${esc(value)}</td>
+    </tr>`;
+
+  const summary: string[] = [];
+  if (order.subtotal != null) summary.push(summaryRow("Subtotal", `S/ ${order.subtotal.toFixed(2)}`));
+  if (order.discount != null && order.discount > 0) {
+    summary.push(
+      summaryRow(
+        order.couponCode ? `Descuento (${order.couponCode})` : "Descuento",
+        `- S/ ${order.discount.toFixed(2)}`
+      )
+    );
+  }
+  if (order.shippingCost != null) {
+    summary.push(summaryRow("Envío", order.shippingCost > 0 ? `S/ ${order.shippingCost.toFixed(2)}` : "Gratis"));
+  }
+  if (order.paymentMethod) summary.push(summaryRow("Método de pago", order.paymentMethod));
+
   const inner = `
     ${heading("Pedido confirmado")}
-    ${paragraph(`Recibimos tu pedido <strong style="color:${COCOA}">#${esc(order.orderNumber)}</strong>. Lo prepararemos y te avisaremos cuando salga.`)}
+    ${paragraph(`Recibimos tu pedido <strong style="color:${COCOA}">#${esc(order.orderNumber)}</strong>. Lo prepararemos y te avisaremos cuando salga. Este correo es tu comprobante.`)}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0">
-      <tr><td style="padding-bottom:4px;color:${MUTED};font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase">Tu pedido</td></tr>
-      <tr><td>
+      <tr><td colspan="2" style="padding-bottom:4px;color:${MUTED};font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase">Comprobante</td></tr>
+      <tr><td colspan="2">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ${BORDER}">
           ${rows}
-          <tr>
-            <td style="padding:14px 0;color:${COCOA};font-size:15px;font-weight:600">Total</td>
-            <td style="padding:14px 0;color:${COCOA};font-family:${SERIF};font-size:22px;text-align:right;white-space:nowrap">S/ ${order.total.toFixed(2)}</td>
-          </tr>
         </table>
       </td></tr>
     </table>
-    <div style="text-align:center;margin-top:8px">${button(`${BASE}/seguimiento?q=${encodeURIComponent(order.orderNumber)}`, "Seguir mi pedido")}</div>`;
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px">
+      ${summary.join("")}
+      <tr>
+        <td style="padding:12px 0 0;border-top:1px solid ${BORDER};color:${COCOA};font-size:15px;font-weight:600">Total</td>
+        <td style="padding:12px 0 0;border-top:1px solid ${BORDER};color:${COCOA};font-family:${SERIF};font-size:22px;text-align:right;white-space:nowrap">S/ ${order.total.toFixed(2)}</td>
+      </tr>
+    </table>
+    <div style="text-align:center;margin-top:20px">${button(`${BASE}/seguimiento?q=${encodeURIComponent(order.orderNumber)}`, "Seguir mi pedido")}</div>`;
   return {
     subject: `Pedido confirmado #${order.orderNumber}`,
     html: layout(inner, `Tu pedido #${order.orderNumber} está confirmado`),

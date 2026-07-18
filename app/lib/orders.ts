@@ -290,13 +290,25 @@ export async function createOrderFromCheckout(input: {
 
   // Correo de confirmación: se envía DESPUÉS de responder (no bloquea el
   // checkout). Así el redirect a la confirmación es inmediato.
+  const paymentLabel =
+    input.paymentMethod === "card"
+      ? "Tarjeta"
+      : input.paymentMethod === "transfer"
+        ? "Transferencia"
+        : "Mercado Pago";
   const confirmationEmail = orderConfirmationEmail({
     orderNumber: order.orderNumber,
-    total,
     items: resolved.map((r) => ({
       productName: r.product.name,
       quantity: r.quantity,
+      price: r.product.price,
     })),
+    subtotal: pricing.subtotal,
+    discount: pricing.discount,
+    shippingCost,
+    total,
+    paymentMethod: paymentLabel,
+    couponCode: coupon?.code ?? null,
   });
   const recipient = customer.email;
   after(async () => {
