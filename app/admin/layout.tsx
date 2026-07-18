@@ -8,6 +8,7 @@ import {
   BarChart3,
   Cookie,
   Settings,
+  Radio,
   Menu,
   X,
 } from "lucide-react";
@@ -43,6 +44,13 @@ function NavLinks() {
       >
         <Users size={16} />
         Clientes
+      </Link>
+      <Link
+        href="/admin/conectados"
+        className="flex items-center gap-1.5 text-sm text-white/80 hover:text-caramel-light transition-colors"
+      >
+        <Radio size={16} />
+        Conectados
       </Link>
       <Link
         href="/admin/resenas"

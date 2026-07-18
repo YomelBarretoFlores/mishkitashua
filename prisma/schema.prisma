@@ -124,6 +124,19 @@ model SiteSetting {
   updatedAt             DateTime @updatedAt
 }
 
+// Presencia aproximada para el panel de "conectados" (fidelización). Un latido
+// (heartbeat) actualiza lastSeen por sesión; si hay sesión Clerk, se estampa el
+// cliente. "Conectado" = lastSeen dentro de los últimos minutos.
+model Presence {
+  sessionId    String   @id
+  customerId   String?
+  customerName String?
+  page         String?
+  lastSeen     DateTime @default(now())
+
+  @@index([lastSeen])
+}
+
 model AnalyticsEvent {
   id          String   @id @default(cuid())
   type        String

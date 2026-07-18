@@ -15,6 +15,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
 import PageTracker from "@/app/components/PageTracker";
 import ServiceWorkerRegister from "@/app/components/ServiceWorkerRegister";
+import PresenceHeartbeat from "@/app/components/PresenceHeartbeat";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -113,6 +114,7 @@ export default function RootLayout({
             <PromotionsProvider>
               <PageTracker />
               <ServiceWorkerRegister />
+              <PresenceHeartbeat />
               <FlashOffersBanner />
               <Navbar />
               <main className="flex-1">{children}</main>
