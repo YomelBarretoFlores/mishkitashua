@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Reveal from "@/app/components/Reveal";
 import { BRAND_NAME, SLOGAN } from "@/app/lib/brand";
+import InstallAppButton from "@/app/components/InstallAppButton";
 
 export default function Footer() {
   return (
     <footer className="bg-cream-dark border-t border-cream-darker mt-auto">
       <div className="max-w-7xl mx-auto px-5 md:px-16 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 md:gap-12">
           <Reveal direction="up">
             <h3 className="font-serif text-xl font-semibold text-cocoa-deep mb-2">
               {BRAND_NAME}
@@ -58,6 +59,16 @@ export default function Footer() {
                 Política de Privacidad
               </Link>
             </div>
+          </Reveal>
+
+          <Reveal direction="up" delay={0.3}>
+            <h4 className="text-sm font-semibold text-cocoa-deep tracking-wide uppercase mb-3">
+              Aplicación
+            </h4>
+            <p className="text-sm text-on-surface-variant mb-3 leading-relaxed">
+              Instala Mishkitashua en tu teléfono para comprar más rápido.
+            </p>
+            <InstallAppButton />
           </Reveal>
         </div>
 

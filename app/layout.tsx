@@ -14,6 +14,7 @@ import { PromotionsProvider } from "@/app/lib/promotions-context";
 import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
 import PageTracker from "@/app/components/PageTracker";
+import ServiceWorkerRegister from "@/app/components/ServiceWorkerRegister";
 
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
@@ -74,6 +75,11 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   // Los íconos se sirven por convención de archivos: app/icon.png y app/apple-icon.png.
+  appleWebApp: {
+    capable: true,
+    title: "Mishkitashua",
+    statusBarStyle: "default",
+  },
   other: {
     "theme-color": "#3e2723",
   },
@@ -106,6 +112,7 @@ export default function RootLayout({
             <CartSessionSync />
             <PromotionsProvider>
               <PageTracker />
+              <ServiceWorkerRegister />
               <FlashOffersBanner />
               <Navbar />
               <main className="flex-1">{children}</main>
