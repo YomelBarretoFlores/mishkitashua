@@ -9,6 +9,7 @@ import {
 } from "@/app/lib/promotions";
 import { checkCoupon, redeemCoupon } from "@/app/lib/coupons";
 import { linkClerkUserToCustomer } from "@/app/lib/customers";
+import { getSiteSettings } from "@/app/lib/settings";
 import { sendEmail } from "@/app/lib/resend";
 import { orderConfirmationEmail } from "@/app/lib/emails/templates";
 
@@ -109,13 +110,21 @@ export async function priceCheckout(
     coupon = { code: check.code, label: check.label, amount: couponDiscount };
   }
 
-  // Envío gratis si: lo da una promoción, un cupón, o es primera compra.
-  const freeShipping =
-    pricing.freeShipping || couponFreeShipping || !!opts?.freeShipping;
-  const shippingCost = freeShipping ? 0 : SHIPPING_COST;
+  // Costo de envío y umbral de envío gratis vienen de la configuración editable
+  // del sitio (con defaults si no está seteada).
+  const settings = await getSiteSettings();
   const discount = Math.min(pricing.discount + couponDiscount, pricing.subtotal);
-  const total =
-    Math.round((pricing.subtotal - discount + shippingCost) * 100) / 100;
+  const netSubtotal = pricing.subtotal - discount;
+
+  // Envío gratis si: promoción, cupón, primera compra, o se alcanza el umbral.
+  const freeShipping =
+    pricing.freeShipping ||
+    couponFreeShipping ||
+    !!opts?.freeShipping ||
+    (settings.freeShippingThreshold != null &&
+      netSubtotal >= settings.freeShippingThreshold);
+  const shippingCost = freeShipping ? 0 : settings.shippingCost;
+  const total = Math.round((netSubtotal + shippingCost) * 100) / 100;
 
   return {
     ok: true,

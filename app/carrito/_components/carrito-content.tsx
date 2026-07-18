@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Lock, Gift } from "lucide-react";
 import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
 import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 
-const SHIPPING_COST = 12.0;
+const DEFAULT_SHIPPING_COST = 12.0;
 
 export default function CarritoPage() {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
@@ -15,9 +16,33 @@ export default function CarritoPage() {
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
   const firstPurchase = useFirstPurchase();
-  const freeShipping = promo.freeShipping || firstPurchase;
-  const shipping = items.length > 0 ? (freeShipping ? 0 : SHIPPING_COST) : 0;
-  const total = subtotal - promo.discount + shipping;
+
+  // Envío solo para mostrar; el servidor recalcula al cobrar.
+  const [shippingSetting, setShippingSetting] = useState({
+    shippingCost: DEFAULT_SHIPPING_COST,
+    freeShippingThreshold: null as number | null,
+  });
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) =>
+        setShippingSetting({
+          shippingCost: d.shippingCost ?? DEFAULT_SHIPPING_COST,
+          freeShippingThreshold: d.freeShippingThreshold ?? null,
+        })
+      )
+      .catch(() => {});
+  }, []);
+
+  const netSubtotal = subtotal - promo.discount;
+  const freeShipping =
+    promo.freeShipping ||
+    firstPurchase ||
+    (shippingSetting.freeShippingThreshold != null &&
+      netSubtotal >= shippingSetting.freeShippingThreshold);
+  const shipping =
+    items.length > 0 ? (freeShipping ? 0 : shippingSetting.shippingCost) : 0;
+  const total = netSubtotal + shipping;
 
   if (items.length === 0) {
     return (
@@ -171,7 +196,7 @@ export default function CarritoPage() {
                 {freeShipping ? (
                   <span className="text-green-700 font-medium">Gratis</span>
                 ) : (
-                  <span>S/ {SHIPPING_COST.toFixed(2)}</span>
+                  <span>S/ {shippingSetting.shippingCost.toFixed(2)}</span>
                 )}
               </div>
               <div className="border-t border-cream-darker pt-3 flex justify-between">

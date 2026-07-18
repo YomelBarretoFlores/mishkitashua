@@ -7,7 +7,7 @@ const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://challenges.cloudflare.com https://js.stripe.com https://sdk.mercadopago.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://img.clerk.com https://http2.mlstatic.com",
+  "img-src 'self' data: blob: https://img.clerk.com https://http2.mlstatic.com https://*.public.blob.vercel-storage.com",
   "font-src 'self' data:",
   "connect-src 'self' https://*.clerk.accounts.dev https://clerk-telemetry.com https://api.stripe.com https://*.neon.tech https://api.mercadopago.com",
   // Los checkouts son hospedados (redirección de página completa); form-action los permite.
@@ -61,6 +61,13 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    // Imágenes de producto subidas a Vercel Blob.
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+      },
+    ],
   },
 };
 

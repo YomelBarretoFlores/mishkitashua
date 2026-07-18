@@ -6,6 +6,8 @@ import {
   Users,
   Tag,
   BarChart3,
+  Cookie,
+  Settings,
   Menu,
   X,
 } from "lucide-react";
@@ -27,6 +29,13 @@ function NavLinks() {
       >
         <ShoppingBag size={16} />
         Pedidos
+      </Link>
+      <Link
+        href="/admin/productos"
+        className="flex items-center gap-1.5 text-sm text-white/80 hover:text-caramel-light transition-colors"
+      >
+        <Cookie size={16} />
+        Productos
       </Link>
       <Link
         href="/admin/clientes"
@@ -55,6 +64,13 @@ function NavLinks() {
       >
         <BarChart3 size={16} />
         Reportes
+      </Link>
+      <Link
+        href="/admin/configuracion"
+        className="flex items-center gap-1.5 text-sm text-white/80 hover:text-caramel-light transition-colors"
+      >
+        <Settings size={16} />
+        Configuración
       </Link>
     </>
   );

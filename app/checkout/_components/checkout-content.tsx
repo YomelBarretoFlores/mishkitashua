@@ -21,7 +21,7 @@ import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
 import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 
-const SHIPPING_COST = 12.0;
+const DEFAULT_SHIPPING_COST = 12.0;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type PaymentMethod = "card" | "mercadopago" | "transfer";
@@ -33,6 +33,23 @@ export default function CheckoutPage() {
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
   const firstPurchase = useFirstPurchase();
+
+  // Configuración de envío (solo para mostrar; el servidor recalcula al cobrar).
+  const [shippingSetting, setShippingSetting] = useState({
+    shippingCost: DEFAULT_SHIPPING_COST,
+    freeShippingThreshold: null as number | null,
+  });
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) =>
+        setShippingSetting({
+          shippingCost: d.shippingCost ?? DEFAULT_SHIPPING_COST,
+          freeShippingThreshold: d.freeShippingThreshold ?? null,
+        })
+      )
+      .catch(() => {});
+  }, []);
 
   // El cupón validado por el servidor. Este cálculo es SOLO para mostrar: el
   // precio que se cobra lo recalcula el servidor al crear el pedido.
@@ -52,8 +69,12 @@ export default function CheckoutPage() {
       : 0;
   const discount = Math.min(promo.discount + couponDiscount, subtotal);
   const freeShipping =
-    promo.freeShipping || firstPurchase || coupon?.type === "free_shipping";
-  const shippingCost = freeShipping ? 0 : SHIPPING_COST;
+    promo.freeShipping ||
+    firstPurchase ||
+    coupon?.type === "free_shipping" ||
+    (shippingSetting.freeShippingThreshold != null &&
+      subtotal - discount >= shippingSetting.freeShippingThreshold);
+  const shippingCost = freeShipping ? 0 : shippingSetting.shippingCost;
   const total = subtotal - discount + shippingCost;
 
   const applyCoupon = async () => {
@@ -548,7 +569,7 @@ export default function CheckoutPage() {
                 {freeShipping ? (
                   <span className="text-green-700 font-medium">Gratis</span>
                 ) : (
-                  <span>S/ {SHIPPING_COST.toFixed(2)}</span>
+                  <span>S/ {shippingSetting.shippingCost.toFixed(2)}</span>
                 )}
               </div>
               <div className="border-t border-cream-darker pt-3 flex justify-between">
