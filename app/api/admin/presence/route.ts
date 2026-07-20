@@ -4,12 +4,22 @@ import { adminGuard } from "@/app/lib/auth";
 
 // Ventana de "conectado": actividad en los últimos 5 minutos.
 const WINDOW_MS = 5 * 60_000;
+// Pasado este tiempo la fila ya no sirve para nada y se borra. Sin esto la
+// tabla crecería para siempre: cada pestaña de cada visitante deja una fila.
+const PURGE_MS = 24 * 60 * 60_000;
 
 export async function GET() {
   const guard = await adminGuard();
   if (guard) return guard;
   try {
-    const since = new Date(Date.now() - WINDOW_MS);
+    const now = Date.now();
+
+    // Limpieza oportunista: es telemetría efímera, no datos de negocio.
+    await prisma.presence.deleteMany({
+      where: { lastSeen: { lt: new Date(now - PURGE_MS) } },
+    });
+
+    const since = new Date(now - WINDOW_MS);
     const rows = await prisma.presence.findMany({
       where: { lastSeen: { gte: since } },
       orderBy: { lastSeen: "desc" },

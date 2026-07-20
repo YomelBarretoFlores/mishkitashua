@@ -16,7 +16,16 @@ import { createOrderFromMpPayment } from "@/app/lib/mp-orders";
 
 function validSignature(request: Request, dataId: string): boolean {
   const secret = process.env.MP_WEBHOOK_SECRET;
-  if (!secret) return true; // sin secreto configurado, se apoya en la verificación contra la API
+  if (!secret) {
+    // En producción se falla CERRADO: si el secreto falta (o alguien lo borra
+    // por error), este endpoint quedaría abierto a cualquiera. En desarrollo se
+    // permite para poder probar el flujo sin configurar el webhook.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[webhook/mp] MP_WEBHOOK_SECRET no configurada: aviso rechazado");
+      return false;
+    }
+    return true;
+  }
 
   const signature = request.headers.get("x-signature") ?? "";
   const requestId = request.headers.get("x-request-id") ?? "";
@@ -79,6 +88,10 @@ export async function POST(request: Request) {
     const result = await createOrderFromMpPayment(dataId);
     if (result.ok && result.created) {
       console.log(`[webhook/mp] pedido creado ${result.orderId} para pago ${dataId}`);
+    } else if (!result.ok) {
+      // Un pago aprobado que no acaba en pedido es lo peor que puede pasar
+      // aquí, así que nunca debe morir en silencio.
+      console.error(`[webhook/mp] pago ${dataId} SIN pedido: ${result.reason}`);
     }
   } catch (err) {
     // No romper el ciclo de reintentos de MP por un error transitorio nuestro:

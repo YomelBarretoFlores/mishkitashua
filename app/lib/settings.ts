@@ -24,7 +24,11 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
       shippingCost: row.shippingCost,
       freeShippingThreshold: row.freeShippingThreshold,
     };
-  } catch {
+  } catch (error) {
+    // Se avisa: esto corre en pleno cálculo del precio, así que caer a los
+    // valores por defecto en silencio significaría cobrar un envío equivocado
+    // sin que nadie se entere.
+    console.error("[settings] no se pudo leer la configuración:", error);
     return DEFAULTS;
   }
 });

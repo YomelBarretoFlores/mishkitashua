@@ -36,6 +36,9 @@ export default function ConectadosPage() {
   }, []);
 
   useEffect(() => {
+    // Carga inicial de datos: el estado se actualiza tras el await del fetch,
+    // no de forma síncrona, pero la regla no puede verlo.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     const t = setInterval(load, 20_000); // refresca cada 20s
     return () => clearInterval(t);

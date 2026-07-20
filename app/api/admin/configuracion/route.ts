@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/app/lib/prisma";
 import { adminGuard } from "@/app/lib/auth";
 import { getSiteSettings } from "@/app/lib/settings";
@@ -32,6 +33,10 @@ export async function PUT(request: Request) {
       create: { id: "singleton", shippingCost, freeShippingThreshold },
       update: { shippingCost, freeShippingThreshold },
     });
+    // El carrito muestra el costo de envío desde el servidor, así que hay que
+    // refrescarlo para que el cambio se vea de inmediato y no en 5 minutos.
+    revalidatePath("/carrito");
+
     return NextResponse.json({
       shippingCost: row.shippingCost,
       freeShippingThreshold: row.freeShippingThreshold,

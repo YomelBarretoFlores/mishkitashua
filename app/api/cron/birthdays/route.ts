@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { sendBirthdayEmails } from "@/app/lib/birthdays";
 
+// Los correos salen uno a uno; con muchos cumpleañeros el envío se alarga.
+export const maxDuration = 300;
+
 // Cron diario: envía un cupón de cumpleaños a los clientes que cumplen HOY y
 // aceptaron marketing. Vercel Cron incluye "Authorization: Bearer $CRON_SECRET".
 export async function GET(request: Request) {

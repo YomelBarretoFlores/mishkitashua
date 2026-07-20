@@ -2,8 +2,11 @@
 // Su función principal es hacer la app "instalable" (Chrome/Android exigen un
 // SW con handler de fetch para disparar beforeinstallprompt). Cachea el shell
 // básico para una pantalla offline; el resto de peticiones pasan a la red.
-const CACHE = "mishkitashua-v1";
-const SHELL = ["/", "/offline"];
+const CACHE = "mishkitashua-v2";
+// Solo la pantalla offline. Cachear "/" congelaba la portada para siempre (el
+// nombre de caché nunca cambia) y, si el visitante tenía sesión iniciada,
+// guardaba su versión personalizada de la página.
+const SHELL = ["/offline"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -34,14 +37,21 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
 
-  // Navegaciones: red primero, con la caché como respaldo offline.
+  // Navegaciones: red primero y, si no hay conexión, la pantalla offline.
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(
-        () =>
-          caches.match(request).then((r) => r || caches.match("/offline")) ||
-          caches.match("/")
-      )
+      fetch(request).catch(async () => {
+        const offline = await caches.match("/offline");
+        // Si ni siquiera está cacheada, una respuesta propia es mejor que
+        // dejar que respondWith resuelva a undefined (error crudo del navegador).
+        return (
+          offline ||
+          new Response(
+            "<h1>Sin conexión</h1><p>Vuelve a intentarlo cuando tengas internet.</p>",
+            { headers: { "Content-Type": "text/html; charset=utf-8" }, status: 503 }
+          )
+        );
+      })
     );
   }
 });

@@ -6,6 +6,7 @@ import { prisma } from "@/app/lib/prisma";
 import { sendEmail } from "@/app/lib/resend";
 import { returnRequestedEmail } from "@/app/lib/emails/templates";
 import { enforceRateLimit } from "@/app/lib/ratelimit";
+import { RETURN_WINDOW_DAYS, withinReturnWindow } from "@/app/lib/return-status";
 
 const schema = z.object({
   orderId: z.string().min(1).max(60),
@@ -62,14 +63,22 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (!withinReturnWindow(order.createdAt)) {
+      return NextResponse.json(
+        {
+          error: `El plazo para devolver es de ${RETURN_WINDOW_DAYS} días y ya venció`,
+        },
+        { status: 400 }
+      );
+    }
 
-    // Una solicitud activa por pedido (no duplicar).
-    const existing = await prisma.return.findFirst({
-      where: { orderId, status: { in: ["solicitada", "aprobada"] } },
-    });
+    // Una devolución por pedido, sea cual sea su estado: si no, tras un rechazo
+    // se podría volver a solicitar sin límite. El @unique de orderId lo blinda
+    // también contra dos peticiones simultáneas.
+    const existing = await prisma.return.findUnique({ where: { orderId } });
     if (existing) {
       return NextResponse.json(
-        { error: "Ya hay una devolución en curso para este pedido" },
+        { error: "Ya solicitaste una devolución para este pedido" },
         { status: 400 }
       );
     }

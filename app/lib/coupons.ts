@@ -85,8 +85,26 @@ export async function redeemCoupon(
   orderId: string
 ): Promise<boolean> {
   const res = await prisma.coupon.updateMany({
-    where: { code: code.trim().toUpperCase(), customerId, usedAt: null },
+    // También se revalida la caducidad: entre que se valida en el checkout y
+    // se confirma el pago (Mercado Pago puede tardar) el cupón pudo vencer.
+    where: {
+      code: code.trim().toUpperCase(),
+      customerId,
+      usedAt: null,
+      expiresAt: { gt: new Date() },
+    },
     data: { usedAt: new Date(), orderId },
   });
   return res.count === 1;
+}
+
+// Cupones que el cliente puede usar ahora mismo. Existe porque el código solo
+// viajaba por correo: si ese correo se perdía o caía en spam, el regalo era
+// irrecuperable aunque estuviera emitido en la base.
+export async function getActiveCoupons(customerId: string) {
+  return prisma.coupon.findMany({
+    where: { customerId, usedAt: null, expiresAt: { gt: new Date() } },
+    orderBy: { expiresAt: "asc" },
+    select: { code: true, type: true, value: true, expiresAt: true },
+  });
 }

@@ -3,8 +3,18 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { adminGuard } from "@/app/lib/auth";
 import { slugify } from "@/app/lib/slugify";
+import { revalidatePath } from "next/cache";
 
 const CATEGORIES = ["alfajores", "manjares"];
+
+// El catálogo se sirve con revalidate = 300, así que sin esto un producto
+// nuevo, un cambio de precio o un archivado tardaban hasta 5 minutos en verse
+// (y un producto archivado se seguía pudiendo añadir al carrito mientras tanto).
+function revalidateCatalog(slug?: string | null) {
+  revalidatePath("/productos");
+  revalidatePath("/");
+  if (slug) revalidatePath(`/productos/${slug}`);
+}
 
 function toStringArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.map(String).map((s) => s.trim()).filter(Boolean);
@@ -68,6 +78,7 @@ export async function POST(request: Request) {
         sortOrder: (last?.sortOrder ?? -1) + 1,
       },
     });
+    revalidateCatalog(product.slug);
     return NextResponse.json(product);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -118,6 +129,7 @@ export async function PATCH(request: Request) {
     if (b.active !== undefined) data.active = !!b.active;
 
     const product = await prisma.product.update({ where: { id }, data });
+    revalidateCatalog(product.slug);
     return NextResponse.json(product);
   } catch (error) {
     console.error("[admin/productos PATCH]", error);
@@ -135,7 +147,11 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Falta el id" }, { status: 400 });
-    await prisma.product.update({ where: { id }, data: { active: false } });
+    const product = await prisma.product.update({
+      where: { id },
+      data: { active: false },
+    });
+    revalidateCatalog(product.slug);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[admin/productos DELETE]", error);

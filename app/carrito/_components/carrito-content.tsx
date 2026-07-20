@@ -2,37 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight, Lock, Gift } from "lucide-react";
 import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
 import { useFirstPurchase } from "@/app/lib/use-first-purchase";
+import type { SiteSettings } from "@/app/lib/settings";
 
-const DEFAULT_SHIPPING_COST = 12.0;
-
-export default function CarritoPage() {
+// Los ajustes llegan del servidor ya resueltos (ver carrito/page.tsx). El envío
+// aquí es solo informativo: el servidor lo recalcula al cobrar.
+export default function CarritoPage({ settings }: { settings: SiteSettings }) {
   const { items, removeItem, updateQuantity, subtotal } = useCart();
   const promo = usePromotions(
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
   const firstPurchase = useFirstPurchase();
-
-  // Envío solo para mostrar; el servidor recalcula al cobrar.
-  const [shippingSetting, setShippingSetting] = useState({
-    shippingCost: DEFAULT_SHIPPING_COST,
-    freeShippingThreshold: null as number | null,
-  });
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((d) =>
-        setShippingSetting({
-          shippingCost: d.shippingCost ?? DEFAULT_SHIPPING_COST,
-          freeShippingThreshold: d.freeShippingThreshold ?? null,
-        })
-      )
-      .catch(() => {});
-  }, []);
+  const shippingSetting = settings;
 
   const netSubtotal = subtotal - promo.discount;
   const freeShipping =

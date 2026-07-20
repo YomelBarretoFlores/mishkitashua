@@ -10,10 +10,10 @@ export function useFirstPurchase(): boolean {
   const [eligible, setEligible] = useState(false);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) {
-      setEligible(false);
-      return;
-    }
+    // Sin sesión no se consulta nada. No hace falta poner el estado a false
+    // aquí (eso provocaba un render en cascada): al devolver el valor ya se
+    // exige `isSignedIn`, así que cerrar sesión deja de dar envío gratis solo.
+    if (!isLoaded || !isSignedIn) return;
     let cancelled = false;
     fetch("/api/account/first-purchase")
       .then((r) => r.json())
@@ -26,5 +26,5 @@ export function useFirstPurchase(): boolean {
     };
   }, [isLoaded, isSignedIn]);
 
-  return eligible;
+  return isSignedIn ? eligible : false;
 }

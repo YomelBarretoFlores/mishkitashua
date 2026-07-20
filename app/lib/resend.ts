@@ -14,6 +14,10 @@ export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  // Enlace de baja para los correos de marketing. Gmail y Yahoo exigen la
+  // cabecera List-Unsubscribe a quien envía en volumen; sin ella, las campañas
+  // acaban marcadas como spam.
+  unsubscribeUrl?: string;
 }): Promise<{ ok: boolean; simulated: boolean; error?: string }> {
   if (!resend) {
     console.log(
@@ -28,6 +32,14 @@ export async function sendEmail(opts: {
       ...(REPLY_TO ? { replyTo: REPLY_TO } : {}),
       subject: opts.subject,
       html: opts.html,
+      ...(opts.unsubscribeUrl
+        ? {
+            headers: {
+              "List-Unsubscribe": `<${opts.unsubscribeUrl}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
+          }
+        : {}),
     });
     if (error) {
       console.error("[email] Resend error:", error);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/lib/prisma";
 import { enforceRateLimit } from "@/app/lib/ratelimit";
 
@@ -77,6 +78,18 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const limited = enforceRateLimit(request, "reviews", 10, 60_000);
   if (limited) return limited;
+
+  // La reseña se atribuye al dueño del pedido, así que hay que comprobar que
+  // quien la escribe ES ese dueño: si no, bastaría conocer un id de pedido para
+  // publicar reseñas en nombre de otro cliente.
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json(
+      { error: "Inicia sesión para dejar una reseña" },
+      { status: 401 }
+    );
+  }
+
   try {
     const parsed = reviewSchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -84,12 +97,18 @@ export async function POST(request: Request) {
     }
     const { orderId, productSlug, rating, comment } = parsed.data;
 
+    const customer = await prisma.customer.findUnique({
+      where: { clerkUserId: userId },
+      select: { id: true },
+    });
+
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: { items: true },
     });
 
-    if (!order) {
+    // Mismo 404 si el pedido no existe o no es suyo: no revelamos cuáles sí.
+    if (!order || !customer || order.customerId !== customer.id) {
       return NextResponse.json(
         { error: "Pedido no encontrado" },
         { status: 404 }

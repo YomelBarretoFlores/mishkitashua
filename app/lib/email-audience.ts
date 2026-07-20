@@ -19,8 +19,11 @@ export function isDeliverable(email: string): boolean {
   return true;
 }
 
+// Se lleva el id además del correo porque el enlace de baja va firmado con él.
+export type Recipient = { id: string; email: string };
+
 export type Audience = {
-  recipients: string[];
+  recipients: Recipient[];
   skipped: number;
 };
 
@@ -30,13 +33,13 @@ export type Audience = {
 export async function getCampaignAudience(): Promise<Audience> {
   const subscribed = await prisma.customer.findMany({
     where: { marketingOptIn: true, email: { not: "" } },
-    select: { email: true },
+    select: { id: true, email: true },
   });
-  const unique = new Map<string, string>();
+  const unique = new Map<string, Recipient>();
   for (const c of subscribed) {
     const key = c.email.trim().toLowerCase();
-    if (!unique.has(key)) unique.set(key, c.email);
+    if (!unique.has(key)) unique.set(key, { id: c.id, email: c.email });
   }
-  const recipients = [...unique.values()].filter(isDeliverable);
+  const recipients = [...unique.values()].filter((r) => isDeliverable(r.email));
   return { recipients, skipped: unique.size - recipients.length };
 }

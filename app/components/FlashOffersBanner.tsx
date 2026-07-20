@@ -42,7 +42,10 @@ export default function FlashOffersBanner() {
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
+    // sessionStorage no existe al renderizar en el servidor, así que esto no
+    // se puede derivar durante el render: hay que leerlo tras montar.
     if (sessionStorage.getItem(DISMISS_KEY)) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (promos.length > 0) setDismissed(false);
   }, [promos.length]);
 

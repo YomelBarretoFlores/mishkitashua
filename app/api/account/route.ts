@@ -44,7 +44,12 @@ export async function PUT(request: Request) {
       address: data.address,
       city: data.city,
       birthdate: data.birthdate ? new Date(data.birthdate) : null,
-      marketingOptIn: data.marketingOptIn ?? true,
+      // Si el campo no viene, se deja como está. Con `?? true` una petición
+      // que solo cambiara la dirección volvía a apuntar a marketing a alguien
+      // que se había dado de baja.
+      ...(data.marketingOptIn !== undefined
+        ? { marketingOptIn: data.marketingOptIn }
+        : {}),
     },
   });
 

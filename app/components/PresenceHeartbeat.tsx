@@ -3,13 +3,16 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-// Reutiliza el mismo id de sesión que la analítica.
-function getSessionId(): string {
+// Id propio en localStorage, NO el de analítica (que vive en sessionStorage y
+// por tanto es distinto en cada pestaña). Aquí queremos identificar al
+// navegador: con un id por pestaña, alguien con tres pestañas abiertas se
+// contaba como tres personas conectadas y dejaba tres filas en la tabla.
+function getDeviceId(): string {
   if (typeof window === "undefined") return "";
-  let id = sessionStorage.getItem("msk-session");
+  let id = localStorage.getItem("msk-presence");
   if (!id) {
     id = crypto.randomUUID();
-    sessionStorage.setItem("msk-session", id);
+    localStorage.setItem("msk-presence", id);
   }
   return id;
 }
@@ -21,7 +24,7 @@ export default function PresenceHeartbeat() {
 
   useEffect(() => {
     const beat = () => {
-      const sessionId = getSessionId();
+      const sessionId = getDeviceId();
       if (!sessionId) return;
       if (typeof document !== "undefined" && document.hidden) return;
       const payload = JSON.stringify({ sessionId, page: pathname });

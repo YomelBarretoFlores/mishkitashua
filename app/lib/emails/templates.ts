@@ -25,7 +25,10 @@ function esc(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function layout(inner: string, preheader = ""): string {
+// `unsubscribe` solo lo pasan los correos de marketing (promociones y
+// cumpleaños). Los transaccionales (pedido, devolución) no llevan baja: no se
+// puede renunciar a que te avisen de tu propia compra.
+function layout(inner: string, preheader = "", unsubscribe?: string): string {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="color-scheme" content="light only"/>
@@ -41,8 +44,11 @@ function layout(inner: string, preheader = ""): string {
         </td></tr>
         <tr><td style="padding:36px 32px">${inner}</td></tr>
         <tr><td style="padding:22px 32px;background:${SAND};border-top:1px solid ${BORDER};color:${MUTED};font-size:12px;line-height:1.7;text-align:center">
-          Mishkitashua &middot; Huaraz, Áncash, Perú<br/>
-          <a href="${BASE}/cuenta" style="color:${CARAMEL};text-decoration:underline">Gestiona tus preferencias</a> para dejar de recibir estos correos.
+          Mishkitashua &middot; Huaraz, Áncash, Perú${
+            unsubscribe
+              ? `<br/><a href="${unsubscribe}" style="color:${CARAMEL};text-decoration:underline">Darte de baja</a> de estos correos.`
+              : ""
+          }
         </td></tr>
       </table>
     </td></tr>
@@ -96,7 +102,8 @@ export function orderConfirmationEmail(order: {
   orderNumber: string;
   items: { productName: string; quantity: number; price?: number }[];
   subtotal?: number;
-  discount?: number;
+  discount?: number; // total descontado (promociones + cupón)
+  couponDiscount?: number; // la parte que aportó el cupón
   shippingCost?: number;
   total: number;
   paymentMethod?: string;
@@ -131,11 +138,19 @@ export function orderConfirmationEmail(order: {
 
   const summary: string[] = [];
   if (order.subtotal != null) summary.push(summaryRow("Subtotal", `S/ ${order.subtotal.toFixed(2)}`));
-  if (order.discount != null && order.discount > 0) {
+  // El descuento se desglosa: el de promociones y el del cupón son cosas
+  // distintas, y juntarlos bajo el código del cupón daba a entender que el
+  // cupón descontaba más de lo que realmente descuenta.
+  const couponDiscount = order.couponDiscount ?? 0;
+  const promoDiscount = (order.discount ?? 0) - couponDiscount;
+  if (promoDiscount > 0) {
+    summary.push(summaryRow("Descuento", `- S/ ${promoDiscount.toFixed(2)}`));
+  }
+  if (couponDiscount > 0) {
     summary.push(
       summaryRow(
-        order.couponCode ? `Descuento (${order.couponCode})` : "Descuento",
-        `- S/ ${order.discount.toFixed(2)}`
+        order.couponCode ? `Cupón ${order.couponCode}` : "Cupón",
+        `- S/ ${couponDiscount.toFixed(2)}`
       )
     );
   }
@@ -171,7 +186,8 @@ export function orderConfirmationEmail(order: {
 
 export function birthdayEmail(
   name: string,
-  coupon: { code: string; discount: number; validDays: number }
+  coupon: { code: string; discount: number; validDays: number },
+  unsubscribe?: string
 ): { subject: string; html: string } {
   const inner = `
     ${heading(`Feliz cumpleaños, ${esc(name)}`)}
@@ -189,13 +205,13 @@ export function birthdayEmail(
     <div style="text-align:center;margin-top:26px">${button(`${BASE}/productos`, "Usar mi regalo")}</div>`;
   return {
     subject: `${name}, tu regalo de cumpleaños te espera`,
-    html: layout(inner, `${coupon.discount}% de descuento para tu día`),
+    html: layout(inner, `${coupon.discount}% de descuento para tu día`, unsubscribe),
   };
 }
 
 // Describe la promoción tal como la aplica el motor (app/lib/promotions.ts):
 // sin códigos, en automático al llegar al checkout.
-export function describePromotion(promo: {
+function describePromotion(promo: {
   type: string;
   value?: number | null;
   minPurchase?: number | null;
@@ -246,7 +262,7 @@ export function promoCampaignEmail(promo: {
   giftDescription?: string | null;
   productName?: string | null;
   endsAt?: Date | string | null;
-}): { subject: string; html: string } {
+}, unsubscribe?: string): { subject: string; html: string } {
   const offer = describePromotion(promo);
   const hasta = promo.endsAt
     ? new Date(promo.endsAt).toLocaleDateString("es-PE", {
@@ -272,7 +288,7 @@ export function promoCampaignEmail(promo: {
     promo.title.trim().toLowerCase() === offer.label.trim().toLowerCase();
   return {
     subject: sameAsTitle ? promo.title : `${promo.title} — ${offer.label}`,
-    html: layout(inner, promo.description || offer.note),
+    html: layout(inner, promo.description || offer.note, unsubscribe),
   };
 }
 
@@ -332,6 +348,42 @@ export function returnResolvedEmail(data: {
     <div style="text-align:center;margin-top:26px">${button(`${BASE}/cuenta/devoluciones`, "Ver mis devoluciones")}</div>`;
   return {
     subject: `Devolución ${data.status} · Pedido #${data.orderNumber}`,
+    html: layout(inner, map.title),
+  };
+}
+
+// Aviso de cambio de estado del pedido. Es transaccional (sin enlace de baja):
+// forma parte de la compra, igual que el comprobante.
+export function orderStatusEmail(data: {
+  orderNumber: string;
+  status: "preparando" | "enviado" | "entregado";
+}): { subject: string; html: string } {
+  const map = {
+    preparando: {
+      title: "Tu pedido está en preparación",
+      body: "Ya estamos preparando tu pedido con todo el cuidado. Te avisamos en cuanto salga.",
+      value: "En preparación",
+    },
+    enviado: {
+      title: "Tu pedido va en camino",
+      body: "Tu pedido ya salió hacia la dirección que nos diste. Puedes seguirlo desde la web.",
+      value: "Enviado",
+    },
+    entregado: {
+      title: "Tu pedido fue entregado",
+      body: "¡Que lo disfrutes! Si algo no salió como esperabas, cuéntanos: puedes solicitar una devolución desde tu cuenta.",
+      value: "Entregado",
+    },
+  }[data.status];
+
+  const inner = `
+    ${heading(map.title)}
+    ${paragraph(`Pedido <strong style="color:${COCOA}">#${esc(data.orderNumber)}</strong>.`)}
+    ${paragraph(map.body)}
+    ${highlight("Estado", esc(map.value))}
+    <div style="text-align:center;margin-top:26px">${button(`${BASE}/seguimiento?q=${encodeURIComponent(data.orderNumber)}`, "Ver seguimiento")}</div>`;
+  return {
+    subject: `${map.value} · Pedido #${data.orderNumber}`,
     html: layout(inner, map.title),
   };
 }

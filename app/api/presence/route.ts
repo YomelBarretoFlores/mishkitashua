@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/lib/prisma";
 import { enforceRateLimit } from "@/app/lib/ratelimit";
 
@@ -34,12 +34,18 @@ export async function POST(request: Request) {
   try {
     const { userId } = await auth();
     if (userId) {
-      const user = await currentUser();
-      customerId = userId;
-      customerName =
-        [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-        user?.primaryEmailAddress?.emailAddress ||
-        "Cliente";
+      // Se guarda el Customer.id de nuestra base, no el userId de Clerk: en el
+      // resto del esquema "customerId" significa eso, y así el panel puede
+      // cruzar al cliente con sus pedidos. Una sola consulta a nuestra BD, sin
+      // llamar a la API de Clerk (esto corre cada 45 s por visitante).
+      const customer = await prisma.customer.findUnique({
+        where: { clerkUserId: userId },
+        select: { id: true, name: true },
+      });
+      if (customer) {
+        customerId = customer.id;
+        customerName = customer.name || "Cliente";
+      }
     }
   } catch {
     // Sin sesión válida: se registra como anónimo.

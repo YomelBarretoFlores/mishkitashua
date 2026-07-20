@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { auth } from "@clerk/nextjs/server";
 import { after } from "next/server";
 import { prisma } from "@/app/lib/prisma";
@@ -13,7 +14,6 @@ import { getSiteSettings } from "@/app/lib/settings";
 import { sendEmail } from "@/app/lib/resend";
 import { orderConfirmationEmail } from "@/app/lib/emails/templates";
 
-export const SHIPPING_COST = 12.0;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type CheckoutItem = {
@@ -152,6 +152,11 @@ export async function isFirstPurchaseForUser(
 }
 
 // Crea el pedido (cliente ligado a la sesión si existe; si no, invitado).
+//
+// `actor` existe para el webhook de Mercado Pago, que corre sin sesión: le
+// permite decir de parte de QUIÉN crea el pedido y si tocaba envío gratis de
+// bienvenida. Sin esto, el pedido salía distinto según lo creara la web (con
+// sesión) o el webhook (sin ella), cobrando un total y guardando otro.
 export async function createOrderFromCheckout(input: {
   customer: CheckoutCustomer;
   items: CheckoutItem[];
@@ -159,6 +164,7 @@ export async function createOrderFromCheckout(input: {
   sessionId?: string;
   payment?: PaymentMeta;
   couponCode?: string | null;
+  actor?: { clerkUserId: string | null; firstPurchase: boolean };
 }): Promise<
   { ok: true; id: string; orderNumber: string; total: number } | Fail
 > {
@@ -178,10 +184,17 @@ export async function createOrderFromCheckout(input: {
     return { ok: false, status: 400, error: "Correo electrónico inválido" };
   }
 
-  const orderNumber = `MSK-${Date.now().toString(36).toUpperCase()}`;
+  // Aleatorio, no derivado del reloj: el número viaja por correo y por la URL
+  // de seguimiento (que es pública), así que si fuera un timestamp se podrían
+  // adivinar los pedidos de los demás probando milisegundos. De paso evita que
+  // dos compras en el mismo instante choquen contra el @unique.
+  const orderNumber = `MSK-${randomBytes(4).toString("hex").toUpperCase()}`;
 
   // Resolver el cliente ANTES de precios, para saber si es su primera compra.
-  const { userId } = await auth();
+  // El actor explícito manda sobre la sesión: es el caso del webhook.
+  const userId = input.actor
+    ? input.actor.clerkUserId
+    : (await auth()).userId;
   let customerId: string;
   if (userId) {
     const linked = await linkClerkUserToCustomer({
@@ -215,8 +228,12 @@ export async function createOrderFromCheckout(input: {
   }
 
   // Envío gratis de bienvenida: solo usuarios logueados sin pedidos previos.
-  const priorOrders = await prisma.order.count({ where: { customerId } });
-  const firstPurchase = !!userId && priorOrders === 0;
+  // Si el actor ya lo decidió al cobrar, se respeta esa decisión — recalcularlo
+  // aquí daría "false" en el webhook y añadiría un envío no cobrado.
+  const firstPurchase = input.actor
+    ? input.actor.firstPurchase
+    : !!userId &&
+      (await prisma.order.count({ where: { customerId } })) === 0;
 
   const priced = await priceCheckout(input.items, {
     freeShipping: firstPurchase,
@@ -305,6 +322,7 @@ export async function createOrderFromCheckout(input: {
     })),
     subtotal: pricing.subtotal,
     discount: pricing.discount,
+    couponDiscount: coupon?.amount ?? 0,
     shippingCost,
     total,
     paymentMethod: paymentLabel,

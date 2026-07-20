@@ -41,6 +41,9 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
   const [data, setData] = useState<ReviewData | null>(null);
   const [star, setStar] = useState<StarFilter>("todas");
   const [time, setTime] = useState<TimeFilter>("siempre");
+  // La fecha de corte se fija al elegir el filtro, no en cada render: leer el
+  // reloj mientras se renderiza daría un resultado distinto en cada repintado.
+  const [cutoff, setCutoff] = useState<number | null>(null);
   const [sort, setSort] = useState<SortFilter>("recientes");
 
   useEffect(() => {
@@ -56,8 +59,7 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
     if (!data) return [];
     let list = [...data.reviews];
     if (star !== "todas") list = list.filter((r) => r.rating === Number(star));
-    if (time !== "siempre") {
-      const cutoff = Date.now() - Number(time) * 86_400_000;
+    if (time !== "siempre" && cutoff != null) {
       list = list.filter((r) => new Date(r.createdAt).getTime() >= cutoff);
     }
     if (sort === "mejor") list.sort((a, b) => b.rating - a.rating);
@@ -68,7 +70,7 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     return list;
-  }, [data, star, time, sort]);
+  }, [data, star, time, cutoff, sort]);
 
   return (
     <section className="mt-16 md:mt-24 border-t border-cream-darker pt-12 md:pt-16">
@@ -107,7 +109,15 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
           </select>
           <select
             value={time}
-            onChange={(e) => setTime(e.target.value as TimeFilter)}
+            onChange={(e) => {
+              const value = e.target.value as TimeFilter;
+              setTime(value);
+              setCutoff(
+                value === "siempre"
+                  ? null
+                  : Date.now() - Number(value) * 86_400_000
+              );
+            }}
             aria-label="Filtrar por tiempo"
             className="px-3 py-2 bg-white border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
           >

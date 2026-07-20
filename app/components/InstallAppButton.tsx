@@ -38,7 +38,10 @@ export default function InstallAppButton({
   const [ios, setIos] = useState(false);
 
   useEffect(() => {
+    // matchMedia y el userAgent solo existen en el navegador: derivarlos
+    // durante el render rompería el HTML del servidor. Se leen al montar.
     if (isStandalone()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInstalled(true);
       return;
     }

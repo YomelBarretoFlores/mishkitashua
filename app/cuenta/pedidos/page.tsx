@@ -5,6 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { requireAuthPage } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
 import { statusBadgeClasses, statusLabel } from "@/app/lib/order-status";
+import { withinReturnWindow } from "@/app/lib/return-status";
 import AccountNav from "../_components/account-nav";
 import RequestReturnButton from "../_components/request-return-button";
 
@@ -118,8 +119,11 @@ export default async function MisPedidosPage() {
                         Dejar reseña
                       </Link>
                     )}
+                  {/* Mismas condiciones que valida /api/returns, para no
+                      ofrecer un botón que el servidor va a rechazar. */}
                   {order.status === "entregado" &&
-                    order.returns.length === 0 && (
+                    order.returns.length === 0 &&
+                    withinReturnWindow(order.createdAt) && (
                       <RequestReturnButton
                         orderId={order.id}
                         orderNumber={order.orderNumber}

@@ -21,6 +21,7 @@ model Customer {
   orders         Order[]
   reviews        Review[]
   coupons        Coupon[]
+  returns        Return[]
   createdAt      DateTime  @default(now())
 
   @@index([email])
@@ -40,7 +41,10 @@ model Order {
   total           Float
   paymentMethod   String
   // Metadatos de pago NO sensibles (PCI SAQ-A): nunca PAN/CVV.
-  chargeId        String?
+  // Único: la página de retorno y el webhook de la pasarela intentan crear el
+  // mismo pedido casi a la vez. Sin esta restricción, un pago podía acabar en
+  // dos pedidos y dos correos; ahora el segundo choca y reutiliza el primero.
+  chargeId        String?     @unique
   cardBrand       String?
   cardLast4       String?
   paymentStatus   String      @default("pagado")
@@ -130,19 +134,21 @@ model SiteSetting {
 // dinero se hace manualmente en el panel de la pasarela (usando el chargeId del
 // pedido); el sistema refleja el estado y avisa al cliente por correo.
 model Return {
-  id         String    @id @default(cuid())
-  order      Order     @relation(fields: [orderId], references: [id])
-  orderId    String
-  customerId String
-  reason     String
-  status     String    @default("solicitada") // solicitada|aprobada|rechazada|reembolsada
+  id           String    @id @default(cuid())
+  order        Order     @relation(fields: [orderId], references: [id])
+  // Una devolución por pedido: evita que dos solicitudes simultáneas creen dos
+  // filas y que se pueda volver a pedir tras un rechazo.
+  orderId      String    @unique
+  customer     Customer  @relation(fields: [customerId], references: [id])
+  customerId   String
+  reason       String
+  status       String    @default("solicitada") // solicitada|aprobada|rechazada|reembolsada
   refundAmount Float?
-  adminNote  String?
-  createdAt  DateTime  @default(now())
-  resolvedAt DateTime?
+  adminNote    String?
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
 
   @@index([status])
-  @@index([orderId])
   @@index([customerId])
 }
 

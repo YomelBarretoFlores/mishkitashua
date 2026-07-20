@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Gift } from "lucide-react";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentCustomer, requireAuthPage } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/prisma";
+import { getActiveCoupons } from "@/app/lib/coupons";
 import AccountForm from "./_components/account-form";
 import AccountNav from "./_components/account-nav";
 
@@ -24,6 +26,8 @@ export default async function CuentaPage() {
     : null;
   if (!customer) customer = await getCurrentCustomer();
 
+  const coupons = customer ? await getActiveCoupons(customer.id) : [];
+
   return (
     <div className="max-w-2xl mx-auto px-5 md:px-8 py-12 md:py-16">
       <h1
@@ -40,6 +44,42 @@ export default async function CuentaPage() {
       <div className="mb-8">
         <AccountNav active="datos" />
       </div>
+
+      {coupons.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-cocoa-deep mb-3 flex items-center gap-2">
+            <Gift size={16} className="text-caramel" />
+            Tus cupones
+          </h2>
+          <ul className="space-y-2">
+            {coupons.map((c) => (
+              <li
+                key={c.code}
+                className="bg-white rounded-xl border border-cream-darker/60 p-4 flex items-center justify-between gap-4 flex-wrap"
+              >
+                <div>
+                  <p className="font-mono font-semibold text-cocoa-deep tracking-wide">
+                    {c.code}
+                  </p>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
+                    {c.type === "free_shipping"
+                      ? "Envío gratis"
+                      : `${c.value ?? 0}% de descuento`}
+                    {" · vence el "}
+                    {new Date(c.expiresAt).toLocaleDateString("es-PE", {
+                      day: "numeric",
+                      month: "long",
+                    })}
+                  </p>
+                </div>
+                <span className="text-xs text-taupe">
+                  Escríbelo al pagar
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <AccountForm
         initial={{

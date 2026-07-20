@@ -26,6 +26,8 @@ export default function AdminDevolucionesPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [toast, setToast] = useState<ToastMessage>(null);
+  // Importe a reembolsar por devolución (vacío = el total del pedido).
+  const [refundAmounts, setRefundAmounts] = useState<Record<string, string>>({});
   const [confirmState, setConfirmState] = useState<{
     title: string;
     message: string;
@@ -44,14 +46,25 @@ export default function AdminDevolucionesPage() {
   }, [filter]);
 
   useEffect(() => {
+    // Carga inicial de datos: el estado se actualiza tras el await del fetch,
+    // no de forma síncrona, pero la regla no puede verlo.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
-  const resolve = async (r: ReturnRow, status: string, adminNote?: string) => {
+  const resolve = async (
+    r: ReturnRow,
+    status: string,
+    opts?: { adminNote?: string; refundAmount?: string }
+  ) => {
     const res = await fetch(`/api/admin/returns/${r.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, adminNote: adminNote ?? null }),
+      body: JSON.stringify({
+        status,
+        adminNote: opts?.adminNote ?? null,
+        refundAmount: opts?.refundAmount ?? null,
+      }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
@@ -63,11 +76,14 @@ export default function AdminDevolucionesPage() {
   };
 
   const confirmRefund = (r: ReturnRow) => {
+    // Vacío = se devuelve el total del pedido (el caso normal).
+    const amount = refundAmounts[r.id]?.trim() || "";
+    const shown = amount || r.order.total.toFixed(2);
     setConfirmState({
       title: "Marcar como reembolsada",
-      message: `Confirma que ya devolviste S/ ${r.order.total.toFixed(2)} en el panel de la pasarela (chargeId: ${r.order.chargeId || "—"}). El pedido quedará como "reembolsado" y se avisará al cliente.`,
+      message: `Confirma que ya devolviste S/ ${shown} en el panel de la pasarela (chargeId: ${r.order.chargeId || "—"}). El pedido quedará como "reembolsado" y se avisará al cliente.`,
       confirmLabel: "Marcar reembolsada",
-      action: () => resolve(r, "reembolsada"),
+      action: () => resolve(r, "reembolsada", { refundAmount: amount }),
     });
   };
 
@@ -135,7 +151,7 @@ export default function AdminDevolucionesPage() {
               )}
 
               {(r.status === "solicitada" || r.status === "aprobada") && (
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap items-center">
                   {r.status === "solicitada" && (
                     <>
                       <button
@@ -152,12 +168,34 @@ export default function AdminDevolucionesPage() {
                       </button>
                     </>
                   )}
-                  <button
-                    onClick={() => confirmRefund(r)}
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-green-700 text-white hover:opacity-90 transition-opacity"
-                  >
-                    Marcar reembolsada
-                  </button>
+                  {/* Reembolso parcial: en blanco se devuelve el total. */}
+                  {r.status === "aprobada" && (
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max={r.order.total}
+                      value={refundAmounts[r.id] ?? ""}
+                      onChange={(e) =>
+                        setRefundAmounts((prev) => ({
+                          ...prev,
+                          [r.id]: e.target.value,
+                        }))
+                      }
+                      placeholder={`S/ ${r.order.total.toFixed(2)}`}
+                      className="w-32 px-3 py-1.5 rounded-lg text-sm border border-cream-darker bg-white text-cocoa-deep"
+                    />
+                  )}
+                  {/* Solo tras aprobar: reembolsar directo desde "solicitada"
+                      lo rechaza el servidor (transición no válida). */}
+                  {r.status === "aprobada" && (
+                    <button
+                      onClick={() => confirmRefund(r)}
+                      className="px-3 py-1.5 rounded-lg text-sm font-medium bg-green-700 text-white hover:opacity-90 transition-opacity"
+                    >
+                      Marcar reembolsada
+                    </button>
+                  )}
                 </div>
               )}
             </div>

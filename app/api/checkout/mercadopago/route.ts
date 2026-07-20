@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/lib/prisma";
 import { priceCheckout, isFirstPurchaseForUser } from "@/app/lib/orders";
@@ -8,28 +7,8 @@ import {
   mercadoPagoIsTest,
   getPreferenceClient,
 } from "@/app/lib/mercadopago";
+import { checkoutSchema as schema } from "@/app/lib/checkout-schema";
 import { enforceRateLimit } from "@/app/lib/ratelimit";
-
-const schema = z.object({
-  customer: z.object({
-    name: z.string().trim().min(1).max(120),
-    email: z.string().email(),
-    phone: z.string().trim().min(6).max(30),
-    address: z.string().trim().min(3).max(200),
-    city: z.string().trim().min(2).max(100),
-  }),
-  items: z
-    .array(
-      z.object({
-        slug: z.string().min(1).max(120),
-        quantity: z.number().int().min(1).max(99),
-        customization: z.record(z.string(), z.number()).nullable().optional(),
-      })
-    )
-    .min(1),
-  sessionId: z.string().max(100).optional(),
-  couponCode: z.string().trim().max(40).nullable().optional(),
-});
 
 export async function POST(request: Request) {
   const limited = enforceRateLimit(request, "checkout-mp", 6, 60_000);
@@ -104,11 +83,16 @@ export async function POST(request: Request) {
         },
         ...(isLocal ? {} : { auto_return: "approved" as const }),
         // Datos para recrear el pedido tras el pago (nunca datos de tarjeta).
+        // Se incluyen clerk_user_id y first_purchase porque el webhook corre
+        // SIN sesión: si tuviera que deducirlos, calcularía un envío distinto
+        // del que se acaba de cobrar y hasta crearía un cliente duplicado.
         metadata: {
           customer: JSON.stringify(data.customer),
           items: JSON.stringify(data.items),
           session_id: data.sessionId ?? "",
           coupon: priced.coupon?.code ?? "",
+          clerk_user_id: userId ?? "",
+          first_purchase: firstPurchase ? "1" : "",
         },
         statement_descriptor: "MISHKITASHUA",
       },

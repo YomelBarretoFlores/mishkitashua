@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { createOrderFromCheckout } from "@/app/lib/orders";
+import { checkoutSchema } from "@/app/lib/checkout-schema";
 import { enforceRateLimit } from "@/app/lib/ratelimit";
 
-// Pedidos por TRANSFERENCIA (pago manual). El pago con tarjeta va por
-// /api/checkout/session (Stripe Checkout).
+// Pedidos por TRANSFERENCIA (pago manual, lo confirma el admin). El pago con
+// tarjeta y Yape va por /api/checkout/mercadopago.
 export async function POST(request: Request) {
   const limited = enforceRateLimit(request, "orders", 8, 60_000);
   if (limited) return limited;
@@ -17,12 +18,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const parsed = checkoutSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    }
+    const data = parsed.data;
+
     const result = await createOrderFromCheckout({
-      customer: body.customer,
-      items: body.items,
+      customer: data.customer,
+      items: data.items,
       paymentMethod: "transfer",
-      sessionId: body.sessionId,
-      couponCode: body.couponCode ?? null,
+      sessionId: data.sessionId,
+      couponCode: data.couponCode ?? null,
       payment: { paymentStatus: "pendiente" }, // transferencia: confirma el admin
     });
 

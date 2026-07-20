@@ -17,7 +17,8 @@ type Order = {
 
 export default function SeguimientoContent() {
   const searchParams = useSearchParams();
-  const [query, setQuery] = useState("");
+  // Se inicializa desde la URL en vez de asignarlo dentro de un efecto.
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "");
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,13 +39,14 @@ export default function SeguimientoContent() {
     setLoading(false);
   }, []);
 
-  // Autollenar y buscar si viene ?q= (ej. desde "Mis pedidos").
+  // Buscar automáticamente si viene ?q= (ej. desde "Mis pedidos"). El campo ya
+  // se rellena solo: su estado inicial se deriva de la URL, así que aquí solo
+  // queda lanzar la búsqueda.
   useEffect(() => {
     const q = searchParams.get("q");
-    if (q) {
-      setQuery(q);
-      runSearch(q);
-    }
+    // Solo enciende el indicador de carga antes del fetch; no hay cascada real.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (q) runSearch(q);
   }, [searchParams, runSearch]);
 
   const handleSearch = (e: React.FormEvent) => {

@@ -20,36 +20,22 @@ import {
 import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
 import { useFirstPurchase } from "@/app/lib/use-first-purchase";
+import type { SiteSettings } from "@/app/lib/settings";
 
-const DEFAULT_SHIPPING_COST = 12.0;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type PaymentMethod = "card" | "mercadopago" | "transfer";
+type PaymentMethod = "mercadopago" | "transfer";
 
-export default function CheckoutPage() {
+// Los ajustes llegan del servidor ya resueltos (ver checkout/page.tsx), para no
+// mostrar S/ 12 por defecto mientras carga o si la llamada falla.
+export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
   const { items, subtotal } = useCart();
   const router = useRouter();
   const promo = usePromotions(
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
   const firstPurchase = useFirstPurchase();
-
-  // Configuración de envío (solo para mostrar; el servidor recalcula al cobrar).
-  const [shippingSetting, setShippingSetting] = useState({
-    shippingCost: DEFAULT_SHIPPING_COST,
-    freeShippingThreshold: null as number | null,
-  });
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((d) =>
-        setShippingSetting({
-          shippingCost: d.shippingCost ?? DEFAULT_SHIPPING_COST,
-          freeShippingThreshold: d.freeShippingThreshold ?? null,
-        })
-      )
-      .catch(() => {});
-  }, []);
+  const shippingSetting = settings;
 
   // El cupón validado por el servidor. Este cálculo es SOLO para mostrar: el
   // precio que se cobra lo recalcula el servidor al crear el pedido.
@@ -95,7 +81,7 @@ export default function CheckoutPage() {
     }
   };
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mercadopago");
   const [form, setForm] = useState({
     nombre: "",
     email: "",
@@ -149,39 +135,8 @@ export default function CheckoutPage() {
       customization: i.customization ?? null,
     }));
 
-  // Inicia el pago con tarjeta: crea la sesión de Stripe Checkout y redirige.
-  // (Sin llaves de Stripe, el servidor crea el pedido en modo simulación.)
-  const payWithCard = async () => {
-    setError("");
-    if (!isValid) return markAllTouched();
-    setSubmitting(true);
-    try {
-      const sessionId = sessionStorage.getItem("msk-session") || "";
-      const res = await fetch("/api/checkout/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer: customerPayload(),
-          items: itemsPayload(),
-          sessionId,
-          couponCode: coupon?.code ?? null,
-        }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        throw new Error(d.error || "No se pudo iniciar el pago");
-      }
-      const { url } = await res.json();
-      // El carrito se limpia en /confirmacion (fresh=1), igual para Stripe y simulación.
-      window.location.href = url; // Stripe hospedado o /confirmacion (simulación)
-    } catch (err) {
-      setSubmitting(false);
-      setError(err instanceof Error ? err.message : "Error al iniciar el pago");
-    }
-  };
-
   // Inicia el pago con Mercado Pago: crea la preferencia y redirige al
-  // Checkout Pro hospedado (tarjetas peruanas). Mismo patrón que Stripe.
+  // Checkout Pro hospedado (tarjetas peruanas y Yape).
   const payWithMercadoPago = async () => {
     setError("");
     if (!isValid) return markAllTouched();
@@ -241,8 +196,7 @@ export default function CheckoutPage() {
 
   const handlePay = () => {
     if (paymentMethod === "transfer") payWithTransfer();
-    else if (paymentMethod === "mercadopago") payWithMercadoPago();
-    else payWithCard();
+    else payWithMercadoPago();
   };
 
   if (items.length === 0) {
@@ -415,10 +369,9 @@ export default function CheckoutPage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-2 gap-3 mb-6">
               {(
                 [
-                  { key: "card", label: "Tarjeta", icon: CreditCard },
                   { key: "mercadopago", label: "Mercado Pago", icon: Wallet },
                   { key: "transfer", label: "Transferencia", icon: Landmark },
                 ] as const
@@ -457,7 +410,7 @@ export default function CheckoutPage() {
                   </p>
                 </div>
               </div>
-            ) : paymentMethod === "mercadopago" ? (
+            ) : (
               <div className="bg-cream rounded-xl p-5 flex items-start gap-3">
                 <ShieldCheck size={20} className="text-green-700 shrink-0 mt-0.5" />
                 <p className="text-sm text-on-surface-variant leading-relaxed">
@@ -466,21 +419,7 @@ export default function CheckoutPage() {
                     Mercado Pago
                   </span>
                   . Serás redirigido a la pasarela segura, donde puedes pagar con
-                  tarjeta de crédito o débito. Tus datos de tarjeta se procesan
-                  cifrados y{" "}
-                  <span className="font-semibold">
-                    nunca se almacenan en nuestros servidores
-                  </span>
-                  .
-                </p>
-              </div>
-            ) : (
-              <div className="bg-cream rounded-xl p-5 flex items-start gap-3">
-                <ShieldCheck size={20} className="text-green-700 shrink-0 mt-0.5" />
-                <p className="text-sm text-on-surface-variant leading-relaxed">
-                  Pago protegido con{" "}
-                  <span className="font-semibold text-cocoa-deep">Stripe</span>.
-                  Serás redirigido a la pasarela segura; tus datos de tarjeta se
+                  tarjeta de crédito o débito y Yape. Tus datos de tarjeta se
                   procesan cifrados y{" "}
                   <span className="font-semibold">
                     nunca se almacenan en nuestros servidores

@@ -354,7 +354,7 @@ export default function ProductosContent({
           (ratings[b.slug]?.average ?? 0) - (ratings[a.slug]?.average ?? 0)
       );
     return list;
-  }, [query, category, sort, ratings]);
+  }, [products, query, category, sort, ratings]);
 
   const clearFilters = () => {
     setQuery("");

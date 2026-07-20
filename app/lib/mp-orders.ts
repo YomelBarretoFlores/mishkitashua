@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
 import { getPaymentClient, getPreferenceClient } from "@/app/lib/mercadopago";
 import { createOrderFromCheckout } from "@/app/lib/orders";
@@ -48,20 +49,43 @@ export async function createOrderFromMpPayment(
     return { ok: false, reason: "metadata inválida" };
   }
 
-  const result = await createOrderFromCheckout({
-    customer: customer as never,
-    items: items as never,
-    paymentMethod: payment.payment_method_id ?? "mercadopago",
-    sessionId: meta.session_id || undefined,
-    couponCode: meta.coupon || null,
-    payment: {
-      chargeId: String(payment.id ?? paymentId),
-      cardBrand: `${payment.payment_method_id ?? "Mercado Pago"}`,
-      cardLast4: payment.card?.last_four_digits ?? undefined,
-      paymentStatus: "pagado",
-    },
-  });
+  try {
+    const result = await createOrderFromCheckout({
+      customer: customer as never,
+      items: items as never,
+      paymentMethod: payment.payment_method_id ?? "mercadopago",
+      sessionId: meta.session_id || undefined,
+      couponCode: meta.coupon || null,
+      // Quién compró y si tocaba envío gratis se decidió al cobrar; aquí no hay
+      // sesión, así que viaja en la metadata en vez de deducirse.
+      actor: {
+        clerkUserId: meta.clerk_user_id || null,
+        firstPurchase: meta.first_purchase === "1",
+      },
+      payment: {
+        chargeId: String(payment.id ?? paymentId),
+        cardBrand: `${payment.payment_method_id ?? "Mercado Pago"}`,
+        cardLast4: payment.card?.last_four_digits ?? undefined,
+        paymentStatus: "pagado",
+      },
+    });
 
-  if (!result.ok) return { ok: false, reason: result.error };
-  return { ok: true, orderId: result.id, created: true };
+    if (!result.ok) return { ok: false, reason: result.error };
+    return { ok: true, orderId: result.id, created: true };
+  } catch (err) {
+    // La página de retorno y el webhook corren casi a la vez: si el otro ganó
+    // la carrera, el @unique de chargeId rechaza este insert. No es un error,
+    // es exactamente lo que queremos — se devuelve el pedido que sí se creó.
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
+      const winner = await prisma.order.findFirst({
+        where: { chargeId: paymentId },
+        select: { id: true },
+      });
+      if (winner) return { ok: true, orderId: winner.id, created: false };
+    }
+    throw err;
+  }
 }

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
-// Rate limiting simple (ventana fija) en memoria por instancia. Suficiente para
-// la demo. En producción con múltiples instancias, usar Upstash (ver TODO abajo).
+// Rate limiting simple (ventana fija) en memoria POR INSTANCIA. En serverless
+// cada instancia lleva su propio contador, así que el límite efectivo es
+// aproximado (N instancias → hasta N×límite) y se reinicia en cada arranque en
+// frío. Frena el abuso casual; para un límite estricto haría falta un store
+// compartido (Redis) o el WAF de Vercel.
 // OWASP A04/A07: mitiga fuerza bruta, scraping y abuso de endpoints sensibles.
 
 type Bucket = { count: number; resetAt: number };
