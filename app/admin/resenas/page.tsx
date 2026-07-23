@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, X } from "lucide-react";
+import DateRangeFilter from "@/app/admin/_components/date-range-filter";
 
 type ProductOption = { slug: string; name: string };
 
@@ -67,6 +68,20 @@ export default function ResenasPage() {
 
   const resetToFirstPage = () => setPage(1);
 
+  // "Limpiar filtros" solo aparece si hay alguno puesto, para no ofrecer un
+  // botón que no haría nada.
+  const hasFilters =
+    productSlug !== "" || rating !== "" || from !== "" || to !== "" || sort !== "recientes";
+
+  const clearFilters = () => {
+    setProductSlug("");
+    setRating("");
+    setFrom("");
+    setTo("");
+    setSort("recientes");
+    setPage(1);
+  };
+
   return (
     <div>
       <h1
@@ -76,55 +91,73 @@ export default function ResenasPage() {
         Reseñas
       </h1>
 
-      {/* Filtros */}
+      {/* Filtros. Cada control lleva su etiqueta encima: sin ella, los campos
+          de fecha se veían como dos cajas grises vacías sin saber qué pedían. */}
       <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <select
-            value={productSlug}
-            onChange={(e) => { setProductSlug(e.target.value); resetToFirstPage(); }}
-            className="px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa lg:col-span-2"
-          >
-            <option value="">Todos los productos</option>
-            {products.map((p) => (
-              <option key={p.slug} value={p.slug}>{p.name}</option>
-            ))}
-          </select>
-          <select
-            value={rating}
-            onChange={(e) => { setRating(e.target.value); resetToFirstPage(); }}
-            className="px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
-          >
-            <option value="">Todas las estrellas</option>
-            <option value="5">5 estrellas</option>
-            <option value="4">4 estrellas</option>
-            <option value="3">3 estrellas</option>
-            <option value="2">2 estrellas</option>
-            <option value="1">1 estrella</option>
-          </select>
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => { setFrom(e.target.value); resetToFirstPage(); }}
-            aria-label="Desde"
-            className="px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
+          <label className="block lg:col-span-2">
+            <span className="block text-xs font-medium text-on-surface-variant mb-1">
+              Producto
+            </span>
+            <select
+              value={productSlug}
+              onChange={(e) => { setProductSlug(e.target.value); resetToFirstPage(); }}
+              className="w-full px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
+            >
+              <option value="">Todos los productos</option>
+              {products.map((p) => (
+                <option key={p.slug} value={p.slug}>{p.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="block text-xs font-medium text-on-surface-variant mb-1">
+              Estrellas
+            </span>
+            <select
+              value={rating}
+              onChange={(e) => { setRating(e.target.value); resetToFirstPage(); }}
+              className="w-full px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
+            >
+              <option value="">Todas las estrellas</option>
+              <option value="5">5 estrellas</option>
+              <option value="4">4 estrellas</option>
+              <option value="3">3 estrellas</option>
+              <option value="2">2 estrellas</option>
+              <option value="1">1 estrella</option>
+            </select>
+          </label>
+          <DateRangeFilter
+            from={from}
+            to={to}
+            onFromChange={(v) => { setFrom(v); resetToFirstPage(); }}
+            onToChange={(v) => { setTo(v); resetToFirstPage(); }}
           />
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => { setTo(e.target.value); resetToFirstPage(); }}
-            aria-label="Hasta"
-            className="px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
-          />
-          <select
-            value={sort}
-            onChange={(e) => { setSort(e.target.value); resetToFirstPage(); }}
-            className="px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
-          >
-            <option value="recientes">Más recientes</option>
-            <option value="mejor">Mejor valoradas</option>
-            <option value="peor">Peor valoradas</option>
-          </select>
+          <label className="block">
+            <span className="block text-xs font-medium text-on-surface-variant mb-1">
+              Orden
+            </span>
+            <select
+              value={sort}
+              onChange={(e) => { setSort(e.target.value); resetToFirstPage(); }}
+              className="w-full px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
+            >
+              <option value="recientes">Más recientes</option>
+              <option value="mejor">Mejor valoradas</option>
+              <option value="peor">Peor valoradas</option>
+            </select>
+          </label>
         </div>
+
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-cocoa hover:text-caramel transition-colors"
+          >
+            <X size={13} />
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       <p className="text-sm text-on-surface-variant mb-3">

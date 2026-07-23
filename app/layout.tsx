@@ -8,6 +8,7 @@ import { organizationJsonLd } from "@/app/lib/jsonld";
 import WhatsAppButton from "@/app/components/WhatsAppButton";
 import Chatbot from "@/app/components/Chatbot";
 import WelcomePopup from "@/app/components/WelcomePopup";
+import CompleteProfileBanner from "@/app/components/CompleteProfileBanner";
 import FlashOffersBanner from "@/app/components/FlashOffersBanner";
 import CartSessionSync from "@/app/components/CartSessionSync";
 import { PromotionsProvider } from "@/app/lib/promotions-context";
@@ -117,6 +118,7 @@ export default function RootLayout({
               <PresenceHeartbeat />
               <FlashOffersBanner />
               <Navbar />
+              <CompleteProfileBanner />
               <main className="flex-1">{children}</main>
               <Footer />
               <WhatsAppButton />

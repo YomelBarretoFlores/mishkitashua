@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import DateRangeFilter from "@/app/admin/_components/date-range-filter";
 
 type Order = {
   id: string;
@@ -64,6 +65,17 @@ export default function PedidosPage() {
     fetchOrders();
   }, [fetchOrders]);
 
+  const hasFilters =
+    search !== "" || filterStatus !== "" || dateFrom !== "" || dateTo !== "";
+
+  const clearFilters = () => {
+    setSearch("");
+    setFilterStatus("");
+    setDateFrom("");
+    setDateTo("");
+    setPage(1);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
@@ -93,39 +105,53 @@ export default function PedidosPage() {
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 mb-6">
         <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div className="relative lg:col-span-2">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-taupe" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por orden o cliente..."
-              className="w-full pl-9 pr-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
-            />
-          </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-            className="px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
-          >
-            <option value="">Todos los estados</option>
-            {statuses.map((s) => (
-              <option key={s} value={s}>{statusLabels[s]}</option>
-            ))}
-          </select>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-            className="px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
-          />
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-            className="px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
+          <label className="block lg:col-span-2">
+            <span className="block text-xs font-medium text-on-surface-variant mb-1">
+              Buscar
+            </span>
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-taupe" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por orden o cliente..."
+                className="w-full pl-9 pr-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
+              />
+            </div>
+          </label>
+          <label className="block">
+            <span className="block text-xs font-medium text-on-surface-variant mb-1">
+              Estado
+            </span>
+            <select
+              value={filterStatus}
+              onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+              className="w-full px-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
+            >
+              <option value="">Todos los estados</option>
+              {statuses.map((s) => (
+                <option key={s} value={s}>{statusLabels[s]}</option>
+              ))}
+            </select>
+          </label>
+          <DateRangeFilter
+            from={dateFrom}
+            to={dateTo}
+            onFromChange={(v) => { setDateFrom(v); setPage(1); }}
+            onToChange={(v) => { setDateTo(v); setPage(1); }}
           />
         </form>
+
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-cocoa hover:text-caramel transition-colors"
+          >
+            <X size={13} />
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       {/* Results info */}
