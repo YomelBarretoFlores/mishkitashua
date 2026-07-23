@@ -70,6 +70,22 @@ export async function sendBirthdayEmails(): Promise<BirthdayRun> {
     });
     if (r.simulated) simulated = true;
     if (r.ok) sent++;
+
+    // Queda constancia de a quién se le mandó y con qué cupón, igual que en las
+    // campañas. Si falla el registro no se corta el envío al resto.
+    try {
+      await prisma.promotionSend.create({
+        data: {
+          kind: "cumpleanos",
+          customerId: person.id,
+          email: person.email,
+          status: r.simulated ? "simulado" : r.ok ? "enviado" : "fallido",
+          detail: code,
+        },
+      });
+    } catch (err) {
+      console.error("[cumpleaños] no se pudo registrar el envío:", err);
+    }
   }
   return { birthdays: people.length, sent, simulated };
 }

@@ -105,20 +105,27 @@ model Promotion {
   @@index([active, startsAt, endsAt])
 }
 
-// Registro de a quién se le envió cada promoción. Antes la campaña se mandaba
-// y no quedaba ni rastro: no se podía saber quién la recibió, ni cuántas veces,
+// Registro de a quién se le envió cada correo de marketing. Antes se mandaba y
+// no quedaba ni rastro: no se podía saber quién lo recibió, ni cuántas veces,
 // ni si el envío fue real o simulado.
+//
+// Sirve para los dos tipos de envío masivo. Los de cumpleaños no cuelgan de
+// ninguna promoción, así que promotionId queda vacío y es `kind` quien
+// distingue de qué envío se trata.
 model PromotionSend {
-  id          String    @id @default(cuid())
-  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
-  promotionId String
+  id          String     @id @default(cuid())
+  promotion   Promotion? @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotionId String?
+  kind        String     @default("promocion") // promocion | cumpleanos
   customerId  String
   email       String
-  status      String    @default("enviado") // enviado | simulado | fallido
-  createdAt   DateTime  @default(now())
+  status      String     @default("enviado") // enviado | simulado | fallido
+  detail      String? // p. ej. el código del cupón que se le mandó
+  createdAt   DateTime   @default(now())
 
   @@index([promotionId])
   @@index([customerId])
+  @@index([kind, createdAt])
 }
 
 model Product {

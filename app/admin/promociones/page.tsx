@@ -64,6 +64,7 @@ export default function PromocionesPage() {
       veces: number;
       ultimo: string;
       status: string;
+      detail: string | null;
     }[];
   } | null>(null);
   // Confirmación pendiente: qué se preguntó y qué hacer si dice que sí.
@@ -147,6 +148,22 @@ export default function PromocionesPage() {
   };
 
   const [sending, setSending] = useState<string | null>(null);
+  // Historial del correo de cumpleaños. No cuelga de ninguna promoción, así
+  // que se pide por tipo en vez de por id.
+  const openBirthdaySends = async () => {
+    const title = "Correo de cumpleaños";
+    setSendsFor({ title, loading: true, total: 0, personas: 0, rows: [] });
+    const res = await fetch("/api/admin/promociones/envios?kind=cumpleanos");
+    const data = await res.json().catch(() => ({ rows: [] }));
+    setSendsFor({
+      title,
+      loading: false,
+      total: data.total ?? 0,
+      personas: data.personas ?? 0,
+      rows: data.rows ?? [],
+    });
+  };
+
   // Abre el historial de envíos de una promoción.
   const openSends = async (promo: Promotion) => {
     setSendsFor({
@@ -265,14 +282,25 @@ export default function PromocionesPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleSendBirthdays}
-            disabled={sendingBirthdays || !birthdayCount}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cocoa-deep text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            <Mail size={16} aria-hidden />
-            {sendingBirthdays ? "Enviando…" : "Enviar ahora"}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Mismo historial que las promociones: a quién se le mandó el
+                cupón de cumpleaños y qué código recibió. */}
+            <button
+              onClick={openBirthdaySends}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-cream-darker text-cocoa-deep text-sm font-medium hover:bg-cream transition-colors"
+            >
+              <Users size={16} aria-hidden />
+              Ver envíos
+            </button>
+            <button
+              onClick={handleSendBirthdays}
+              disabled={sendingBirthdays || !birthdayCount}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cocoa-deep text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              <Mail size={16} aria-hidden />
+              {sendingBirthdays ? "Enviando…" : "Enviar ahora"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -592,6 +620,11 @@ export default function PromocionesPage() {
                             {r.nombre}
                           </p>
                           <p className="text-xs text-taupe">{r.email}</p>
+                          {r.detail && (
+                            <p className="text-xs text-caramel font-mono mt-0.5">
+                              {r.detail}
+                            </p>
+                          )}
                         </td>
                         <td className="py-2.5 px-3 text-on-surface-variant">
                           {r.veces}

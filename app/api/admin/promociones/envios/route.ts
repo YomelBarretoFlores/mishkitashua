@@ -2,29 +2,43 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { adminGuard } from "@/app/lib/auth";
 
-// Historial de envíos de una promoción: quién la recibió, cuándo y cuántas
-// veces. Responde a "¿a quién le llegó esto?", que antes no se podía saber.
+// Historial de envíos: quién lo recibió, cuándo y cuántas veces.
+//
+// Sirve para los dos tipos de envío masivo:
+//   ?promotionId=xxx  → los de una promoción concreta
+//   ?kind=cumpleanos  → los del correo de cumpleaños (no cuelgan de ninguna)
 export async function GET(request: Request) {
   const guard = await adminGuard();
   if (guard) return guard;
 
   const { searchParams } = new URL(request.url);
   const promotionId = searchParams.get("promotionId");
-  if (!promotionId) {
-    return NextResponse.json({ error: "Falta la promoción" }, { status: 400 });
+  const kind = searchParams.get("kind");
+
+  if (!promotionId && kind !== "cumpleanos") {
+    return NextResponse.json(
+      { error: "Indica una promoción o el tipo de envío" },
+      { status: 400 }
+    );
   }
 
   const sends = await prisma.promotionSend.findMany({
-    where: { promotionId },
+    where: promotionId ? { promotionId } : { kind: "cumpleanos" },
     orderBy: { createdAt: "desc" },
     take: 500,
   });
 
-  // Una persona puede haber recibido la misma promoción varias veces (si se
-  // reenvió la campaña): se agrupa por cliente y se cuenta.
+  // Una persona puede haber recibido lo mismo varias veces (una campaña
+  // reenviada, o el cumpleaños de cada año): se agrupa por cliente y se cuenta.
   const byCustomer = new Map<
     string,
-    { email: string; veces: number; ultimo: Date; status: string }
+    {
+      email: string;
+      veces: number;
+      ultimo: Date;
+      status: string;
+      detail: string | null;
+    }
   >();
   for (const s of sends) {
     const prev = byCustomer.get(s.customerId);
@@ -33,6 +47,7 @@ export async function GET(request: Request) {
       if (s.createdAt > prev.ultimo) {
         prev.ultimo = s.createdAt;
         prev.status = s.status;
+        prev.detail = s.detail;
       }
     } else {
       byCustomer.set(s.customerId, {
@@ -40,6 +55,7 @@ export async function GET(request: Request) {
         veces: 1,
         ultimo: s.createdAt,
         status: s.status,
+        detail: s.detail,
       });
     }
   }
@@ -63,6 +79,7 @@ export async function GET(request: Request) {
       veces: v.veces,
       ultimo: v.ultimo,
       status: v.status,
+      detail: v.detail,
     }))
     .sort((a, b) => b.ultimo.getTime() - a.ultimo.getTime());
 
