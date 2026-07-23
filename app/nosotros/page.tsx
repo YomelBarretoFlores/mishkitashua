@@ -9,6 +9,9 @@ import {
   Heart,
   Sparkles,
   Users,
+  Mountain,
+  Globe,
+  Handshake,
 } from "lucide-react";
 import Reveal from "@/app/components/Reveal";
 import SectionNav, { type Section } from "@/app/components/SectionNav";
@@ -18,7 +21,7 @@ export const metadata: Metadata = {
   title: "Nosotros",
   alternates: { canonical: "/nosotros" },
   description:
-    "Quiénes somos, nuestra historia, esencia, misión, valores, ingredientes, proceso y empaques. Repostería andina desde Huaraz, Áncash.",
+    "Quiénes somos, nuestra historia, esencia, misión, objetivos, valores, ingredientes, proceso y empaques. Repostería andina desde Huaraz, Áncash.",
   openGraph: {
     title: "Nosotros | Mishkitashua",
     description:
@@ -34,10 +37,35 @@ const SECTIONS: Section[] = [
   { id: "nuestra-historia", label: "Nuestra historia" },
   { id: "nuestra-esencia", label: "Nuestra esencia" },
   { id: "mision-vision", label: "Misión y visión" },
+  { id: "objetivos", label: "Nuestros objetivos" },
   { id: "valores", label: "Nuestros valores" },
   { id: "ingredientes", label: "Ingredientes y calidad" },
   { id: "proceso", label: "Nuestro proceso" },
   { id: "empaques", label: "Empaques con propósito" },
+];
+
+// Objetivos del negocio, tal como los definió la marca.
+const OBJETIVOS = [
+  {
+    icon: Mountain,
+    text: "Fortalecer el posicionamiento de Mishkitashua como una marca de repostería que revaloriza los ingredientes y sabores andinos.",
+  },
+  {
+    icon: Globe,
+    text: "Ampliar el alcance comercial de la empresa mediante la plataforma de comercio electrónico web y móvil y los envíos nacionales.",
+  },
+  {
+    icon: Heart,
+    text: "Mejorar la experiencia y fidelización del cliente mediante una compra sencilla, segura, accesible y acompañada durante todo el pedido.",
+  },
+  {
+    icon: Handshake,
+    text: "Desarrollar oportunidades de venta B2B mediante la atención asistida por WhatsApp, correo y otros canales de contacto.",
+  },
+  {
+    icon: PackageCheck,
+    text: "Promover productos con identidad cultural, presentación diferenciada y empaques coherentes con la propuesta de la marca.",
+  },
 ];
 
 const VALORES = [
@@ -289,7 +317,51 @@ export default function NosotrosPage() {
               </Reveal>
             </section>
 
-            {/* 5. Nuestros valores */}
+            {/* 5. Nuestros objetivos */}
+            <section id="objetivos" className="scroll-mt-28">
+              <Reveal>
+                <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-3">
+                  Nuestros objetivos
+                </p>
+                <h2
+                  className="text-3xl md:text-4xl font-medium text-cocoa-deep mb-6"
+                  style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+                >
+                  Qué nos hemos propuesto
+                </h2>
+                <p className="text-on-surface-variant leading-relaxed mb-8 max-w-2xl">
+                  Estas son las metas que guían las decisiones de Mishkitashua,
+                  desde qué producimos hasta cómo vendemos y atendemos.
+                </p>
+                <ol className="space-y-4">
+                  {OBJETIVOS.map((o, i) => (
+                    <li
+                      key={o.text}
+                      className="bg-white rounded-2xl p-6 border border-cream-darker/40 flex gap-4 items-start"
+                    >
+                      <span className="w-11 h-11 shrink-0 bg-caramel-light/25 rounded-full flex items-center justify-center">
+                        <o.icon className="text-caramel" size={20} />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <span
+                          className="text-xs text-caramel/70 block mb-1"
+                          style={{
+                            fontFamily: "var(--font-eb-garamond), serif",
+                          }}
+                        >
+                          Objetivo {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <p className="text-on-surface-variant leading-relaxed">
+                          {o.text}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </Reveal>
+            </section>
+
+            {/* 6. Nuestros valores */}
             <section id="valores" className="scroll-mt-28">
               <Reveal>
                 <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-3">
@@ -340,7 +412,7 @@ export default function NosotrosPage() {
               </Reveal>
             </section>
 
-            {/* 6. Ingredientes y calidad */}
+            {/* 7. Ingredientes y calidad */}
             <section id="ingredientes" className="scroll-mt-28">
               <Reveal>
                 <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-3">
@@ -403,7 +475,7 @@ export default function NosotrosPage() {
               </Reveal>
             </section>
 
-            {/* 7. Nuestro proceso */}
+            {/* 8. Nuestro proceso */}
             <section id="proceso" className="scroll-mt-28">
               <Reveal>
                 <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-3">
@@ -456,7 +528,7 @@ export default function NosotrosPage() {
               </Reveal>
             </section>
 
-            {/* 8. Empaques con propósito */}
+            {/* 9. Empaques con propósito */}
             <section id="empaques" className="scroll-mt-28">
               <Reveal>
                 <p className="text-sm font-semibold text-caramel tracking-widest uppercase mb-3">
