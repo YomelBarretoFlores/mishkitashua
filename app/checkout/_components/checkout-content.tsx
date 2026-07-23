@@ -374,7 +374,7 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
               {(
                 [
                   { key: "mercadopago", label: "Mercado Pago", icon: Wallet },
-                  { key: "transfer", label: "Transferencia", icon: Landmark },
+                  { key: "transfer", label: "Yape o transferencia", icon: Landmark },
                 ] as const
               ).map((m) => (
                 <button
@@ -395,45 +395,55 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
 
             {paymentMethod === "transfer" ? (
               <div className="bg-cream rounded-xl p-5">
-                <p className="text-sm text-on-surface-variant leading-relaxed mb-3">
-                  Realiza tu transferencia a la siguiente cuenta y envíanos el
-                  comprobante por WhatsApp:
+                <p className="text-sm text-on-surface-variant leading-relaxed mb-4">
+                  Paga por Yape o transferencia y envíanos el comprobante por
+                  WhatsApp:
                 </p>
-                <div className="space-y-2 text-sm">
+
+                {/* Yape primero: es la forma más rápida y la que más se usa. */}
+                {yapeEnabled() && (
+                  <div className="bg-white rounded-lg p-4 mb-3 border border-cream-darker/60">
+                    <p className="text-xs font-semibold text-caramel tracking-wide uppercase mb-1.5">
+                      Yape
+                    </p>
+                    <p className="font-mono text-lg text-cocoa-deep">
+                      {YAPE_PHONE}
+                    </p>
+                    <p className="text-xs text-taupe mt-1">
+                      A nombre de {BANK_TRANSFER.holder}
+                    </p>
+                  </div>
+                )}
+
+                <div className="bg-white rounded-lg p-4 border border-cream-darker/60 space-y-1 text-sm">
+                  <p className="text-xs font-semibold text-caramel tracking-wide uppercase mb-1.5">
+                    Transferencia bancaria
+                  </p>
                   <p className="text-cocoa-deep font-semibold">
                     {BANK_TRANSFER.bank}
                   </p>
-                  <div className="space-y-1">
-                    <p className="text-on-surface-variant">
-                      Cuenta en soles:{" "}
-                      <span className="font-mono text-cocoa-deep">
-                        {BANK_TRANSFER.account}
-                      </span>
-                    </p>
-                    <p className="text-on-surface-variant">
-                      CCI (interbancaria):{" "}
-                      <span className="font-mono text-cocoa-deep">
-                        {BANK_TRANSFER.cci}
-                      </span>
-                    </p>
-                    <p className="text-on-surface-variant">
-                      Titular: {BANK_TRANSFER.holder}
-                    </p>
-                  </div>
-                  {yapeEnabled() && (
-                    <p className="text-on-surface-variant pt-2 border-t border-cream-darker/60">
-                      También puedes yapear al{" "}
-                      <span className="font-mono text-cocoa-deep">
-                        {YAPE_PHONE}
-                      </span>
-                    </p>
-                  )}
-                  <p className="text-xs text-taupe pt-2">
-                    Tu pedido queda registrado como <strong>pendiente</strong>{" "}
-                    hasta que verifiquemos el abono. Envíanos el comprobante por
-                    WhatsApp con tu número de orden y lo confirmamos.
+                  <p className="text-on-surface-variant">
+                    Cuenta en soles:{" "}
+                    <span className="font-mono text-cocoa-deep">
+                      {BANK_TRANSFER.account}
+                    </span>
+                  </p>
+                  <p className="text-on-surface-variant">
+                    CCI (interbancaria):{" "}
+                    <span className="font-mono text-cocoa-deep">
+                      {BANK_TRANSFER.cci}
+                    </span>
+                  </p>
+                  <p className="text-on-surface-variant">
+                    Titular: {BANK_TRANSFER.holder}
                   </p>
                 </div>
+
+                <p className="text-xs text-taupe pt-3 leading-relaxed">
+                  Tu pedido queda registrado como <strong>pendiente</strong>{" "}
+                  hasta que verifiquemos el abono. Envíanos el comprobante por
+                  WhatsApp con tu número de orden y lo confirmamos.
+                </p>
               </div>
             ) : (
               <div className="bg-cream rounded-xl p-5 flex items-start gap-3">

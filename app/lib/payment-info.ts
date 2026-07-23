@@ -12,9 +12,9 @@ export const BANK_TRANSFER = {
   cci: "002-375-101599433045-41",
 };
 
-// Número de celular asociado a Yape. Mientras esté vacío, la opción de Yape no
-// se muestra: es preferible no ofrecerla a publicar un número equivocado y que
+// Número de celular asociado a Yape. Si se deja vacío, la opción de Yape no se
+// muestra: es preferible no ofrecerla a publicar un número equivocado y que
 // alguien envíe el dinero a otra persona.
-export const YAPE_PHONE = "";
+export const YAPE_PHONE = "926 761 067";
 
 export const yapeEnabled = () => YAPE_PHONE.trim().length > 0;
