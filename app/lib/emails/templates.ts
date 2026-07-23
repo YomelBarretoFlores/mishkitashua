@@ -387,3 +387,36 @@ export function orderStatusEmail(data: {
     html: layout(inner, map.title),
   };
 }
+
+// Mensaje del formulario de contacto, reenviado a la bandeja de la marca.
+// No lleva enlace de baja: no es marketing, es correspondencia entrante.
+export function contactMessageEmail(data: {
+  nombre: string;
+  email: string;
+  asunto?: string | null;
+  mensaje: string;
+}): { subject: string; html: string } {
+  const asunto = data.asunto?.trim() || "Consulta general";
+  const inner = `
+    ${heading("Nuevo mensaje de contacto")}
+    ${paragraph(`Alguien escribió desde la web. Responde a este correo y le llegará directamente.`)}
+    ${highlight("Asunto", esc(asunto))}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px">
+      <tr>
+        <td style="padding:6px 0;color:${MUTED};font-size:13px;width:90px">Nombre</td>
+        <td style="padding:6px 0;color:${TEXT};font-size:13px">${esc(data.nombre)}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:${MUTED};font-size:13px">Correo</td>
+        <td style="padding:6px 0;color:${TEXT};font-size:13px">${esc(data.email)}</td>
+      </tr>
+    </table>
+    <div style="background:${SAND};border:1px solid ${BORDER};border-radius:12px;padding:20px">
+      <div style="color:${MUTED};font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:8px">Mensaje</div>
+      <div style="color:${TEXT};font-size:14px;line-height:1.7;white-space:pre-wrap">${esc(data.mensaje)}</div>
+    </div>`;
+  return {
+    subject: `Contacto web: ${asunto} — ${data.nombre}`,
+    html: layout(inner, `${data.nombre}: ${data.mensaje.slice(0, 80)}`),
+  };
+}

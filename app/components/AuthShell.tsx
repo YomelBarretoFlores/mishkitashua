@@ -77,7 +77,7 @@ export default function AuthShell({
           </div>
           <p className="mt-6 text-center md:text-left text-xs text-taupe">
             Al continuar aceptas nuestros{" "}
-            <Link href="/ayuda" className="underline hover:text-cocoa">
+            <Link href="/ayuda#terminos" className="underline hover:text-cocoa">
               términos y política de privacidad
             </Link>
             .

@@ -21,6 +21,7 @@ import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
 import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 import type { SiteSettings } from "@/app/lib/settings";
+import { BANK_TRANSFER, YAPE_PHONE, yapeEnabled } from "@/app/lib/payment-info";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -398,15 +399,39 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
                   Realiza tu transferencia a la siguiente cuenta y envíanos el
                   comprobante por WhatsApp:
                 </p>
-                <div className="space-y-1 text-sm">
+                <div className="space-y-2 text-sm">
                   <p className="text-cocoa-deep font-semibold">
-                    Banco de la Nación
+                    {BANK_TRANSFER.bank}
                   </p>
-                  <p className="text-on-surface-variant">
-                    Cuenta corriente: 00-123-456789
-                  </p>
-                  <p className="text-on-surface-variant">
-                    Titular: Mishkitashua S.A.C.
+                  <div className="space-y-1">
+                    <p className="text-on-surface-variant">
+                      Cuenta en soles:{" "}
+                      <span className="font-mono text-cocoa-deep">
+                        {BANK_TRANSFER.account}
+                      </span>
+                    </p>
+                    <p className="text-on-surface-variant">
+                      CCI (interbancaria):{" "}
+                      <span className="font-mono text-cocoa-deep">
+                        {BANK_TRANSFER.cci}
+                      </span>
+                    </p>
+                    <p className="text-on-surface-variant">
+                      Titular: {BANK_TRANSFER.holder}
+                    </p>
+                  </div>
+                  {yapeEnabled() && (
+                    <p className="text-on-surface-variant pt-2 border-t border-cream-darker/60">
+                      También puedes yapear al{" "}
+                      <span className="font-mono text-cocoa-deep">
+                        {YAPE_PHONE}
+                      </span>
+                    </p>
+                  )}
+                  <p className="text-xs text-taupe pt-2">
+                    Tu pedido queda registrado como <strong>pendiente</strong>{" "}
+                    hasta que verifiquemos el abono. Envíanos el comprobante por
+                    WhatsApp con tu número de orden y lo confirmamos.
                   </p>
                 </div>
               </div>
@@ -607,8 +632,18 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
 
             <p className="text-xs text-taupe text-center mt-4 leading-relaxed">
               Al realizar tu pedido, aceptas nuestros{" "}
-              <Link href="/ayuda" className="underline hover:text-cocoa-deep">
+              <Link
+                href="/ayuda#terminos"
+                className="underline hover:text-cocoa-deep"
+              >
                 Términos y Condiciones
+              </Link>{" "}
+              y la{" "}
+              <Link
+                href="/ayuda#devoluciones"
+                className="underline hover:text-cocoa-deep"
+              >
+                política de cambios y devoluciones
               </Link>
               .
             </p>

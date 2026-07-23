@@ -51,7 +51,15 @@ export async function POST(request: Request) {
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      select: { id: true, customerId: true, status: true, orderNumber: true, createdAt: true, total: true },
+      select: {
+        id: true,
+        customerId: true,
+        status: true,
+        orderNumber: true,
+        createdAt: true,
+        deliveredAt: true,
+        total: true,
+      },
     });
     // El pedido debe existir, ser del cliente y estar entregado.
     if (!order || order.customerId !== customer.id) {
@@ -63,7 +71,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    if (!withinReturnWindow(order.createdAt)) {
+    if (!withinReturnWindow(order.deliveredAt, order.createdAt)) {
       return NextResponse.json(
         {
           error: `El plazo para devolver es de ${RETURN_WINDOW_DAYS} días y ya venció`,

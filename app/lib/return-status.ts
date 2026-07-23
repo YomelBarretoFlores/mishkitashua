@@ -26,10 +26,16 @@ export function canTransition(from: string, to: ReturnStatus): boolean {
   return !!allowed && allowed.includes(to);
 }
 
-// ¿Sigue dentro del plazo para devolver, contando desde la fecha del pedido?
-export function withinReturnWindow(orderDate: Date): boolean {
+// ¿Sigue dentro del plazo para devolver? El plazo cuenta desde la ENTREGA, que
+// es lo que se le promete al cliente. Para los pedidos antiguos, que no tienen
+// registrada esa fecha, se usa la de compra como aproximación.
+export function withinReturnWindow(
+  deliveredAt: Date | null | undefined,
+  orderDate: Date
+): boolean {
+  const reference = deliveredAt ?? orderDate;
   const limit = RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-  return Date.now() - orderDate.getTime() <= limit;
+  return Date.now() - reference.getTime() <= limit;
 }
 
 export function returnStatusLabel(status: string): string {

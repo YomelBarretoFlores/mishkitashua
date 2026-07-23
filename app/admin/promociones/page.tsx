@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Tag, Power, Mail, Cake } from "lucide-react";
+import { Plus, Trash2, Tag, Power, Mail, Cake, Users, X } from "lucide-react";
 import ConfirmDialog from "@/app/admin/_components/confirm-dialog";
 import Toast, { type ToastMessage } from "@/app/admin/_components/toast";
 
@@ -51,6 +51,21 @@ export default function PromocionesPage() {
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [audience, setAudience] = useState<{ recipients: number } | null>(null);
   const [toast, setToast] = useState<ToastMessage>(null);
+  // Panel de "a quién se envió" de una promoción concreta.
+  const [sendsFor, setSendsFor] = useState<{
+    title: string;
+    loading: boolean;
+    total: number;
+    personas: number;
+    rows: {
+      customerId: string;
+      nombre: string;
+      email: string;
+      veces: number;
+      ultimo: string;
+      status: string;
+    }[];
+  } | null>(null);
   // Confirmación pendiente: qué se preguntó y qué hacer si dice que sí.
   const [confirmState, setConfirmState] = useState<{
     title: string;
@@ -132,6 +147,28 @@ export default function PromocionesPage() {
   };
 
   const [sending, setSending] = useState<string | null>(null);
+  // Abre el historial de envíos de una promoción.
+  const openSends = async (promo: Promotion) => {
+    setSendsFor({
+      title: promo.title,
+      loading: true,
+      total: 0,
+      personas: 0,
+      rows: [],
+    });
+    const res = await fetch(
+      `/api/admin/promociones/envios?promotionId=${promo.id}`
+    );
+    const data = await res.json().catch(() => ({ rows: [] }));
+    setSendsFor({
+      title: promo.title,
+      loading: false,
+      total: data.total ?? 0,
+      personas: data.personas ?? 0,
+      rows: data.rows ?? [],
+    });
+  };
+
   const sendCampaign = (promo: Promotion) => {
     const cuantos = audience
       ? `${audience.recipients} cliente${audience.recipients !== 1 ? "s" : ""}`
@@ -458,6 +495,13 @@ export default function PromocionesPage() {
                     <Mail size={16} />
                   </button>
                   <button
+                    onClick={() => openSends(promo)}
+                    title="Ver a quién se le envió"
+                    className="p-2 text-cocoa hover:bg-cream-dark rounded-lg transition-colors"
+                  >
+                    <Users size={16} />
+                  </button>
+                  <button
                     onClick={() => toggleActive(promo)}
                     title={promo.active ? "Desactivar" : "Activar"}
                     className={`p-2 rounded-lg transition-colors ${
@@ -479,6 +523,105 @@ export default function PromocionesPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Historial de envíos: a quién le llegó esta promoción y cuántas veces */}
+      {sendsFor && (
+        <div
+          className="fixed inset-0 z-50 bg-cocoa-deep/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-5"
+          onClick={() => setSendsFor(null)}
+        >
+          <div
+            className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 p-5 border-b border-cream-darker/60">
+              <div>
+                <h3
+                  className="text-lg font-medium text-cocoa-deep"
+                  style={{ fontFamily: "var(--font-eb-garamond), serif" }}
+                >
+                  Envíos de «{sendsFor.title}»
+                </h3>
+                <p className="text-xs text-taupe mt-0.5">
+                  {sendsFor.loading
+                    ? "Cargando…"
+                    : `${sendsFor.personas} personas · ${sendsFor.total} correos enviados`}
+                </p>
+              </div>
+              <button
+                onClick={() => setSendsFor(null)}
+                className="p-1.5 text-taupe hover:text-cocoa-deep transition-colors"
+                aria-label="Cerrar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto p-5">
+              {sendsFor.loading ? (
+                <p className="text-sm text-taupe text-center py-8">Cargando…</p>
+              ) : sendsFor.rows.length === 0 ? (
+                <p className="text-sm text-taupe text-center py-8">
+                  Esta promoción todavía no se ha enviado a nadie.
+                </p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-cream-darker/60 text-left">
+                      <th className="py-2 pr-3 font-semibold text-on-surface-variant">
+                        Cliente
+                      </th>
+                      <th className="py-2 px-3 font-semibold text-on-surface-variant">
+                        Veces
+                      </th>
+                      <th className="py-2 pl-3 font-semibold text-on-surface-variant">
+                        Último envío
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sendsFor.rows.map((r) => (
+                      <tr
+                        key={r.customerId}
+                        className="border-b border-cream-darker/40"
+                      >
+                        <td className="py-2.5 pr-3">
+                          <p className="text-cocoa-deep font-medium">
+                            {r.nombre}
+                          </p>
+                          <p className="text-xs text-taupe">{r.email}</p>
+                        </td>
+                        <td className="py-2.5 px-3 text-on-surface-variant">
+                          {r.veces}
+                        </td>
+                        <td className="py-2.5 pl-3">
+                          <p className="text-on-surface-variant">
+                            {new Date(r.ultimo).toLocaleDateString("es-PE", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                          {r.status !== "enviado" && (
+                            <span
+                              className={`text-xs font-medium ${r.status === "fallido" ? "text-red-600" : "text-amber-600"}`}
+                            >
+                              {r.status === "simulado"
+                                ? "simulado (sin correo real)"
+                                : "falló"}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

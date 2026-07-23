@@ -9,6 +9,8 @@ import {
   Download,
   Tag,
 } from "lucide-react";
+import IndicatorCard from "@/app/admin/_components/indicator-card";
+import { meetsTarget, type IndicatorReport } from "@/app/lib/kpi";
 
 type Report = {
   month: string;
@@ -21,6 +23,7 @@ type Report = {
   reviewAvg: number;
   reviewCount: number;
   topProducts: { productName: string; quantity: number; revenue: number }[];
+  indicators?: IndicatorReport;
 };
 
 function monthLabel(ym: string): string {
@@ -66,6 +69,34 @@ export default function ReportesPage() {
         String(p.quantity),
         p.revenue.toFixed(2),
       ]),
+      [],
+      // Los indicadores se exportan con su fórmula y sus datos base, para que
+      // el CSV coincida con lo que se ve en pantalla y se pueda comprobar.
+      [
+        "Indicador",
+        "Valor",
+        "Meta",
+        "Cumple",
+        "Formula",
+        "Numerador",
+        "Denominador",
+        "Fuente",
+        "Exclusiones",
+      ],
+      ...(report.indicators?.indicators ?? []).map((i) => {
+        const ok = meetsTarget(i);
+        return [
+          i.label,
+          i.value === null ? "sin datos" : `${i.value}${i.unit === "%" ? "%" : ` ${i.unit}`}`,
+          `${i.targetDirection === "gte" ? ">=" : "<="} ${i.target}`,
+          ok === null ? "sin datos" : ok ? "si" : "no",
+          i.formula,
+          `${i.numerator.label}: ${i.numerator.value}`,
+          `${i.denominator.label}: ${i.denominator.value}`,
+          i.source,
+          i.exclusions,
+        ];
+      }),
     ];
     const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
@@ -170,6 +201,48 @@ export default function ReportesPage() {
               </div>
             ))}
           </div>
+
+          {/* Indicadores logísticos y de servicio, cada uno con su meta */}
+          {report.indicators && (
+            <section className="mb-8">
+              <div className="flex items-baseline justify-between gap-4 flex-wrap mb-4">
+                <h2 className="font-semibold text-cocoa-deep">
+                  Indicadores logísticos y de servicio
+                </h2>
+                <p className="text-xs text-taupe">
+                  {(() => {
+                    const list = report.indicators.indicators;
+                    const enMeta = list.filter(
+                      (i) => meetsTarget(i) === true
+                    ).length;
+                    const fuera = list.filter(
+                      (i) => meetsTarget(i) === false
+                    ).length;
+                    return `${enMeta} en meta · ${fuera} fuera · actualizado ${new Date(
+                      report.indicators.generatedAt
+                    ).toLocaleString("es-PE", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}`;
+                  })()}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {report.indicators.indicators.map((i) => (
+                  <IndicatorCard key={i.key} indicator={i} />
+                ))}
+              </div>
+              <p className="text-xs text-taupe mt-4 leading-relaxed">
+                Periodo evaluado: {report.indicators.period.label}. Todos los
+                indicadores se calculan sobre los pedidos creados en ese mes,
+                salvo «Productos agotados», que es una foto del catálogo de hoy.
+                Despliega «Cómo se calcula» en cada tarjeta para ver la fórmula
+                y los datos exactos que se usaron.
+              </p>
+            </section>
+          )}
 
           <div className="bg-white rounded-2xl border border-cream-darker/60 p-5 md:p-6">
             <h2 className="font-semibold text-cocoa-deep mb-4">

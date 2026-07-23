@@ -8,12 +8,19 @@ import type { Product } from "@/app/lib/products";
 import { useCart } from "@/app/lib/cart-context";
 import { isPromotionActive } from "@/app/lib/promotions";
 import { useActivePromotions } from "@/app/lib/promotions-context";
+import {
+  availabilityOf,
+  availabilityLabel,
+  availabilityClasses,
+} from "@/app/lib/stock";
 import ProductReviews from "./product-reviews";
 
 // El producto llega ya resuelto desde el server component (page.tsx), que hace
 // notFound() si no existe; aquí siempre está presente.
 export default function ProductDetailPage({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const disponibilidad = availabilityOf(product.stock);
+  const agotado = disponibilidad === "agotado";
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [added, setAdded] = useState(false);
@@ -131,6 +138,16 @@ export default function ProductDetailPage({ product }: { product: Product }) {
               S/ {product.price.toFixed(2)}
             </span>
             <span className="text-sm text-taupe">/ {product.weight}</span>
+          </div>
+
+          {/* Disponibilidad: el cliente debe saber si puede comprarlo antes de
+              intentarlo, no descubrirlo al pulsar el botón. */}
+          <div className="mb-3">
+            <span
+              className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${availabilityClasses(disponibilidad)}`}
+            >
+              {availabilityLabel(disponibilidad, product.stock)}
+            </span>
           </div>
 
           {(() => {
@@ -257,7 +274,7 @@ export default function ProductDetailPage({ product }: { product: Product }) {
 
             <button
               onClick={handleAddToCart}
-              disabled={!customizationComplete}
+              disabled={!customizationComplete || agotado}
               className={`w-full flex items-center justify-center gap-2 font-semibold py-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 added
                   ? "bg-green-700 text-white"
@@ -265,8 +282,18 @@ export default function ProductDetailPage({ product }: { product: Product }) {
               }`}
             >
               <ShoppingBag size={18} />
-              {added ? "Agregado al carrito" : "Agregar al Carrito"}
+              {agotado
+                ? "Agotado"
+                : added
+                  ? "Agregado al carrito"
+                  : "Agregar al Carrito"}
             </button>
+            {agotado && (
+              <p className="text-xs text-taupe text-center mt-3">
+                Se nos acabó por ahora. Escríbenos y te avisamos en cuanto
+                volvamos a producir.
+              </p>
+            )}
           </div>
         </div>
       </div>

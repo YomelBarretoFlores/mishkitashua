@@ -45,15 +45,23 @@ export default function Footer() {
             <h4 className="text-sm font-semibold text-cocoa-deep tracking-wide uppercase mb-3">
               Legal
             </h4>
+            {/* Cada enlace lleva a su sección concreta dentro de Ayuda: antes
+                los dos apuntaban a /ayuda, que no tenía ninguna de las dos. */}
             <div className="space-y-2">
               <Link
-                href="/ayuda"
+                href="/ayuda#devoluciones"
+                className="block text-sm text-on-surface-variant hover:text-caramel transition-colors"
+              >
+                Cambios y Devoluciones
+              </Link>
+              <Link
+                href="/ayuda#terminos"
                 className="block text-sm text-on-surface-variant hover:text-caramel transition-colors"
               >
                 Términos de Servicio
               </Link>
               <Link
-                href="/ayuda"
+                href="/ayuda#privacidad"
                 className="block text-sm text-on-surface-variant hover:text-caramel transition-colors"
               >
                 Política de Privacidad

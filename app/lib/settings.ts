@@ -4,11 +4,13 @@ import { prisma } from "@/app/lib/prisma";
 export type SiteSettings = {
   shippingCost: number;
   freeShippingThreshold: number | null;
+  deliveryDays: number;
 };
 
 const DEFAULTS: SiteSettings = {
   shippingCost: 12.0,
   freeShippingThreshold: null,
+  deliveryDays: 3,
 };
 
 // Lee la configuración editable del sitio (fila única). Si aún no existe la
@@ -23,6 +25,7 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
     return {
       shippingCost: row.shippingCost,
       freeShippingThreshold: row.freeShippingThreshold,
+      deliveryDays: row.deliveryDays,
     };
   } catch (error) {
     // Se avisa: esto corre en pleno cálculo del precio, así que caer a los

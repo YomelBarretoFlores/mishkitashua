@@ -8,7 +8,9 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
-    "db:seed:products": "tsx prisma/seed-products.ts"
+    "db:seed:products": "tsx prisma/seed-products.ts",
+    "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:wipe:demo": "tsx prisma/seed-demo.ts --wipe"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.2",

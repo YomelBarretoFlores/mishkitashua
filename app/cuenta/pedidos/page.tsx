@@ -123,7 +123,7 @@ export default async function MisPedidosPage() {
                       ofrecer un botón que el servidor va a rechazar. */}
                   {order.status === "entregado" &&
                     order.returns.length === 0 &&
-                    withinReturnWindow(order.createdAt) && (
+                    withinReturnWindow(order.deliveredAt, order.createdAt) && (
                       <RequestReturnButton
                         orderId={order.id}
                         orderNumber={order.orderNumber}

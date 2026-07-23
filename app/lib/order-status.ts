@@ -15,6 +15,8 @@ export function orderStepIndex(status: string): number {
 // Clases de color para el badge de estado.
 export function statusBadgeClasses(status: string): string {
   switch (status) {
+    case "cancelado":
+      return "bg-red-100 text-red-700";
     case "entregado":
       return "bg-green-100 text-green-700";
     case "enviado":
@@ -27,5 +29,8 @@ export function statusBadgeClasses(status: string): string {
 }
 
 export function statusLabel(status: string): string {
+  // "cancelado" no está en ORDER_STEPS porque no es un paso del recorrido,
+  // pero sí necesita etiqueta propia.
+  if (status === "cancelado") return "Cancelado";
   return ORDER_STEPS.find((s) => s.key === status)?.label ?? status;
 }

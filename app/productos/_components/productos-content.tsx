@@ -6,6 +6,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Truck, Package, Store, ShoppingCart, Search, Star, X } from "lucide-react";
 import { type Product } from "@/app/lib/products";
 import { useCart } from "@/app/lib/cart-context";
+import {
+  availabilityOf,
+  availabilityLabel,
+  availabilityClasses,
+} from "@/app/lib/stock";
 import Reveal from "@/app/components/Reveal";
 
 type RatingSummary = Record<string, { average: number; count: number }>;
@@ -43,10 +48,13 @@ function AddToCartCard({
 }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
+  const disponibilidad = availabilityOf(product.stock);
+  const agotado = disponibilidad === "agotado";
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (agotado) return;
     addItem({
       slug: product.slug,
       name: product.name,
@@ -74,6 +82,15 @@ function AddToCartCard({
         <span className="absolute top-3 left-3 bg-caramel-light text-cocoa-deep text-[12px] font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
           Nuevo
         </span>
+        {/* Disponibilidad: solo se muestra cuando dice algo útil, para no
+            poner "Disponible" en todas las tarjetas y añadir ruido. */}
+        {disponibilidad !== "disponible" && (
+          <span
+            className={`absolute top-3 right-3 text-[12px] font-semibold px-3 py-1 rounded-full ${availabilityClasses(disponibilidad)}`}
+          >
+            {availabilityLabel(disponibilidad, product.stock)}
+          </span>
+        )}
       </div>
 
       <div className="p-5 flex flex-col flex-grow">
@@ -91,7 +108,11 @@ function AddToCartCard({
           <span className="text-lg font-semibold text-caramel">
             S/ {product.price.toFixed(2)}
           </span>
-          {product.customizable ? (
+          {agotado ? (
+            <span className="px-4 py-2 rounded-lg text-sm font-semibold bg-cream-dark text-taupe">
+              Agotado
+            </span>
+          ) : product.customizable ? (
             <span className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-cocoa text-white group-hover:bg-cocoa-deep transition-colors">
               <ShoppingCart size={14} />
               Personalizar
@@ -124,8 +145,11 @@ function AlfajorHeroCard({
 }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
+  const disponibilidad = availabilityOf(product.stock);
+  const agotado = disponibilidad === "agotado";
 
   const handleAdd = () => {
+    if (agotado) return;
     addItem({
       slug: product.slug,
       name: product.name,
@@ -151,10 +175,17 @@ function AlfajorHeroCard({
           className="w-full h-auto group-hover:scale-105 transition-transform duration-700"
           sizes="(max-width: 768px) 100vw, 50vw"
         />
-        <div className="absolute top-4 left-4">
+        <div className="absolute top-4 left-4 flex gap-2">
           <span className="bg-caramel-light text-cocoa-deep text-[12px] font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
             Cajas
           </span>
+          {disponibilidad !== "disponible" && (
+            <span
+              className={`text-[12px] font-semibold px-3 py-1 rounded-full ${availabilityClasses(disponibilidad)}`}
+            >
+              {availabilityLabel(disponibilidad, product.stock)}
+            </span>
+          )}
         </div>
       </Link>
       <div className="p-6 md:p-10 flex flex-col justify-center">
@@ -187,7 +218,11 @@ function AlfajorHeroCard({
           <span className="text-2xl font-medium text-caramel">
             S/ {product.price.toFixed(2)}
           </span>
-          {product.customizable ? (
+          {agotado ? (
+            <span className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-cream-dark text-taupe">
+              Agotado
+            </span>
+          ) : product.customizable ? (
             <Link
               href={`/productos/${product.slug}`}
               className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-semibold bg-cocoa text-white hover:bg-cocoa-deep transition-colors"

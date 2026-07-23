@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { adminGuard } from "@/app/lib/auth";
+import { buildIndicatorReport } from "@/app/lib/kpi";
 
 // Reporte de ventas de un mes concreto (param month=YYYY-MM, por defecto el actual).
 export async function GET(request: Request) {
@@ -62,6 +63,15 @@ export async function GET(request: Request) {
     `;
     const months = monthRows.map((r) => r.month);
 
+    // Indicadores logísticos y de servicio del mismo periodo, cada uno con su
+    // fórmula, su fuente y su meta.
+    const periodLabel = start.toLocaleDateString("es-PE", {
+      month: "long",
+      year: "numeric",
+      timeZone: "America/Lima",
+    });
+    const indicators = await buildIndicatorReport(start, end, periodLabel);
+
     return NextResponse.json({
       month: `${year}-${String(month).padStart(2, "0")}`,
       months,
@@ -73,6 +83,7 @@ export async function GET(request: Request) {
       reviewAvg: reviews._avg.rating || 0,
       reviewCount: reviews._count,
       topProducts,
+      indicators,
     });
   } catch (error) {
     console.error("Report error:", error);

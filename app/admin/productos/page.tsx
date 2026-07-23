@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Plus, Pencil, Archive, RotateCcw, Upload, X } from "lucide-react";
 import ConfirmDialog from "@/app/admin/_components/confirm-dialog";
 import Toast, { type ToastMessage } from "@/app/admin/_components/toast";
+import { availabilityOf, availabilityClasses } from "@/app/lib/stock";
 
 type Product = {
   id: string;
@@ -26,6 +27,7 @@ type Product = {
   flavorOptions: string[];
   boxSize: number | null;
   active: boolean;
+  stock: number | null;
 };
 
 type FormState = {
@@ -46,6 +48,7 @@ type FormState = {
   customizable: boolean;
   flavorOptions: string; // una por línea
   boxSize: string;
+  stock: string; // vacío = bajo pedido (sin control)
 };
 
 const emptyForm: FormState = {
@@ -65,6 +68,7 @@ const emptyForm: FormState = {
   customizable: false,
   flavorOptions: "",
   boxSize: "",
+  stock: "",
 };
 
 const lines = (s: string) =>
@@ -90,6 +94,7 @@ function productToForm(p: Product): FormState {
     customizable: p.customizable,
     flavorOptions: toText(p.flavorOptions),
     boxSize: p.boxSize ? String(p.boxSize) : "",
+    stock: p.stock === null ? "" : String(p.stock),
   };
 }
 
@@ -98,6 +103,8 @@ export default function ProductosAdminPage() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
+  // Id del producto cuyo stock se está moviendo (para no permitir doble clic).
+  const [stockBusy, setStockBusy] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState<ToastMessage>(null);
   const [confirmState, setConfirmState] = useState<{
@@ -165,6 +172,8 @@ export default function ProductosAdminPage() {
       customizable: form.customizable,
       flavorOptions: lines(form.flavorOptions),
       boxSize: form.boxSize ? Number(form.boxSize) : null,
+      // Vacío = "bajo pedido": el producto no lleva control de unidades.
+      stock: form.stock.trim() === "" ? null : Number(form.stock),
     };
     const res = await fetch("/api/admin/productos", {
       method: form.id ? "PATCH" : "POST",
@@ -179,6 +188,30 @@ export default function ProductosAdminPage() {
       setToast({ text: form.id ? "Producto actualizado." : "Producto creado.", kind: "ok" });
     } else {
       setToast({ text: data.error || "No se pudo guardar", kind: "error" });
+    }
+  };
+
+  // Movimiento rápido de stock desde la lista (venta manual o reposición).
+  const moveStock = async (p: Product, delta: number, reason: string) => {
+    setStockBusy(p.id);
+    const res = await fetch("/api/admin/stock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: p.id, delta, reason }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setStockBusy(null);
+    if (res.ok) {
+      load();
+      setToast({
+        text:
+          delta < 0
+            ? `Venta manual registrada: ${p.name}`
+            : `Reposición registrada: ${p.name}`,
+        kind: "ok",
+      });
+    } else {
+      setToast({ text: data.error || "No se pudo actualizar", kind: "error" });
     }
   };
 
@@ -270,6 +303,21 @@ export default function ProductosAdminPage() {
             <label className="text-sm">
               <span className="block text-cocoa-deep font-medium mb-1">Color (hex)</span>
               <input className={inputClass} value={form.color} onChange={(e) => set("color", e.target.value)} placeholder="#3e2723" />
+            </label>
+            <label className="text-sm">
+              <span className="block text-cocoa-deep font-medium mb-1">Stock (unidades)</span>
+              <input
+                type="number"
+                min="0"
+                className={inputClass}
+                value={form.stock}
+                onChange={(e) => set("stock", e.target.value)}
+                placeholder="Vacío = bajo pedido"
+              />
+              <span className="block text-xs text-taupe mt-1">
+                Déjalo vacío si lo preparas por encargo. Con 0 se marca como
+                agotado y no se puede comprar.
+              </span>
             </label>
           </div>
 
@@ -371,6 +419,7 @@ export default function ProductosAdminPage() {
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Producto</th>
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Categoría</th>
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Precio</th>
+                <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Stock</th>
                 <th className="text-left py-3 px-4 text-on-surface-variant font-semibold">Estado</th>
                 <th className="text-right py-3 px-4 text-on-surface-variant font-semibold">Acciones</th>
               </tr>
@@ -391,6 +440,33 @@ export default function ProductosAdminPage() {
                   </td>
                   <td className="py-3 px-4 text-on-surface-variant capitalize">{p.category}</td>
                   <td className="py-3 px-4 text-cocoa-deep font-semibold">S/ {p.price.toFixed(2)}</td>
+                  <td className="py-3 px-4">
+                    {/* Stock + atajos: −1 registra una venta manual, +1 una
+                        reposición. Cada clic deja su movimiento en el historial. */}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => moveStock(p, -1, "venta_manual")}
+                        disabled={p.stock === null || p.stock <= 0 || stockBusy === p.id}
+                        className="w-6 h-6 rounded border border-cream-darker text-cocoa-deep disabled:opacity-30 hover:bg-cream transition-colors"
+                        title="Registrar venta manual (−1)"
+                      >
+                        −
+                      </button>
+                      <span
+                        className={`min-w-[3.5rem] text-center text-xs font-semibold px-2 py-1 rounded-full ${availabilityClasses(availabilityOf(p.stock))}`}
+                      >
+                        {p.stock === null ? "Bajo pedido" : `${p.stock} u.`}
+                      </span>
+                      <button
+                        onClick={() => moveStock(p, 1, "reposicion")}
+                        disabled={p.stock === null || stockBusy === p.id}
+                        className="w-6 h-6 rounded border border-cream-darker text-cocoa-deep disabled:opacity-30 hover:bg-cream transition-colors"
+                        title="Reponer (+1)"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </td>
                   <td className="py-3 px-4">
                     {p.active ? (
                       <span className="text-xs font-medium text-green-700">Activo</span>

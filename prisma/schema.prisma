@@ -18,6 +18,7 @@ model Customer {
   role           String    @default("customer")
   birthdate      DateTime?
   marketingOptIn Boolean   @default(true)
+  isDemo         Boolean   @default(false)
   orders         Order[]
   reviews        Review[]
   coupons        Coupon[]
@@ -50,6 +51,16 @@ model Order {
   paymentStatus   String      @default("pagado")
   couponCode      String?
   status          String      @default("confirmado")
+  // Fechas del ciclo logístico. Sin ellas no se puede calcular OTIF, el tiempo
+  // de ciclo ni el nivel de servicio: el estado solo dice dónde está el pedido
+  // AHORA, no cuándo llegó ahí.
+  promisedAt      DateTime? // fecha comprometida de entrega
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  // Marca los pedidos de ejemplo, para poder distinguirlos de los reales y
+  // borrarlos de una vez sin tocar el historial verdadero.
+  isDemo          Boolean     @default(false)
   reviews         Review[]
   returns         Return[]
   createdAt       DateTime    @default(now())
@@ -58,6 +69,7 @@ model Order {
   @@index([status])
   @@index([createdAt])
   @@index([customerId])
+  @@index([isDemo])
 }
 
 model OrderItem {
@@ -87,9 +99,26 @@ model Promotion {
   startsAt        DateTime
   endsAt          DateTime
   active          Boolean  @default(true)
+  sends           PromotionSend[]
   createdAt       DateTime @default(now())
 
   @@index([active, startsAt, endsAt])
+}
+
+// Registro de a quién se le envió cada promoción. Antes la campaña se mandaba
+// y no quedaba ni rastro: no se podía saber quién la recibió, ni cuántas veces,
+// ni si el envío fue real o simulado.
+model PromotionSend {
+  id          String    @id @default(cuid())
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotionId String
+  customerId  String
+  email       String
+  status      String    @default("enviado") // enviado | simulado | fallido
+  createdAt   DateTime  @default(now())
+
+  @@index([promotionId])
+  @@index([customerId])
 }
 
 model Product {
@@ -112,6 +141,10 @@ model Product {
   flavorOptions   String[]
   boxSize         Int?
   active          Boolean  @default(true) // soft delete / archivar
+  // Unidades disponibles. null = no se lleva control: el producto se prepara
+  // por encargo ("bajo pedido") y nunca bloquea la compra. Un 0 sí bloquea.
+  stock           Int?
+  movements       StockMovement[]
   sortOrder       Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -120,12 +153,32 @@ model Product {
   @@index([category])
 }
 
+// Historial de entradas y salidas de stock. Cada compra web, venta manual o
+// ajuste deja una fila: sin esto, el número de stock cambiaría sin que nadie
+// pueda saber por qué ni reconstruirlo si algo sale mal.
+model StockMovement {
+  id        String   @id @default(cuid())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  delta     Int // negativo = salida, positivo = entrada
+  reason    String // venta_web | venta_manual | reposicion | ajuste | devolucion
+  note      String?
+  orderId   String? // pedido que lo originó, si vino de la tienda
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
 // Configuración editable del sitio (fila única). Los OrderItem son snapshots,
 // así que cambiar esto no afecta pedidos ya hechos.
 model SiteSetting {
   id                    String   @id @default("singleton")
   shippingCost          Float    @default(12.0)
   freeShippingThreshold Float? // null = sin umbral de envío gratis
+  // Días hábiles comprometidos para la entrega. Define la fecha contra la que
+  // se mide el OTIF y el nivel de servicio.
+  deliveryDays          Int      @default(3)
   updatedAt             DateTime @updatedAt
 }
 

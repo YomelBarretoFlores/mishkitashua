@@ -89,7 +89,7 @@ export default function HeroHome() {
               href="/nosotros"
               className="inline-flex items-center gap-2 border-2 border-cream/70 text-white font-semibold px-8 py-4 rounded-lg hover:bg-white hover:text-cocoa-deep transition-colors backdrop-blur-sm"
             >
-              Nuestra Historia
+              Conócenos
             </Link>
           </motion.div>
         </div>

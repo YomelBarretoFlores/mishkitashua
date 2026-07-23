@@ -18,6 +18,9 @@ export async function sendEmail(opts: {
   // cabecera List-Unsubscribe a quien envía en volumen; sin ella, las campañas
   // acaban marcadas como spam.
   unsubscribeUrl?: string;
+  // Sobrescribe el Reply-To por defecto. Lo usa el formulario de contacto para
+  // que al responder en la bandeja se le escriba al cliente, no a la marca.
+  replyTo?: string;
 }): Promise<{ ok: boolean; simulated: boolean; error?: string }> {
   if (!resend) {
     console.log(
@@ -29,7 +32,9 @@ export async function sendEmail(opts: {
     const { error } = await resend.emails.send({
       from: FROM,
       to: opts.to,
-      ...(REPLY_TO ? { replyTo: REPLY_TO } : {}),
+      ...(opts.replyTo || REPLY_TO
+        ? { replyTo: opts.replyTo ?? REPLY_TO! }
+        : {}),
       subject: opts.subject,
       html: opts.html,
       ...(opts.unsubscribeUrl

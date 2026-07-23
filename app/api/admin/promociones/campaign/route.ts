@@ -67,6 +67,21 @@ export async function POST(request: Request) {
     });
     if (res.ok) sent++;
     if (res.simulated) simulated = true;
+
+    // Queda constancia de a quién se le mandó, cuándo y con qué resultado.
+    // Antes la campaña se enviaba y no dejaba ningún rastro.
+    try {
+      await prisma.promotionSend.create({
+        data: {
+          promotionId: promo.id,
+          customerId: r.id,
+          email: r.email,
+          status: res.simulated ? "simulado" : res.ok ? "enviado" : "fallido",
+        },
+      });
+    } catch (err) {
+      console.error("[campaign] no se pudo registrar el envío:", err);
+    }
   }
 
   return NextResponse.json({

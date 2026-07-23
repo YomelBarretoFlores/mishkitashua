@@ -11,10 +11,19 @@ import {
 import { checkCoupon, redeemCoupon } from "@/app/lib/coupons";
 import { linkClerkUserToCustomer } from "@/app/lib/customers";
 import { getSiteSettings } from "@/app/lib/settings";
+import { promisedDeliveryDate } from "@/app/lib/logistics";
 import { sendEmail } from "@/app/lib/resend";
 import { orderConfirmationEmail } from "@/app/lib/emails/templates";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Se lanza dentro de la transacción de compra para deshacerla cuando el stock
+// se agotó a mitad del proceso.
+class OutOfStockError extends Error {
+  constructor(public productName: string) {
+    super(`Sin stock: ${productName}`);
+  }
+}
 
 export type CheckoutItem = {
   slug: string;
@@ -71,6 +80,24 @@ export async function priceCheckout(
         status: 400,
         error: `Cantidad no válida para ${product.name}`,
       };
+    }
+    // Disponibilidad: un producto agotado no se puede comprar. Los de "bajo
+    // pedido" (stock null) no se controlan y siempre pasan.
+    if (product.stock !== null) {
+      if (product.stock <= 0) {
+        return {
+          ok: false,
+          status: 409,
+          error: `${product.name} está agotado`,
+        };
+      }
+      if (product.stock < quantity) {
+        return {
+          ok: false,
+          status: 409,
+          error: `Solo quedan ${product.stock} unidades de ${product.name}`,
+        };
+      }
     }
     resolved.push({ product, quantity, customization: item.customization });
   }
@@ -243,35 +270,88 @@ export async function createOrderFromCheckout(input: {
   if (!priced.ok) return priced;
   const { resolved, pricing, shippingCost, total, coupon } = priced;
 
-  const order = await prisma.order.create({
-    data: {
-      orderNumber,
-      customerId,
-      subtotal: pricing.subtotal,
-      discount: pricing.discount,
-      giftDescription: pricing.gift,
-      shippingCost,
-      total,
-      paymentMethod: input.paymentMethod,
-      chargeId: input.payment?.chargeId ?? null,
-      cardBrand: input.payment?.cardBrand ?? null,
-      cardLast4: input.payment?.cardLast4 ?? null,
-      paymentStatus: input.payment?.paymentStatus ?? "pagado",
-      couponCode: coupon?.code ?? null,
-      items: {
-        create: resolved.map((r) => ({
-          productSlug: r.product.slug,
-          productName: r.product.name,
-          quantity: r.quantity,
-          price: r.product.price,
-          image: r.product.image,
-          customization: r.customization
-            ? JSON.stringify(r.customization)
-            : null,
-        })),
-      },
-    },
-  });
+  // Fecha comprometida de entrega: es contra la que luego se mide el OTIF.
+  const settingsForOrder = await getSiteSettings();
+  const promisedAt = promisedDeliveryDate(
+    new Date(),
+    settingsForOrder.deliveryDays
+  );
+
+  // El pedido y el descuento de stock van juntos: si el stock ya no alcanza
+  // (alguien compró la última unidad entre la validación y ahora), no debe
+  // quedar un pedido creado para algo que no existe.
+  let order: { id: string; orderNumber: string };
+  try {
+    order = await prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          orderNumber,
+          customerId,
+          subtotal: pricing.subtotal,
+          discount: pricing.discount,
+          giftDescription: pricing.gift,
+          shippingCost,
+          total,
+          paymentMethod: input.paymentMethod,
+          chargeId: input.payment?.chargeId ?? null,
+          cardBrand: input.payment?.cardBrand ?? null,
+          cardLast4: input.payment?.cardLast4 ?? null,
+          paymentStatus: input.payment?.paymentStatus ?? "pagado",
+          couponCode: coupon?.code ?? null,
+          promisedAt,
+          items: {
+            create: resolved.map((r) => ({
+              productSlug: r.product.slug,
+              productName: r.product.name,
+              quantity: r.quantity,
+              price: r.product.price,
+              image: r.product.image,
+              customization: r.customization
+                ? JSON.stringify(r.customization)
+                : null,
+            })),
+          },
+        },
+        select: { id: true, orderNumber: true },
+      });
+
+      for (const r of resolved) {
+        if (r.product.stock === null) continue; // bajo pedido: no se controla
+
+        // La condición `stock >= cantidad` dentro del propio UPDATE es lo que
+        // evita vender dos veces la última unidad: si otra compra se adelantó,
+        // no actualiza ninguna fila y la transacción se deshace.
+        const updated = await tx.product.updateMany({
+          where: { id: r.product.id, stock: { gte: r.quantity } },
+          data: { stock: { decrement: r.quantity } },
+        });
+        if (updated.count !== 1) {
+          throw new OutOfStockError(r.product.name);
+        }
+
+        await tx.stockMovement.create({
+          data: {
+            productId: r.product.id,
+            delta: -r.quantity,
+            reason: "venta_web",
+            orderId: created.id,
+            note: `Pedido ${created.orderNumber}`,
+          },
+        });
+      }
+
+      return created;
+    });
+  } catch (err) {
+    if (err instanceof OutOfStockError) {
+      return {
+        ok: false,
+        status: 409,
+        error: `${err.productName} se agotó mientras completabas la compra`,
+      };
+    }
+    throw err;
+  }
 
   // El cupón se marca usado al crear el pedido, no antes: si algo fallara en
   // la creación, el cliente se quedaría sin cupón y sin compra.
