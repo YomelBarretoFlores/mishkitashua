@@ -10,6 +10,7 @@ import {
   Settings,
   Radio,
   RotateCcw,
+  ShieldCheck,
   Menu,
   X,
 } from "lucide-react";
@@ -80,6 +81,13 @@ function NavLinks() {
       >
         <BarChart3 size={16} />
         Reportes
+      </Link>
+      <Link
+        href="/admin/usuarios"
+        className="flex items-center gap-1.5 text-sm text-white/80 hover:text-caramel-light transition-colors whitespace-nowrap shrink-0"
+      >
+        <ShieldCheck size={16} />
+        Usuarios
       </Link>
       <Link
         href="/admin/configuracion"
