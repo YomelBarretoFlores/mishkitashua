@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { trackEvent } from "@/app/lib/analytics";
@@ -13,19 +14,25 @@ import {
   CheckCircle,
   Gift,
   ShieldCheck,
+  Wallet,
+  Smartphone,
 } from "lucide-react";
 import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
 import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 import type { SiteSettings } from "@/app/lib/settings";
+import YapeForm from "@/app/checkout/_components/yape-form";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type MetodoPago = "yape" | "mercadopago";
 
 
 // Los ajustes llegan del servidor ya resueltos (ver checkout/page.tsx), para no
 // mostrar S/ 12 por defecto mientras carga o si la llamada falla.
 export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
   const { items, subtotal } = useCart();
+  const router = useRouter();
   const promo = usePromotions(
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
@@ -84,6 +91,7 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
     telefono: "",
   });
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [metodo, setMetodo] = useState<MetodoPago>("yape");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -160,6 +168,22 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
   };
 
   const handlePay = () => payWithMercadoPago();
+
+  // Yape cobra desde su propio componente, así que necesita los datos del
+  // pedido ya validados. Devolver null hace que se marquen los campos que
+  // faltan en vez de intentar un cobro que el servidor rechazaría.
+  const datosParaYape = () => {
+    if (!isValid) {
+      markAllTouched();
+      return null;
+    }
+    return {
+      customer: customerPayload(),
+      items: itemsPayload(),
+      sessionId: sessionStorage.getItem("msk-session") || "",
+      couponCode: coupon?.code ?? null,
+    };
+  };
 
   if (items.length === 0) {
     return (
@@ -331,28 +355,64 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
               </h2>
             </div>
 
-            {/* Un solo método: todo el cobro pasa por Mercado Pago, que
-                confirma solo por webhook. Antes había además "Yape o
-                transferencia" al número directo, que se retiró porque obligaba
-                a comprobar cada abono a mano. Dentro de la pasarela se puede
-                pagar con Yape igual, y ahí sí se acredita al instante. */}
-            <div className="bg-cream rounded-xl p-5 flex items-start gap-3">
-              <ShieldCheck size={20} className="text-green-700 shrink-0 mt-0.5" />
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                Pago protegido con{" "}
-                <span className="font-semibold text-cocoa-deep">
-                  Mercado Pago
-                </span>
-                . Serás redirigido a la pasarela segura, donde puedes pagar con{" "}
-                <span className="font-semibold text-cocoa-deep">Yape</span>,
-                tarjeta de crédito o débito, banca por internet o agentes. Tus
-                datos de pago se procesan cifrados y{" "}
-                <span className="font-semibold">
-                  nunca se almacenan en nuestros servidores
-                </span>
-                .
-              </p>
+            {/* Dos vías distintas a propósito:
+                  - Yape cobra AQUÍ mismo (Checkout API) y no exige cuenta de
+                    Mercado Pago, solo la app de Yape. Va primero porque es el
+                    medio más usado en Perú.
+                  - Mercado Pago redirige a su pasarela y cubre tarjeta, banca y
+                    agentes, sin el tope por operación que sí tiene Yape.
+                Se mantienen las dos: si Yape fuera el único medio, un pedido
+                que supere su tope no se podría pagar de ninguna forma. */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {(
+                [
+                  { key: "yape", label: "Yape", icon: Smartphone },
+                  { key: "mercadopago", label: "Tarjeta u otros", icon: Wallet },
+                ] as const
+              ).map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setMetodo(m.key)}
+                  className={`flex flex-col items-center gap-1.5 py-3 rounded-lg text-xs font-semibold transition-colors border ${
+                    metodo === m.key
+                      ? "bg-cocoa text-white border-cocoa"
+                      : "bg-white text-cocoa-deep border-cream-darker hover:border-cocoa-light"
+                  }`}
+                >
+                  <m.icon size={18} />
+                  {m.label}
+                </button>
+              ))}
             </div>
+
+            {metodo === "yape" ? (
+              <YapeForm
+                total={total}
+                disabled={submitting}
+                onAntesDePagar={datosParaYape}
+                onPagado={(orderId) =>
+                  router.push(`/confirmacion?order=${orderId}&fresh=1`)
+                }
+              />
+            ) : (
+              <div className="bg-cream rounded-xl p-5 flex items-start gap-3">
+                <ShieldCheck size={20} className="text-green-700 shrink-0 mt-0.5" />
+                <p className="text-sm text-on-surface-variant leading-relaxed">
+                  Pago protegido con{" "}
+                  <span className="font-semibold text-cocoa-deep">
+                    Mercado Pago
+                  </span>
+                  . Serás redirigido a la pasarela segura, donde puedes pagar con
+                  tarjeta de crédito o débito, banca por internet o en agentes.
+                  Tus datos de pago se procesan cifrados y{" "}
+                  <span className="font-semibold">
+                    nunca se almacenan en nuestros servidores
+                  </span>
+                  .
+                </p>
+              </div>
+            )}
 
             <p className="flex items-center gap-1.5 text-xs text-taupe mt-5">
               <Lock size={12} />
