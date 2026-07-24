@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { soloReales, dePedidoReal } from "@/app/lib/demo-data";
 import { adminGuard } from "@/app/lib/auth";
 import { buildIndicatorReport } from "@/app/lib/kpi";
 
@@ -55,7 +56,13 @@ export async function GET(request: Request) {
       });
     }
 
-    const where = { createdAt: { gte: start, lt: end } };
+    // El informe es la foto del negocio: fuera los datos de demostración. La
+    // marca `isDemo` vive en Order y Customer; Review y Return la heredan a
+    // través del pedido, de ahí los tres filtros distintos.
+    const periodo = { gte: start, lt: end };
+    const where = { createdAt: periodo, ...soloReales };
+    const whereReview = { createdAt: periodo, ...dePedidoReal };
+    const whereReturn = { createdAt: periodo, ...dePedidoReal };
 
     const [
       orders,
@@ -75,19 +82,19 @@ export async function GET(request: Request) {
           select: { productName: true, quantity: true, price: true },
         }),
         prisma.review.aggregate({
-          where,
+          where: whereReview,
           _avg: { rating: true },
           _count: true,
         }),
         prisma.customer.count({ where }),
         // Devoluciones solicitadas en el periodo, con su estado.
         prisma.return.findMany({
-          where: { createdAt: { gte: start, lt: end } },
+          where: whereReturn,
           select: { status: true, refundAmount: true },
         }),
         // Dinero efectivamente devuelto en el periodo.
         prisma.return.aggregate({
-          where: { createdAt: { gte: start, lt: end }, status: "reembolsada" },
+          where: { ...whereReturn, status: "reembolsada" },
           _sum: { refundAmount: true },
         }),
       ]);
@@ -112,6 +119,7 @@ export async function GET(request: Request) {
     const monthRows = await prisma.$queryRaw<{ month: string }[]>`
       SELECT to_char(date_trunc('month', "createdAt"), 'YYYY-MM') AS month
       FROM "Order"
+      WHERE "isDemo" = false
       GROUP BY 1
       ORDER BY 1 DESC
     `;

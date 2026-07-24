@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
+import { dePedidoReal } from "@/app/lib/demo-data";
 
 // Devuelve rating promedio y conteo por productSlug, para mostrar en el catálogo.
 export async function GET() {
   const grouped = await prisma.review.groupBy({
     by: ["productSlug"],
-    where: { productSlug: { not: null } },
+    where: { productSlug: { not: null }, ...dePedidoReal },
     _avg: { rating: true },
     _count: true,
   });

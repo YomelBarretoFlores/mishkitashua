@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/app/lib/prisma";
 import { enforceRateLimit } from "@/app/lib/ratelimit";
+import { dePedidoReal } from "@/app/lib/demo-data";
 
 const reviewSchema = z.object({
   orderId: z.string().min(1).max(60),
@@ -18,11 +19,15 @@ export async function GET(request: Request) {
   const sort = searchParams.get("sort"); // "recientes" | "mejor" | "peor"
   const daysParam = searchParams.get("days"); // "7" | "30" | "90" | "365"
 
+  // Las reseñas de los pedidos de demostración quedan fuera: esta ruta alimenta
+  // la ficha pública del producto, y una reseña inventada mostrada como
+  // auténtica engaña a quien está decidiendo la compra.
   const where: {
     productSlug?: string;
     rating?: number;
     createdAt?: { gte: Date };
-  } = {};
+    order: { isDemo: boolean };
+  } = { ...dePedidoReal };
   if (productSlug) where.productSlug = productSlug;
 
   const rating = Number(ratingParam);

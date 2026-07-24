@@ -10,6 +10,7 @@ import {
   Tag,
   RotateCcw,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import DateRangeFilter from "@/app/admin/_components/date-range-filter";
 import IndicatorCard from "@/app/admin/_components/indicator-card";
@@ -318,6 +319,27 @@ export default function ReportesPage() {
                   })()}
                 </p>
               </div>
+              {/* El resto del panel excluye los datos de demostración. Estos
+                  indicadores no pueden: los pedidos reales aún no registran
+                  fechas de promesa ni de entrega, así que sin el histórico
+                  ficticio saldrían todos vacíos. Se avisa para que nadie tome
+                  una decisión creyendo que mide el negocio real. */}
+              {report.indicators.demoOrders > 0 && (
+                <div className="mb-4 rounded-xl border border-amber-300/70 bg-amber-50 px-4 py-3 flex gap-3">
+                  <AlertTriangle
+                    size={16}
+                    className="text-amber-700 shrink-0 mt-0.5"
+                  />
+                  <p className="text-xs text-amber-900 leading-relaxed">
+                    <strong>Incluye datos de demostración.</strong>{" "}
+                    {report.indicators.demoOrders} de los pedidos de este periodo
+                    son de prueba, creados para que estos indicadores tuvieran de
+                    dónde calcularse. Sirven para ver cómo funcionan, no para
+                    medir el negocio. Las ventas, los clientes y las reseñas del
+                    resto del panel sí son solo reales.
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {report.indicators.indicators.map((i) => (
                   <IndicatorCard key={i.key} indicator={i} />

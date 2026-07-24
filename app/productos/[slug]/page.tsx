@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getProductBySlug, getAllProducts } from "@/app/lib/products";
 import { productJsonLd } from "@/app/lib/jsonld";
 import { prisma } from "@/app/lib/prisma";
+import { dePedidoReal } from "@/app/lib/demo-data";
 import ProductDetail from "./_components/product-detail";
 
 type Props = {
@@ -59,7 +60,7 @@ export default async function ProductPage({ params }: Props) {
   let rating: { average: number; count: number } | undefined;
   try {
     const agg = await prisma.review.aggregate({
-      where: { productSlug: slug },
+      where: { productSlug: slug, ...dePedidoReal },
       _avg: { rating: true },
       _count: true,
     });

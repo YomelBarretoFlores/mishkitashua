@@ -31,6 +31,16 @@ export type IndicatorReport = {
   period: { from: string; to: string; label: string };
   generatedAt: string;
   indicators: Indicator[];
+  /**
+   * Cuántos de los pedidos del periodo son de demostración.
+   *
+   * A diferencia del resto del panel, aquí SÍ se incluyen: los pedidos reales
+   * todavía no llevan promisedAt/shippedAt/deliveredAt, así que sin ellos los
+   * nueve indicadores saldrían todos vacíos. Pero el número se devuelve para
+   * poder avisarlo en pantalla: un indicador calculado sobre datos inventados
+   * no debe leerse como una medición del negocio.
+   */
+  demoOrders: number;
 };
 
 function pct(numerator: number, denominator: number): number | null {
@@ -62,6 +72,7 @@ export async function buildIndicatorReport(
       where: { createdAt: range },
       select: {
         id: true,
+        isDemo: true,
         status: true,
         createdAt: true,
         promisedAt: true,
@@ -330,5 +341,6 @@ export async function buildIndicatorReport(
     },
     generatedAt: new Date().toISOString(),
     indicators,
+    demoOrders: orders.filter((o) => o.isDemo).length,
   };
 }
