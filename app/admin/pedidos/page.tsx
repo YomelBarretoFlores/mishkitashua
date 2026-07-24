@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, X, Check } from "lucide-react";
 import DateRangeFilter from "@/app/admin/_components/date-range-filter";
+import ConfirmDialog from "@/app/admin/_components/confirm-dialog";
+import Toast, { type ToastMessage } from "@/app/admin/_components/toast";
 
 type Order = {
   id: string;
@@ -16,18 +18,30 @@ type Order = {
   items: { productName: string; quantity: number }[];
 };
 
-const statuses = ["confirmado", "preparando", "enviado", "entregado"];
+// "cancelado" tiene que estar en la lista aunque no sea un paso del recorrido:
+// sin él, un pedido cancelado no coincidía con ninguna opción del desplegable y
+// el navegador mostraba la primera, así que en el panel se leía "Confirmado".
+// Cancelar es además lo que devuelve el stock de un pedido que nunca se pagó.
+const statuses = [
+  "confirmado",
+  "preparando",
+  "enviado",
+  "entregado",
+  "cancelado",
+];
 const statusLabels: Record<string, string> = {
   confirmado: "Confirmado",
   preparando: "En preparación",
   enviado: "Enviado",
   entregado: "Entregado",
+  cancelado: "Cancelado",
 };
 const statusColors: Record<string, string> = {
   confirmado: "bg-blue-50 text-blue-700",
   preparando: "bg-amber-50 text-amber-700",
   enviado: "bg-purple-50 text-purple-700",
   entregado: "bg-green-50 text-green-700",
+  cancelado: "bg-red-50 text-red-700",
 };
 
 export default function PedidosPage() {
@@ -41,6 +55,14 @@ export default function PedidosPage() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [pagando, setPagando] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastMessage>(null);
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    message: string;
+    confirmLabel: string;
+    action: () => void | Promise<void>;
+  } | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -92,6 +114,42 @@ export default function PedidosPage() {
       prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
     );
   };
+
+  // Yape y transferencia no se pueden validar solas: el dinero llega al
+  // teléfono o al banco, fuera de la web. Esto deja constancia de que llegó.
+  const confirmarPago = async (order: Order) => {
+    setPagando(order.id);
+    const res = await fetch(`/api/admin/orders/${order.id}/pago`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentStatus: "pagado" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setPagando(null);
+    if (res.ok) {
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id ? { ...o, paymentStatus: "pagado" } : o
+        )
+      );
+      setToast({
+        text: `Pago de ${order.orderNumber} confirmado. Se le avisó al cliente.`,
+        kind: "ok",
+      });
+    } else {
+      setToast({ text: data.error || "No se pudo confirmar", kind: "error" });
+    }
+  };
+
+  const pedirConfirmacion = (order: Order) =>
+    setConfirmState({
+      title: "Confirmar que el pago llegó",
+      message: `Comprueba en Yape o en la cuenta del BCP que entraron S/ ${order.total.toFixed(
+        2
+      )} del pedido ${order.orderNumber}. Al confirmar, el pedido deja de estar pendiente y se le manda un correo al cliente avisándole.`,
+      confirmLabel: "Sí, el pago llegó",
+      action: () => confirmarPago(order),
+    });
 
   return (
     <div>
@@ -206,10 +264,29 @@ export default function PedidosPage() {
                           Reembolsado
                         </span>
                       )}
-                      {order.paymentStatus === "pendiente" && (
-                        <span className="block text-xs text-amber-600">
-                          Pago pendiente
+                      {order.paymentStatus === "pagado" && (
+                        <span className="block text-xs text-green-700">
+                          Pago confirmado
                         </span>
+                      )}
+                      {order.paymentStatus === "pendiente" && (
+                        <>
+                          <span className="block text-xs text-amber-600">
+                            Pago pendiente
+                          </span>
+                          {order.paymentMethod === "transfer" && (
+                            <button
+                              onClick={() => pedirConfirmacion(order)}
+                              disabled={pagando === order.id}
+                              className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-cocoa hover:text-caramel disabled:opacity-40 transition-colors"
+                            >
+                              <Check size={12} />
+                              {pagando === order.id
+                                ? "Confirmando…"
+                                : "Confirmar pago"}
+                            </button>
+                          )}
+                        </>
                       )}
                     </td>
                     <td className="py-3 px-4">
@@ -257,6 +334,20 @@ export default function PedidosPage() {
           )}
         </>
       )}
+
+      <ConfirmDialog
+        open={confirmState !== null}
+        title={confirmState?.title ?? ""}
+        message={confirmState?.message ?? ""}
+        confirmLabel={confirmState?.confirmLabel}
+        onCancel={() => setConfirmState(null)}
+        onConfirm={() => {
+          const pending = confirmState;
+          setConfirmState(null);
+          void pending?.action();
+        }}
+      />
+      <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

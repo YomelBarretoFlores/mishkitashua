@@ -59,10 +59,50 @@ export async function PATCH(
     }
     if (status === "cancelado" && !previous.cancelledAt) stamps.cancelledAt = now;
 
-    const order = await prisma.order.update({
-      where: { id },
-      data: { status, ...stamps },
-      include: { customer: { select: { email: true } } },
+    // Cancelar devuelve las unidades al inventario. El stock se descuenta al
+    // crear el pedido (antes de cobrar, en la vía de Yape/transferencia), así
+    // que sin esto un pedido que nunca se pagó se quedaba con la mercadería
+    // reservada para siempre y el catálogo acababa marcando "agotado" algo que
+    // sí había. Solo se hace en la transición a "cancelado", nunca al reabrir.
+    const devolverStock = status === "cancelado" && previous.status !== "cancelado";
+
+    const order = await prisma.$transaction(async (tx) => {
+      const actualizado = await tx.order.update({
+        where: { id },
+        data: { status, ...stamps },
+        include: {
+          customer: { select: { email: true } },
+          items: { select: { productSlug: true, quantity: true } },
+        },
+      });
+
+      if (devolverStock) {
+        for (const item of actualizado.items) {
+          if (!item.productSlug) continue;
+          const producto = await tx.product.findUnique({
+            where: { slug: item.productSlug },
+            select: { id: true, stock: true },
+          });
+          // stock null = "bajo pedido": no se lleva inventario, nada que devolver.
+          if (!producto || producto.stock === null) continue;
+
+          await tx.product.update({
+            where: { id: producto.id },
+            data: { stock: { increment: item.quantity } },
+          });
+          await tx.stockMovement.create({
+            data: {
+              productId: producto.id,
+              delta: item.quantity,
+              reason: "devolucion",
+              orderId: id,
+              note: `Cancelación del pedido ${actualizado.orderNumber}`,
+            },
+          });
+        }
+      }
+
+      return actualizado;
     });
 
     // Avisar al cliente del avance de su pedido.

@@ -420,3 +420,32 @@ export function contactMessageEmail(data: {
     html: layout(inner, `${data.nombre}: ${data.mensaje.slice(0, 80)}`),
   };
 }
+
+// Confirmación de que llegó un abono por Yape o transferencia. Le sirve al
+// cliente de recibo y le ahorra escribir para preguntar si su pago entró.
+export function paymentReceivedEmail(data: {
+  orderNumber: string;
+  total: number;
+  customerName?: string | null;
+}): { subject: string; html: string } {
+  const nombre = data.customerName?.trim().split(" ")[0];
+  const inner = `
+    ${heading("Confirmamos tu pago")}
+    ${paragraph(
+      `${nombre ? `${esc(nombre)}, ` : ""}recibimos tu abono del pedido <strong style="color:${COCOA}">#${esc(
+        data.orderNumber
+      )}</strong>. Ya lo estamos preparando.`
+    )}
+    ${highlight("Monto recibido", `S/ ${data.total.toFixed(2)}`)}
+    ${paragraph(
+      "Te avisaremos en cuanto salga hacia tu dirección. Gracias por tu compra."
+    )}
+    <div style="text-align:center;margin-top:26px">${button(
+      `${BASE}/seguimiento?q=${encodeURIComponent(data.orderNumber)}`,
+      "Ver seguimiento"
+    )}</div>`;
+  return {
+    subject: `Pago confirmado · Pedido #${data.orderNumber}`,
+    html: layout(inner, "Confirmamos tu pago"),
+  };
+}
