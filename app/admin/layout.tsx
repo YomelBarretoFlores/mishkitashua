@@ -103,22 +103,28 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-cream">
       <nav className="bg-cocoa-deep text-white">
-        <div className="max-w-7xl mx-auto px-5 md:px-8 flex items-center gap-4 h-14">
+        <div className="max-w-7xl mx-auto px-5 md:px-8 flex items-center gap-x-5 gap-y-2 flex-wrap min-h-14 py-2.5">
           <Link
             href="/admin"
-            className="font-medium text-lg shrink-0"
+            className="font-medium text-lg shrink-0 mr-1"
             style={{ fontFamily: "var(--font-eb-garamond), serif" }}
           >
             Mishkitashua
           </Link>
-          {/* Nav en línea: ocupa el espacio disponible y hace scroll horizontal
-              si no cabe (con 10 secciones ya no entran todas). */}
-          <div className="hidden lg:flex items-center gap-5 overflow-x-auto min-w-0 flex-1 no-scrollbar">
+          {/* Los enlaces BAJAN DE LÍNEA cuando no caben, en vez de desplazarse
+              en horizontal. Con diez secciones no entran en un portátil, y al
+              hacer scroll con la barra oculta parecía que "Configuración" no
+              existía. Ocupando dos filas siempre se ve todo, sin depender de
+              flechas ni de que el navegador anime nada. */}
+          {/* `lg:contents` disuelve este contenedor en la fila superior, para
+              que los enlaces fluyan junto al logo y no se lleven una fila
+              entera para ellos solos. */}
+          <div className="hidden lg:contents">
             <NavLinks />
           </div>
           <Link
             href="/"
-            className="hidden lg:inline shrink-0 text-sm text-white/60 hover:text-caramel-light transition-colors whitespace-nowrap"
+            className="hidden lg:inline shrink-0 ml-auto text-sm text-white/60 hover:text-caramel-light transition-colors whitespace-nowrap"
           >
             ← Volver al sitio
           </Link>

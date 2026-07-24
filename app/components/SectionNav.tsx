@@ -36,13 +36,33 @@ export default function SectionNav({ sections }: { sections: Section[] }) {
   const go = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
-    // scroll-mt en cada sección deja el espacio del navbar; aquí solo se salta.
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
     setActive(id);
+
+    // Se calcula el destino en vez de usar scrollIntoView para descontar el
+    // alto del navbar fijo, que si no tapa el título de la sección.
+    const OFFSET = 96;
+    const destino = Math.max(
+      0,
+      el.getBoundingClientRect().top + window.scrollY - OFFSET
+    );
+    const sinAnimacion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    window.scrollTo({
+      top: destino,
+      behavior: sinAnimacion ? "auto" : "smooth",
+    });
   };
 
   return (
-    <nav aria-label="Secciones de la página">
+    // El sticky va en el <nav>, no en la lista: el nav es la celda de la
+    // cuadrícula y su alto abarca toda la columna, así que el índice acompaña
+    // al contenido mientras se baja. Puesto en la lista se quedaba anclado a
+    // un contenedor del alto del propio menú y desaparecía enseguida.
+    <nav
+      aria-label="Secciones de la página"
+      className="lg:sticky lg:top-24 lg:self-start"
+    >
       {/* Móvil: píldoras horizontales */}
       <div className="lg:hidden sticky top-16 z-30 -mx-5 px-5 py-3 bg-cream/95 backdrop-blur border-b border-cream-darker/60">
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
@@ -64,7 +84,7 @@ export default function SectionNav({ sections }: { sections: Section[] }) {
       </div>
 
       {/* Escritorio: índice fijo a un lado */}
-      <ul className="hidden lg:block sticky top-24 space-y-1 border-l border-cream-darker/60">
+      <ul className="hidden lg:block space-y-1 border-l border-cream-darker/60">
         {sections.map((s) => (
           <li key={s.id}>
             <button
