@@ -11,7 +11,12 @@ const REPLY_TO = process.env.EMAIL_REPLY_TO;
 const resend = apiKey ? new Resend(apiKey) : null;
 
 export async function sendEmail(opts: {
-  to: string;
+  /**
+   * Uno o varios destinatarios. Se admite lista separada por comas para poder
+   * configurar por variable de entorno que un aviso llegue a dos bandejas
+   * (p. ej. la dueña del negocio y quien la ayuda) sin tocar código.
+   */
+  to: string | string[];
   subject: string;
   html: string;
   // Enlace de baja para los correos de marketing. Gmail y Yahoo exigen la
@@ -22,16 +27,26 @@ export async function sendEmail(opts: {
   // que al responder en la bandeja se le escriba al cliente, no a la marca.
   replyTo?: string;
 }): Promise<{ ok: boolean; simulated: boolean; error?: string }> {
+  // "a@x.com, b@y.com" -> ["a@x.com", "b@y.com"]. Resend acepta ambas formas,
+  // pero normalizarlo aquí evita mandarle una cadena con comas como si fuera
+  // una sola dirección, que falla en silencio.
+  const destinatarios = (Array.isArray(opts.to) ? opts.to : opts.to.split(","))
+    .map((d) => d.trim())
+    .filter(Boolean);
+  if (destinatarios.length === 0) {
+    return { ok: false, simulated: false, error: "sin destinatario" };
+  }
+
   if (!resend) {
     console.log(
-      `[email:SIMULADO] Para: ${opts.to} · Asunto: "${opts.subject}"`
+      `[email:SIMULADO] Para: ${destinatarios.join(", ")} · Asunto: "${opts.subject}"`
     );
     return { ok: true, simulated: true };
   }
   try {
     const { error } = await resend.emails.send({
       from: FROM,
-      to: opts.to,
+      to: destinatarios,
       ...(opts.replyTo || REPLY_TO
         ? { replyTo: opts.replyTo ?? REPLY_TO! }
         : {}),
