@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, ChevronLeft, ChevronRight, X, Check } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Check } from "lucide-react";
 import DateRangeFilter from "@/app/admin/_components/date-range-filter";
+import SearchInput from "@/app/admin/_components/search-input";
 import ConfirmDialog from "@/app/admin/_components/confirm-dialog";
 import Toast, { type ToastMessage } from "@/app/admin/_components/toast";
 
@@ -53,6 +54,9 @@ export default function PedidosPage() {
 
   const [filterStatus, setFilterStatus] = useState("");
   const [search, setSearch] = useState("");
+  // Lo que viaja al servidor. Antes `search` iba directo en las dependencias
+  // del fetch, así que cada tecla era una consulta a la base de datos.
+  const [searchAplicada, setSearchAplicada] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [pagando, setPagando] = useState<string | null>(null);
@@ -68,7 +72,7 @@ export default function PedidosPage() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: "15" });
     if (filterStatus) params.set("status", filterStatus);
-    if (search) params.set("search", search);
+    if (searchAplicada) params.set("search", searchAplicada);
     if (dateFrom) params.set("from", dateFrom);
     if (dateTo) params.set("to", dateTo);
 
@@ -78,7 +82,15 @@ export default function PedidosPage() {
     setTotalPages(data.totalPages || 1);
     setTotal(data.total || 0);
     setLoading(false);
-  }, [page, filterStatus, search, dateFrom, dateTo]);
+  }, [page, filterStatus, searchAplicada, dateFrom, dateTo]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearchAplicada(search);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [search]);
 
   useEffect(() => {
     // Carga inicial de datos: el estado se actualiza tras el await del fetch,
@@ -92,16 +104,11 @@ export default function PedidosPage() {
 
   const clearFilters = () => {
     setSearch("");
+    setSearchAplicada("");
     setFilterStatus("");
     setDateFrom("");
     setDateTo("");
     setPage(1);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-    fetchOrders();
   };
 
   const updateStatus = async (orderId: string, newStatus: string) => {
@@ -162,22 +169,13 @@ export default function PedidosPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 mb-6">
-        <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <label className="block lg:col-span-2">
-            <span className="block text-xs font-medium text-on-surface-variant mb-1">
-              Buscar
-            </span>
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-taupe" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por orden o cliente..."
-                className="w-full pl-9 pr-3 py-2 bg-cream-dark border border-cream-darker rounded-lg text-sm text-cocoa-deep focus:outline-none focus:border-cocoa"
-              />
-            </div>
-          </label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Número de orden o cliente…"
+            className="lg:col-span-2"
+          />
           <label className="block">
             <span className="block text-xs font-medium text-on-surface-variant mb-1">
               Estado
@@ -199,7 +197,7 @@ export default function PedidosPage() {
             onFromChange={(v) => { setDateFrom(v); setPage(1); }}
             onToChange={(v) => { setDateTo(v); setPage(1); }}
           />
-        </form>
+        </div>
 
         {hasFilters && (
           <button

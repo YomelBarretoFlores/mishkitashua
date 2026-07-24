@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { UserCheck, User } from "lucide-react";
+import SearchInput, { normaliza } from "@/app/admin/_components/search-input";
 
 type Customer = {
   id: string;
@@ -23,6 +24,7 @@ export default function ClientesPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("todos");
+  const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/customers")
@@ -34,21 +36,32 @@ export default function ClientesPage() {
       .catch(() => setLoading(false));
   }, []);
 
+  // La búsqueda se aplica ANTES que las pestañas, para que sus contadores
+  // hablen del resultado que se está mirando y no de la lista entera: "Todos
+  // 75" encima de tres filas se lee como que algo está mal.
+  const buscados = useMemo(() => {
+    const q = normaliza(busqueda);
+    if (q === "") return customers;
+    return customers.filter((c) =>
+      [c.name, c.email, c.city].some((campo) => normaliza(campo ?? "").includes(q))
+    );
+  }, [customers, busqueda]);
+
   const conCuenta = useMemo(
-    () => customers.filter((c) => c.hasAccount).length,
-    [customers]
+    () => buscados.filter((c) => c.hasAccount).length,
+    [buscados]
   );
 
   const visible = useMemo(() => {
-    if (filter === "cuenta") return customers.filter((c) => c.hasAccount);
-    if (filter === "sin-cuenta") return customers.filter((c) => !c.hasAccount);
-    return customers;
-  }, [customers, filter]);
+    if (filter === "cuenta") return buscados.filter((c) => c.hasAccount);
+    if (filter === "sin-cuenta") return buscados.filter((c) => !c.hasAccount);
+    return buscados;
+  }, [buscados, filter]);
 
   const TABS: { key: Filter; label: string; count: number }[] = [
-    { key: "todos", label: "Todos", count: customers.length },
+    { key: "todos", label: "Todos", count: buscados.length },
     { key: "cuenta", label: "Con cuenta", count: conCuenta },
-    { key: "sin-cuenta", label: "Sin cuenta", count: customers.length - conCuenta },
+    { key: "sin-cuenta", label: "Sin cuenta", count: buscados.length - conCuenta },
   ];
 
   if (loading)
@@ -66,6 +79,15 @@ export default function ClientesPage() {
         &quot;Con cuenta&quot; son quienes se registraron. &quot;Sin cuenta&quot; son
         datos de demostración y registros de cuentas ya eliminadas.
       </p>
+
+      <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 mb-4">
+        <SearchInput
+          value={busqueda}
+          onChange={setBusqueda}
+          placeholder="Nombre, correo o ciudad…"
+          className="max-w-md"
+        />
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
         {TABS.map((t) => (
@@ -94,7 +116,9 @@ export default function ClientesPage() {
         <p className="text-taupe text-center py-12">
           {customers.length === 0
             ? "Aún no hay clientes registrados"
-            : "No hay nadie en esta categoría"}
+            : busqueda !== ""
+              ? `Ningún cliente coincide con "${busqueda}"`
+              : "No hay nadie en esta categoría"}
         </p>
       ) : (
         <div className="bg-white rounded-2xl border border-cream-darker/60 overflow-x-auto">

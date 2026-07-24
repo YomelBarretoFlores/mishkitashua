@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ShieldCheck, User, Mail, X, Send } from "lucide-react";
 import ConfirmDialog from "@/app/admin/_components/confirm-dialog";
+import SearchInput, { normaliza } from "@/app/admin/_components/search-input";
 import Toast, { type ToastMessage } from "@/app/admin/_components/toast";
 
 type Miembro = {
@@ -31,6 +32,7 @@ export default function UsuariosPage() {
   const [rolInvitado, setRolInvitado] = useState<"admin" | "cliente">("admin");
   const [enviando, setEnviando] = useState(false);
   const [toast, setToast] = useState<ToastMessage>(null);
+  const [busqueda, setBusqueda] = useState("");
   const [confirmState, setConfirmState] = useState<{
     title: string;
     message: string;
@@ -130,8 +132,19 @@ export default function UsuariosPage() {
     });
   };
 
-  const admins = miembros.filter((m) => m.rol === "admin");
-  const clientes = miembros.filter((m) => m.rol === "cliente");
+  // Se busca sobre la lista ya cargada (Clerk devuelve el lote entero), así que
+  // filtrar aquí es inmediato. Se aplica a los dos grupos por igual: buscar a
+  // alguien sin saber de antemano si es admin o cliente es el caso normal.
+  const encontrados = (() => {
+    const q = normaliza(busqueda);
+    if (q === "") return miembros;
+    return miembros.filter((m) =>
+      [m.nombre, m.email].some((campo) => normaliza(campo ?? "").includes(q))
+    );
+  })();
+
+  const admins = encontrados.filter((m) => m.rol === "admin");
+  const clientes = encontrados.filter((m) => m.rol === "cliente");
 
   return (
     <div>
@@ -243,6 +256,15 @@ export default function UsuariosPage() {
         <p className="text-taupe text-center py-12">Cargando…</p>
       ) : (
         <>
+          <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 mb-6">
+            <SearchInput
+              value={busqueda}
+              onChange={setBusqueda}
+              placeholder="Nombre o correo…"
+              className="max-w-md"
+            />
+          </div>
+
           {/* Administradores */}
           <section className="mb-8">
             <h2 className="font-semibold text-cocoa-deep mb-3">
@@ -301,7 +323,9 @@ export default function UsuariosPage() {
             </p>
             {clientes.length === 0 ? (
               <p className="text-taupe text-sm py-6 text-center bg-white rounded-xl border border-cream-darker/60">
-                Todavía no hay clientes con cuenta.
+                {busqueda !== ""
+                  ? `Ningún cliente coincide con "${busqueda}".`
+                  : "Todavía no hay clientes con cuenta."}
               </p>
             ) : (
               <div className="space-y-2">

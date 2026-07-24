@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Star, ChevronLeft, ChevronRight, X } from "lucide-react";
 import DateRangeFilter from "@/app/admin/_components/date-range-filter";
+import SearchInput from "@/app/admin/_components/search-input";
 
 type ProductOption = { slug: string; name: string };
 
@@ -28,7 +29,20 @@ export default function ResenasPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [sort, setSort] = useState("recientes");
+  const [busqueda, setBusqueda] = useState("");
+  // Lo que realmente viaja al servidor. Se separa del texto que se escribe para
+  // no lanzar una consulta por tecla: esta lista está paginada y cada búsqueda
+  // es un viaje a la base de datos.
+  const [busquedaAplicada, setBusquedaAplicada] = useState("");
   const [products, setProducts] = useState<ProductOption[]>([]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setBusquedaAplicada(busqueda);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [busqueda]);
 
   useEffect(() => {
     fetch("/api/products")
@@ -50,6 +64,7 @@ export default function ResenasPage() {
     if (rating) params.set("rating", rating);
     if (from) params.set("from", from);
     if (to) params.set("to", to);
+    if (busquedaAplicada) params.set("search", busquedaAplicada);
 
     const res = await fetch(`/api/admin/resenas?${params}`);
     const data = await res.json();
@@ -57,7 +72,7 @@ export default function ResenasPage() {
     setTotalPages(data.totalPages || 1);
     setTotal(data.total || 0);
     setLoading(false);
-  }, [page, productSlug, rating, from, to, sort]);
+  }, [page, productSlug, rating, from, to, sort, busquedaAplicada]);
 
   useEffect(() => {
     // Carga inicial de datos: el estado se actualiza tras el await del fetch,
@@ -71,7 +86,12 @@ export default function ResenasPage() {
   // "Limpiar filtros" solo aparece si hay alguno puesto, para no ofrecer un
   // botón que no haría nada.
   const hasFilters =
-    productSlug !== "" || rating !== "" || from !== "" || to !== "" || sort !== "recientes";
+    productSlug !== "" ||
+    rating !== "" ||
+    from !== "" ||
+    to !== "" ||
+    sort !== "recientes" ||
+    busqueda !== "";
 
   const clearFilters = () => {
     setProductSlug("");
@@ -79,6 +99,8 @@ export default function ResenasPage() {
     setFrom("");
     setTo("");
     setSort("recientes");
+    setBusqueda("");
+    setBusquedaAplicada("");
     setPage(1);
   };
 
@@ -95,6 +117,12 @@ export default function ResenasPage() {
           de fecha se veían como dos cajas grises vacías sin saber qué pedían. */}
       <div className="bg-white rounded-2xl border border-cream-darker/60 p-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <SearchInput
+            value={busqueda}
+            onChange={setBusqueda}
+            placeholder="Comentario, cliente o pedido…"
+            className="lg:col-span-2"
+          />
           <label className="block lg:col-span-2">
             <span className="block text-xs font-medium text-on-surface-variant mb-1">
               Producto
