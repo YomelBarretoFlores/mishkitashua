@@ -87,7 +87,7 @@ export default function ContactoPage() {
               className="text-2xl md:text-3xl font-medium text-cocoa-deep mb-6"
               style={{ fontFamily: "var(--font-eb-garamond), serif" }}
             >
-              Visita Nuestra Panadería
+              Visítanos
             </h2>
 
             <div className="space-y-6">
@@ -143,9 +143,15 @@ export default function ContactoPage() {
 
             {/* Map */}
             <div className="rounded-xl overflow-hidden border border-cream-darker/60 h-[220px]">
+              {/* El `pb=...` que había aquí llevaba un identificador de lugar
+                  inventado (0x1234...abcdef), así que Google no reconocía el
+                  sitio y el recuadro salía roto. Esta forma (`q=` + `output=embed`)
+                  resuelve la dirección en el momento, no necesita clave de API
+                  y no depende de un blob opaco que nadie puede verificar a
+                  simple vista. */}
               <iframe
                 title="Ubicación Mishkitashua - Huaraz, Áncash"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31228.22508468825!2d-77.53700795!3d-9.5260!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x91a90c2a4b3e6e1f%3A0x1234567890abcdef!2sHuaraz%2C%20%C3%81ncash%2C%20Per%C3%BA!5e0!3m2!1ses!2spe!4v1700000000000"
+                src="https://maps.google.com/maps?q=Huaraz,%20%C3%81ncash,%20Per%C3%BA&z=14&output=embed"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
