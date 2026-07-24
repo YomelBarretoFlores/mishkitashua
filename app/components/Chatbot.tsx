@@ -94,7 +94,7 @@ function getResponse(
     case "pagos":
       return {
         from: "bot",
-        text: "Métodos de pago aceptados:\n\n• Tarjeta de crédito / débito\n• Transferencia bancaria\n\nTodas las transacciones son seguras.",
+        text: "Pagamos todo por Mercado Pago, donde puedes usar:\n\n• Yape\n• Tarjeta de crédito o débito\n• Banca por internet\n• Pago en agentes\n\nTodas las transacciones son seguras y tu pago se acredita al instante.",
         link: { label: "Ir a comprar", href: "/productos" },
         options: [{ label: "← Volver al menú", key: "menu" }],
       };
@@ -198,7 +198,8 @@ function matchKeyword(text: string): string {
   if (
     lower.includes("pago") ||
     lower.includes("tarjeta") ||
-    lower.includes("transferencia")
+    lower.includes("transferencia") ||
+    lower.includes("yape")
   )
     return "pagos";
   if (

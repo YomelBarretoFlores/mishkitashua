@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { trackEvent } from "@/app/lib/analytics";
@@ -11,27 +10,22 @@ import {
   ShoppingBag,
   Truck,
   CreditCard,
-  Landmark,
   CheckCircle,
   Gift,
   ShieldCheck,
-  Wallet,
 } from "lucide-react";
 import { useCart, cartItemKey } from "@/app/lib/cart-context";
 import { usePromotions } from "@/app/lib/promotions-context";
 import { useFirstPurchase } from "@/app/lib/use-first-purchase";
 import type { SiteSettings } from "@/app/lib/settings";
-import { BANK_TRANSFER, YAPE_PHONE, yapeEnabled } from "@/app/lib/payment-info";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type PaymentMethod = "mercadopago" | "transfer";
 
 // Los ajustes llegan del servidor ya resueltos (ver checkout/page.tsx), para no
 // mostrar S/ 12 por defecto mientras carga o si la llamada falla.
 export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
   const { items, subtotal } = useCart();
-  const router = useRouter();
   const promo = usePromotions(
     items.map((i) => ({ slug: i.slug, price: i.price, quantity: i.quantity }))
   );
@@ -82,7 +76,6 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
     }
   };
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mercadopago");
   const [form, setForm] = useState({
     nombre: "",
     email: "",
@@ -166,39 +159,7 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
     }
   };
 
-  const payWithTransfer = async () => {
-    setError("");
-    if (!isValid) return markAllTouched();
-    setSubmitting(true);
-    try {
-      const sessionId = sessionStorage.getItem("msk-session") || "";
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer: customerPayload(),
-          items: itemsPayload(),
-          paymentMethod: "transfer",
-          sessionId,
-          couponCode: coupon?.code ?? null,
-        }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        throw new Error(d.error || "No se pudo registrar el pedido");
-      }
-      const { id } = await res.json();
-      router.push(`/confirmacion?order=${id}&fresh=1`);
-    } catch (err) {
-      setSubmitting(false);
-      setError(err instanceof Error ? err.message : "Error");
-    }
-  };
-
-  const handlePay = () => {
-    if (paymentMethod === "transfer") payWithTransfer();
-    else payWithMercadoPago();
-  };
+  const handlePay = () => payWithMercadoPago();
 
   if (items.length === 0) {
     return (
@@ -370,99 +331,28 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
               </h2>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {(
-                [
-                  { key: "mercadopago", label: "Mercado Pago", icon: Wallet },
-                  { key: "transfer", label: "Yape o transferencia", icon: Landmark },
-                ] as const
-              ).map((m) => (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => setPaymentMethod(m.key)}
-                  className={`flex flex-col items-center gap-1.5 py-3 rounded-lg text-xs font-semibold transition-colors border ${
-                    paymentMethod === m.key
-                      ? "bg-cocoa text-white border-cocoa"
-                      : "bg-white text-cocoa-deep border-cream-darker hover:border-cocoa-light"
-                  }`}
-                >
-                  <m.icon size={18} />
-                  {m.label}
-                </button>
-              ))}
+            {/* Un solo método: todo el cobro pasa por Mercado Pago, que
+                confirma solo por webhook. Antes había además "Yape o
+                transferencia" al número directo, que se retiró porque obligaba
+                a comprobar cada abono a mano. Dentro de la pasarela se puede
+                pagar con Yape igual, y ahí sí se acredita al instante. */}
+            <div className="bg-cream rounded-xl p-5 flex items-start gap-3">
+              <ShieldCheck size={20} className="text-green-700 shrink-0 mt-0.5" />
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                Pago protegido con{" "}
+                <span className="font-semibold text-cocoa-deep">
+                  Mercado Pago
+                </span>
+                . Serás redirigido a la pasarela segura, donde puedes pagar con{" "}
+                <span className="font-semibold text-cocoa-deep">Yape</span>,
+                tarjeta de crédito o débito, banca por internet o agentes. Tus
+                datos de pago se procesan cifrados y{" "}
+                <span className="font-semibold">
+                  nunca se almacenan en nuestros servidores
+                </span>
+                .
+              </p>
             </div>
-
-            {paymentMethod === "transfer" ? (
-              <div className="bg-cream rounded-xl p-5">
-                <p className="text-sm text-on-surface-variant leading-relaxed mb-4">
-                  Paga por Yape o transferencia y envíanos el comprobante por
-                  WhatsApp:
-                </p>
-
-                {/* Yape primero: es la forma más rápida y la que más se usa. */}
-                {yapeEnabled() && (
-                  <div className="bg-white rounded-lg p-4 mb-3 border border-cream-darker/60">
-                    <p className="text-xs font-semibold text-caramel tracking-wide uppercase mb-1.5">
-                      Yape
-                    </p>
-                    <p className="font-mono text-lg text-cocoa-deep">
-                      {YAPE_PHONE}
-                    </p>
-                    <p className="text-xs text-taupe mt-1">
-                      A nombre de {BANK_TRANSFER.holder}
-                    </p>
-                  </div>
-                )}
-
-                <div className="bg-white rounded-lg p-4 border border-cream-darker/60 space-y-1 text-sm">
-                  <p className="text-xs font-semibold text-caramel tracking-wide uppercase mb-1.5">
-                    Transferencia bancaria
-                  </p>
-                  <p className="text-cocoa-deep font-semibold">
-                    {BANK_TRANSFER.bank}
-                  </p>
-                  <p className="text-on-surface-variant">
-                    Cuenta en soles:{" "}
-                    <span className="font-mono text-cocoa-deep">
-                      {BANK_TRANSFER.account}
-                    </span>
-                  </p>
-                  <p className="text-on-surface-variant">
-                    CCI (interbancaria):{" "}
-                    <span className="font-mono text-cocoa-deep">
-                      {BANK_TRANSFER.cci}
-                    </span>
-                  </p>
-                  <p className="text-on-surface-variant">
-                    Titular: {BANK_TRANSFER.holder}
-                  </p>
-                </div>
-
-                <p className="text-xs text-taupe pt-3 leading-relaxed">
-                  Tu pedido queda registrado como <strong>pendiente</strong>{" "}
-                  hasta que verifiquemos el abono. Envíanos el comprobante por
-                  WhatsApp con tu número de orden y lo confirmamos.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-cream rounded-xl p-5 flex items-start gap-3">
-                <ShieldCheck size={20} className="text-green-700 shrink-0 mt-0.5" />
-                <p className="text-sm text-on-surface-variant leading-relaxed">
-                  Pago protegido con{" "}
-                  <span className="font-semibold text-cocoa-deep">
-                    Mercado Pago
-                  </span>
-                  . Serás redirigido a la pasarela segura, donde puedes pagar con
-                  tarjeta de crédito o débito y Yape. Tus datos de tarjeta se
-                  procesan cifrados y{" "}
-                  <span className="font-semibold">
-                    nunca se almacenan en nuestros servidores
-                  </span>
-                  .
-                </p>
-              </div>
-            )}
 
             <p className="flex items-center gap-1.5 text-xs text-taupe mt-5">
               <Lock size={12} />
@@ -633,11 +523,7 @@ export default function CheckoutPage({ settings }: { settings: SiteSettings }) {
               className="w-full flex items-center justify-center gap-2 bg-cocoa text-white font-semibold py-4 rounded-lg hover:bg-cocoa-deep transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <CheckCircle size={18} />
-              {submitting
-                ? "Procesando..."
-                : paymentMethod === "transfer"
-                  ? "Confirmar Pedido"
-                  : `Pagar S/ ${total.toFixed(2)}`}
+              {submitting ? "Procesando..." : `Pagar S/ ${total.toFixed(2)}`}
             </button>
 
             <p className="text-xs text-taupe text-center mt-4 leading-relaxed">

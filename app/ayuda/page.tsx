@@ -391,11 +391,10 @@ export default function AyudaPage() {
                   tu siguiente envío o <strong>reembolso</strong> del importe.
                 </p>
                 <p className="text-sm text-on-surface-variant leading-relaxed">
-                  El reembolso se hace por el mismo medio con el que pagaste. Si
-                  pagaste con Yape o transferencia, se devuelve a la misma
-                  cuenta. El abono puede tardar unos días hábiles en reflejarse,
-                  según tu banco. Los gastos de envío se devuelven solo cuando el
-                  error fue nuestro.
+                  El reembolso se hace por el mismo medio con el que pagaste, a
+                  través de Mercado Pago. El abono puede tardar unos días hábiles
+                  en reflejarse, según tu banco o tu billetera. Los gastos de
+                  envío se devuelven solo cuando el error fue nuestro.
                 </p>
               </div>
               <div className="bg-cocoa rounded-2xl p-6 text-white">
@@ -456,10 +455,10 @@ export default function AyudaPage() {
                     Pedidos y pagos
                   </h3>
                   <p>
-                    Un pedido se considera confirmado cuando recibimos el pago o,
-                    en el caso de transferencia y Yape, cuando verificamos el
-                    abono. Aceptamos Mercado Pago (tarjeta y Yape) y
-                    transferencia bancaria. Recibirás un comprobante por correo
+                    Un pedido se considera confirmado cuando recibimos el pago.
+                    Cobramos a través de Mercado Pago, donde puedes pagar con
+                    Yape, tarjeta de crédito o débito, banca por internet o en
+                    agentes. Recibirás un comprobante por correo
                     con el detalle completo de tu compra. Nos reservamos el
                     derecho de cancelar un pedido si detectamos un error evidente
                     de precio o si el producto ya no está disponible; en ese caso
